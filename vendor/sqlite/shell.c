@@ -20,6 +20,7 @@
 #include <assert.h>
 #include "sqlite3.h"
 #include <ctype.h>
+#include "sqliteInt.h"
 
 #if !defined(_WIN32) && !defined(WIN32) && !defined(__MACOS__)
 # include <signal.h>

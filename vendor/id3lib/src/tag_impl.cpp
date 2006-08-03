@@ -32,7 +32,7 @@
 #include "tag_impl.h" //has <stdio.h> "tag.h" "header_tag.h" "frame.h" "field.h" "spec.h" "id3lib_strings.h" "utils.h"
 //#include "io_helpers.h"
 #include "id3lib/io_strings.h"
-
+#include "config.h"
 using namespace dami;
 
 size_t ID3_TagImpl::IsV2Tag(ID3_Reader& reader)

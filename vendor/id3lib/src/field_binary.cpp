@@ -33,7 +33,7 @@
 #include "id3lib/writer.h"
 #include "id3lib/io_helpers.h"
 #include "id3lib/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
-
+#include "config.h"
 using namespace dami;
 
 size_t ID3_FieldImpl::Set(const uchar* data, size_t len)

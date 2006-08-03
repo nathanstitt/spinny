@@ -16,6 +16,13 @@
 #ifndef _SQLITEINT_H_
 #define _SQLITEINT_H_
 
+// hide errors under vc++ 7
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4018)
+#pragma warning(disable : 4013)
+#pragma warning(disable : 4996)
+
+
 /*
 ** Extra interface definitions for those who need them
 */

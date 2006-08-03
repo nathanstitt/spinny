@@ -30,7 +30,7 @@
 #  define local static
 #endif
 /* compile with -Dlocal if your debugger can't find static symbols */
-
+#pragma warning(disable : 4996)
 typedef unsigned char  uch;
 typedef uch FAR uchf;
 typedef unsigned short ush;

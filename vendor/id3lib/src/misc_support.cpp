@@ -31,7 +31,7 @@
 #include "id3lib/misc_support.h"
 //#include "field.h"
 #include "id3lib/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
-
+#include "config.h"
 //using namespace dami;
 
 char *ID3_GetString(const ID3_Frame *frame, ID3_FieldID fldName)

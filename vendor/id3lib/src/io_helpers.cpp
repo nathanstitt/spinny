@@ -24,9 +24,8 @@
 // id3lib.  These files are distributed with id3lib at
 // http://download.sourceforge.net/id3lib/
 
-#if defined HAVE_CONFIG_H
-#include <config.h>
-#endif
+
+#include "config.h"
 
 #include "id3lib/io_decorators.h" //has "readers.h" "io_helpers.h" "utils.h"
 
@@ -111,6 +110,7 @@ namespace
       return false;
     }
     io::ExitTrigger et(reader);
+
     ch1 = reader.readChar();
     if (reader.atEnd())
     {

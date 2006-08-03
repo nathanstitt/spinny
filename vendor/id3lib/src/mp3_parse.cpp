@@ -26,6 +26,7 @@
 // http://download.sourceforge.net/id3lib/
 
 #include "mp3_header.h"
+#include "config.h"
 
 #define FRAMES_FLAG     0x0001
 #define BYTES_FLAG      0x0002

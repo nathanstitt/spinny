@@ -25,7 +25,9 @@
 #ifndef STREAMS_H_DEFINE
 #define STREAMS_H_DEFINE
 #include <fstream>
+#pragma warning( disable : 4996)
 #include <iostream>
+#pragma warning( default : 4996)
 #include <iosfwd>
 
 using std::ifstream;

@@ -28,6 +28,9 @@
 #ifndef _ID3LIB_IO_STRINGS_H_
 #define _ID3LIB_IO_STRINGS_H_
 
+#pragma warning( disable : 4996)
+
+
 #include "id3lib/id3lib_strings.h"
 #include "reader.h"
 #include "writer.h"
@@ -234,5 +237,6 @@ namespace dami
   };
 };
 
+#pragma warning( default : 4996)
 #endif /* _ID3LIB_IO_STRINGS_H_ */
 
