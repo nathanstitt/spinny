@@ -30,7 +30,7 @@
 
 #include "id3lib/misc_support.h"
 //#include "field.h"
-#include "id3/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
+#include "id3lib/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
 
 //using namespace dami;
 

@@ -42,38 +42,10 @@
  * properly get exported in windows dlls.
  */
 #ifdef WIN32
-#  define LINKOPTION_STATIC         1 //both for use and creation of static lib
-#  define LINKOPTION_CREATE_DYNAMIC 2 //should only be used by prj/id3lib.dsp
-#  define LINKOPTION_USE_DYNAMIC    3 //if your project links id3lib dynamic
-#  ifndef ID3LIB_LINKOPTION
-#    pragma message("*** NOTICE *** (not a real error)")
-#    pragma message("* You should include a define in your project which reflect how you link the library")
-#    pragma message("* If you use id3lib.lib or libprj/id3lib.dsp (you link static) you should add")
-#    pragma message("* ID3LIB_LINKOPTION=1 to your preprocessor definitions of your project.")
-#    pragma message("* If you use id3lib.dll (you link dynamic) you should add ID3LIB_LINKOPTION=3")
-#    pragma message("* to your preprocessor definitions of your project.")
-#    pragma message("***")
-#    error read message above or win32.readme.first.txt
-#  else
-#    if (ID3LIB_LINKOPTION == LINKOPTION_CREATE_DYNAMIC)
        //used for creating a dynamic dll
 #      define ID3_C_EXPORT extern _declspec(dllexport)
 #      define ID3_CPP_EXPORT __declspec(dllexport)
 #      define CCONV __stdcall // Added for VB & Delphi Compatibility - By FrogPrince Advised By Lothar
-#    endif
-#    if (ID3LIB_LINKOPTION == LINKOPTION_STATIC)
-       //used for creating a static lib and using a static lib
-#      define ID3_C_EXPORT
-#      define ID3_CPP_EXPORT
-#      define CCONV
-#    endif
-#    if (ID3LIB_LINKOPTION == LINKOPTION_USE_DYNAMIC)
-       //used for those that do not link static and are using the dynamic dll by including a id3lib header
-#      define ID3_C_EXPORT extern _declspec(dllimport)
-#      define ID3_CPP_EXPORT __declspec(dllimport) //functions like these shouldn't be used by vb and delphi,
-#      define CCONV __stdcall // Added for VB & Delphi Compatibility - By FrogPrince Advised By Lothar
-#    endif
-#  endif
 #else /* !WIN32 */
 #  define ID3_C_EXPORT
 #  define ID3_CPP_EXPORT

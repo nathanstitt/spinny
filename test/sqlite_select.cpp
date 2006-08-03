@@ -31,7 +31,9 @@ using namespace std;
 
 using namespace sqlite;
 
-int sqlite_select(int, char**) {
+int
+sqlite_select( int argc, char *argv[] )
+{
 	try {
 		connection con("test.db");
 

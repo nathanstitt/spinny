@@ -36,7 +36,7 @@ using namespace dami;
 #include <stdio.h>
 
 
-#include <unistd.h>
+//#include <unistd.h>
 
 
 
@@ -269,9 +269,10 @@ size_t RenderV2ToFile(const ID3_TagImpl& tag, fstream& file)
 
       remove(filename.c_str());
       rename(sTempFile, filename.c_str());
-
+#if !defined(_WIN32)
       chmod(filename.c_str(), fileStat.st_mode);
-    }
+#endif // WIN32
+	}
 
 
 //    file = tmpOut;

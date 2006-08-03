@@ -27,7 +27,7 @@
 
 #include <memory.h>
 #include "header_frame.h"
-#include "id3/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
+#include "id3lib/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
 #include "frame_def.h"
 #include "field_def.h"
 #include "field_impl.h"

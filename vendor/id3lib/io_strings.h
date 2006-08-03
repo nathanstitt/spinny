@@ -28,7 +28,7 @@
 #ifndef _ID3LIB_IO_STRINGS_H_
 #define _ID3LIB_IO_STRINGS_H_
 
-#include "id3/id3lib_strings.h"
+#include "id3lib/id3lib_strings.h"
 #include "reader.h"
 #include "writer.h"
 

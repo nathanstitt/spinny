@@ -24,7 +24,7 @@
 // id3lib.  These files are distributed with id3lib at
 // http://download.sourceforge.net/id3lib/
 
-#include "id3/globals.h" //has <stdlib.h> "id3/sized_types.h"
+#include "id3lib/globals.h" //has <stdlib.h> "id3/sized_types.h"
 
 
 #include <config.h>

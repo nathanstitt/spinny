@@ -31,7 +31,7 @@
 
 #include <vector>
 #include <bitset>
-#include "id3/id3lib_frame.h"
+#include "id3lib/id3lib_frame.h"
 #include "header_frame.h"
 
 class ID3_FrameImpl
