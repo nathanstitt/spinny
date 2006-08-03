@@ -36,15 +36,12 @@ sqlite_select( int argc, char *argv[] )
 {
 	try {
 		connection con("test.db");
-
 		{
 			command cmd(con, "select * from t_test;");
 			reader r=cmd.exec<reader>();
-
 			while(r.read())
 				cout << r.getcolname(0) << ": " << r.get<int>() << endl;
 		}
-
 		con.close();
 	}
 	catch(exception &ex) {
