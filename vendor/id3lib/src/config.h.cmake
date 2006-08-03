@@ -3,10 +3,6 @@
 #ifndef _ID3LIB_CONFIG_H_
 #define _ID3LIB_CONFIG_H_
 
-
-#cmakedefine HAVE_ZLIB
-
-
 #define ID3D_INIT_DOUT()
 #define ID3D_INIT_WARNING()
 #define ID3D_INIT_NOTICE()
