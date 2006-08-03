@@ -27,7 +27,7 @@
 
 #include "config.h"
 #include "field_impl.h"
-#include "id3/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
+#include "id3lib/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
 #include "id3lib/src/field_def.h"
 #include "id3lib/src/frame_def.h"
 #include "id3lib/readers.h"

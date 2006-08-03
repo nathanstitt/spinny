@@ -35,7 +35,7 @@
 #define NOCREATE ((std::ios_base::openmode)0)
 #endif
 
-#include "id3/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
+#include "id3lib/utils.h" // has <config.h> "id3/id3lib_streams.h" "id3/globals.h" "id3/id3lib_strings.h"
 
 #if defined HAVE_ICONV_H
 // check if we have all unicodes

@@ -28,7 +28,7 @@
 #ifndef _ID3LIB_WRITER_H_
 #define _ID3LIB_WRITER_H_
 
-#include "id3/globals.h" //has <stdlib.h> "id3/sized_types.h"
+#include "id3lib/globals.h" //has <stdlib.h> "id3/sized_types.h"
 
 class ID3_CPP_EXPORT ID3_Writer
 {

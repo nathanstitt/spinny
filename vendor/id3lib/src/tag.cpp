@@ -48,7 +48,7 @@ using namespace dami;
  ** \c #include is necessary.
  **
  ** \code
- **   #include <id3/tag.h>
+ **   #include <id3lib/tag.h>
  ** \endcode
  **
  ** There are other files that must be included to access more advanced
