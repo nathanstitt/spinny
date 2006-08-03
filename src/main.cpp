@@ -1,13 +1,11 @@
-
 #include <iostream>
 #include "sqlite/sqlite.hpp"
-
+#include "id3lib/tag.h"
 #include "boost/thread/thread.hpp"
 #include "boost/thread/xtime.hpp"
 
 using namespace std;
 using namespace sqlite;
-
 
 struct thread_alarm
 {
@@ -26,8 +24,10 @@ struct thread_alarm
    int m_secs;
 };
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
+	ID3_Tag myTag;
 	int secs = 5;
 	connection *conn = new connection();
 	cout << "Hello World" << endl;

@@ -3,7 +3,7 @@ INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../
 
 ADD_EXECUTABLE( spinny main.cpp )
 
-TARGET_LINK_LIBRARIES( spinny sqlite boost )
+TARGET_LINK_LIBRARIES( spinny sqlite boost id3lib z)
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( spinny pthread )
