@@ -63,24 +63,15 @@ namespace sqlite {
 	command::~command() {
 		sqlite3_finalize(this->stmt);
 	}
-
-	void command::bind(int index) {
-		if(sqlite3_bind_null(this->stmt, index)!=SQLITE_OK)
-			throw database_error(this->con);
-	}
-
-	void command::bind(int index, int data) {
-		if(sqlite3_bind_int(this->stmt, index, data)!=SQLITE_OK)
-			throw database_error(this->con);
-	}
-
-	void command::bind(int index, long long data) {
-		if(sqlite3_bind_int64(this->stmt, index, data)!=SQLITE_OK)
-			throw database_error(this->con);
-	}
-
-	void command::bind(int index, double data) {
-		if(sqlite3_bind_double(this->stmt, index, data)!=SQLITE_OK)
+	
+	void command::bind( int index, const void *data, int datalen ) {
+		int res;
+		if ( datalen == 0 ){
+			res=sqlite3_bind_null(this->stmt, index);
+		} else {
+			res=sqlite3_bind_blob(this->stmt, index, data, datalen, SQLITE_TRANSIENT);
+		}
+		if (res!=SQLITE_OK)
 			throw database_error(this->con);
 	}
 
@@ -89,23 +80,9 @@ namespace sqlite {
 			throw database_error(this->con);
 	}
 
+
 	void command::bind(int index, const wchar_t *data, int datalen) {
 		if(sqlite3_bind_text16(this->stmt, index, data, datalen, SQLITE_TRANSIENT)!=SQLITE_OK)
-			throw database_error(this->con);
-	}
-
-	void command::bind(int index, const void *data, int datalen) {
-		if(sqlite3_bind_blob(this->stmt, index, data, datalen, SQLITE_TRANSIENT)!=SQLITE_OK)
-			throw database_error(this->con);
-	}
-
-	void command::bind(int index, const std::string &data) {
-		if(sqlite3_bind_text(this->stmt, index, data.data(), (int)data.length(), SQLITE_TRANSIENT)!=SQLITE_OK)
-			throw database_error(this->con);
-	}
-
-	void command::bind(int index, const std::wstring &data) {
-		if(sqlite3_bind_text16(this->stmt, index, data.data(), (int)data.length()*2, SQLITE_TRANSIENT)!=SQLITE_OK)
 			throw database_error(this->con);
 	}
 

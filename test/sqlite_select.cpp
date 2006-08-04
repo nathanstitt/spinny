@@ -29,24 +29,33 @@ using namespace std;
 
 #include "sqlite/sqlite.hpp"
 
+#include "sqlite_db_utils.hpp"
+
 using namespace sqlite;
+
 
 int
 sqlite_select( int argc, char *argv[] )
 {
+	bool failed=false;
+	sqlite::connection con("test.db");
+	populate_db( con );
 	try {
-		connection con("test.db");
 		{
 			command cmd(con, "select * from t_test;");
 			reader r=cmd.exec<reader>();
-			while(r.read())
-				cout << r.getcolname(0) << ": " << r.get<int>() << endl;
+			int age=1;
+			while(r.read()){
+				FooDoggy fd=r.get<FooDoggy>();
+				assert( fd.age == age++ );
+			}
+				
 		}
 		con.close();
 	}
 	catch(exception &ex) {
 		cerr << "Exception Occured: " << ex.what() << endl;
 	}
-
-	return 0;
+	remove_db( con );
+	return failed;
 }

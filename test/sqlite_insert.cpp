@@ -29,46 +29,31 @@
 using namespace std;
 
 #include "sqlite/sqlite.hpp"
-#include "boost/filesystem/operations.hpp"
+#include "sqlite_db_utils.hpp"
+
 using namespace sqlite;
 
 int
 sqlite_insert( int argc, char *argv[] )
 {
 	bool failed=false;
-	try
-	{
-		connection con("test.db");
-		int count=con.exec<int>("select count(*) from sqlite_master where name='t_test';");
-		if( count == 0 ) {
-			con.exec<none>("create table t_test(number,string);");
-		} else {
-			con.exec<none>("delete from t_test");
-		}
+	sqlite::connection con("test.db");
 
-		transaction trans(con);
-		{
-			command cmd(con, "insert into t_test values(?,?);");
-			cmd.bind(2, "foobar", 6);
-			for(int i=0; i<10000; i++) {
-				cmd.bind(1, i);
-				cmd.exec<none>();
-			}
-		}
+	populate_db( con );
 
-		trans.commit();
-		{
-			command cmd(con, "select count(*) from t_test;");
-			reader r=cmd.exec<reader>();
-			r.read();
-			failed=( r.get<int>() != 10000 );
-		}
-		con.close();
+	command cmd(con, "insert into people_test values(?,?);");
+	FooDoggy fd;
+	for(int age=0; age<10000; age++) {
+		fd.age=age;
+		fd.name="Foo Doggy";
+		cmd.bind<const FooDoggy &>( fd );
+		cmd.exec<none>();
 	}
-	catch(exception &ex) {
-		cerr << "Exception Occured: " << ex.what() << endl;
-		failed = true;
-	}
-	boost::filesystem::remove("test.db");
+
+	fd=con.exec<FooDoggy>( "select * from people_test where age=548;" );
+	assert( fd.age == 548 );
+
+	
+	remove_db( con );
 	return failed;
 }

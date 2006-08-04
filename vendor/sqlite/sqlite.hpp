@@ -90,15 +90,18 @@ namespace sqlite {
 		command(connection &con, const std::wstring &sql);
 		~command();
 
-		void bind(int index);
-		void bind(int index, int data);
-		void bind(int index, long long data);
-		void bind(int index, double data);
-		void bind(int index, const char *data, int datalen);
-		void bind(int index, const wchar_t *data, int datalen);
-		void bind(int index, const void *data, int datalen);
-		void bind(int index, const std::string &data);
-		void bind(int index, const std::wstring &data);
+		template<typename T>
+		void bind( T data );
+
+		template<typename T>
+		void bind( int index, T data );
+
+		void command::bind( int index, const void *data, int datalen );
+
+		void command::bind(int index, const char *data, int datalen);
+
+		void command::bind(int index, const wchar_t *data, int datalen);
+
 
 		template<typename T>
 		T exec();
@@ -163,6 +166,43 @@ namespace sqlite {
 		return reader(this);
 	}
 
+	template<> inline
+	void command::bind(int index, const char *data) {
+		this->bind( index,data, strnlen( data, 1024 ) );
+	}
+
+
+	template<> inline
+	void command::bind(int index, int data) {
+		if(sqlite3_bind_int(this->stmt, index, data)!=SQLITE_OK)
+			throw database_error(this->con);
+	}
+	
+	template<> inline
+	void command::bind( int index, const std::string &data){
+		if(sqlite3_bind_text(this->stmt, index, data.data(), (int)data.length(), SQLITE_TRANSIENT)!=SQLITE_OK)
+			throw database_error(this->con);
+	}
+
+
+	template<> inline
+	void command::bind(int index, const std::wstring &data){
+		if(sqlite3_bind_text16(this->stmt, index, data.data(), (int)data.length()*2, SQLITE_TRANSIENT)!=SQLITE_OK)
+			throw database_error(this->con);
+
+	}
+
+	template<> inline
+	void command::bind(int index, long long data) {
+		if(sqlite3_bind_int64(this->stmt, index, data)!=SQLITE_OK)
+			throw database_error(this->con);
+	}
+
+	template<> inline
+	void command::bind(int index, double data) {
+		if(sqlite3_bind_double(this->stmt, index, data)!=SQLITE_OK)
+			throw database_error(this->con);
+	}
 
 	template <class T>
 	T reader::get( int index ){
