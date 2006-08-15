@@ -40,8 +40,9 @@ sqlite_insert( int argc, char *argv[] )
 	sqlite::connection con("test.db");
 
 	populate_db( con );
-
-	command cmd(con, "insert into people_test values(?,?);");
+	
+	con << "insert into people_test values(?,?)";
+	command cmd = con.exec<command>();
 	FooDoggy fd;
 	for(int age=0; age<10000; age++) {
 		fd.age=age;

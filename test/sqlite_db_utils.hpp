@@ -34,6 +34,7 @@ populate_db( sqlite::connection &con ) {
 		con.exec<sqlite::none>("delete from people_test");
 	}
 	sqlite::transaction trans(con);
+
 	sqlite::command cmd(con, "insert into people_test values(?,?);");
 	cmd.bind(2, "Bar" );
 	for(int i=1; i<10000; i++ ) {
