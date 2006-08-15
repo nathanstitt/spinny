@@ -1,3 +1,1 @@
-
-
-SUBDIRS( id3lib boost sqlite zlib )
+SUBDIRS( id3lib boost sqlite zlib lame )
