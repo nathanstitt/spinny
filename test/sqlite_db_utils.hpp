@@ -5,6 +5,16 @@
 struct FooDoggy {
 	int age;
 	std::string name;
+
+	static inline
+	const char* fields(){
+		return "age, name";
+	}
+
+	static inline
+	const char* table(){
+		return "people_test";
+	}
 };
 
 namespace sqlite{
@@ -29,16 +39,16 @@ bool
 populate_db( sqlite::connection &con ) {
 	int count=con.exec<int>("select count(*) from sqlite_master where name='people_test';");
 	if( count == 0 ) {
-		con.exec<sqlite::none>("create table people_test (number,string);");
+		con.exec<sqlite::none>("create table people_test ( age number, name string);");
 	} else {
-		con.exec<sqlite::none>("delete from people_test");
+		con.exec<sqlite::none>("delete from people_test;");
 	}
 	sqlite::transaction trans(con);
 
-	sqlite::command cmd(con, "insert into people_test values(?,?);");
-	cmd.bind(2, "Bar" );
+	sqlite::command cmd(con, "insert into people_test (age,name) values (?,?);");
+	cmd.bind(1, "Bar" );
 	for(int i=1; i<10000; i++ ) {
-		cmd.bind(1, i);
+		cmd.bind(0, i);
 		cmd.exec<sqlite::none>();
 	}
 	trans.commit();

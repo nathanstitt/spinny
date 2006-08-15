@@ -28,11 +28,20 @@
 
 namespace sqlite {
 
+
+	command::command(connection &con) : con(con) {
+ 		const char *tail=NULL;
+		if( sqlite3_prepare( con.db,con._cmd.curval().c_str(),con._cmd.curval().length() , &this->stmt, &tail)!=SQLITE_OK )
+			throw database_error(con);
+		con.clear_cmd();
+		this->argc=sqlite3_column_count(this->stmt);
+	}
+
+
 	command::command(connection &con, const char *sql) : con(con),refs(0) {
 		const char *tail=NULL;
 		if( sqlite3_prepare( con.db, sql, -1, &this->stmt, &tail)!=SQLITE_OK )
 			throw database_error(con);
-
 		this->argc=sqlite3_column_count(this->stmt);
 	}
 
@@ -40,7 +49,6 @@ namespace sqlite {
 		const wchar_t *tail=NULL;
 		if(sqlite3_prepare16(con.db, sql, -1, &this->stmt, (const void**)&tail)!=SQLITE_OK)
 			throw database_error(con);
-
 		this->argc=sqlite3_column_count(this->stmt);
 	}
 
@@ -48,7 +56,6 @@ namespace sqlite {
 		const char *tail=NULL;
 		if(sqlite3_prepare(con.db, sql.data(), (int)sql.length(), &this->stmt, &tail)!=SQLITE_OK)
 			throw database_error(con);
-
 		this->argc=sqlite3_column_count(this->stmt);
 	}
 
@@ -61,7 +68,14 @@ namespace sqlite {
 	}
 
 	command::~command() {
+		if ( stmt )
+			sqlite3_finalize(this->stmt);
+	}
+
+	void
+	command::close(){
 		sqlite3_finalize(this->stmt);
+		this->stmt=0;
 	}
 	
 	void command::bind( int index, const void *data, int datalen ) {
@@ -74,17 +88,5 @@ namespace sqlite {
 		if (res!=SQLITE_OK)
 			throw database_error(this->con);
 	}
-
-	void command::bind(int index, const char *data, int datalen) {
-		if(sqlite3_bind_text(this->stmt, index, data, datalen, SQLITE_TRANSIENT)!=SQLITE_OK)
-			throw database_error(this->con);
-	}
-
-
-	void command::bind(int index, const wchar_t *data, int datalen) {
-		if(sqlite3_bind_text16(this->stmt, index, data, datalen, SQLITE_TRANSIENT)!=SQLITE_OK)
-			throw database_error(this->con);
-	}
-
 
 }

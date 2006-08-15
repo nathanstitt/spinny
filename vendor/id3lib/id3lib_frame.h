@@ -43,13 +43,15 @@ public:
   class Iterator
   {
   public:
-    virtual ID3_Field*       GetNext()       = 0;
+	  virtual ID3_Field*       GetNext()       = 0;
+	  virtual ~Iterator(){}
   };
 
   class ConstIterator
   {
   public:
-    virtual const ID3_Field* GetNext()       = 0;
+	  virtual const ID3_Field* GetNext()       = 0;
+	  virtual ~ConstIterator(){}
   };
 
 public:

@@ -27,38 +27,77 @@
 #define __SQLITE_HPP__
 
 #include <string>
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <stdexcept>
 #include <sqlite/sqlite3.h>
+#include <iostream>
 
 namespace sqlite {
+
 	class reader;
 	struct none{};
+	typedef long long auto_id_t;
 
-	class connection : boost::noncopyable {
+									
+	class table { // functionality may be needed later
+		friend class reader;
+		friend class command;
+		friend class connection;
+
+	};
+
+	class connection : boost::noncopyable, public std::ostream {
 	private:
+		class buffer : public std::streambuf {
+		public:
+			//! return contents of buffer
+			std::string curval();
+			//! abandon contents of buffer
+			void abandon();
+		private:
+			int overflow(int c);
+			std::string _buffer;
+		};
+
+		buffer _cmd;
+
 		friend class command;
 		friend class database_error;
 		struct sqlite3 *db;
 		void validate_db();
 	public:
 		connection();
-		connection(const char *db);
-		connection(const wchar_t *db);
-		~connection();
+		connection(const std::string &db );
+ 		~connection();
 
-		void open(const char *db);
-		void open(const wchar_t *db);
+		template<class T1,class T2>
+		T1
+		find_by_field( const std::string &field, T2 value ){
+			*this << "select " << T1::fields() << " from " << T1::table() << " where field = " << value;
+			return this->exec<T1>();
+		}
+
+		void open( const std::string &db );
+
 		void close();
 
-		long long insertid();
+		auto_id_t insertid();
 
 		void setbusytimeout(int ms);
 
 		template<class T1, class T2>
 		T1 exec( T2 sql);
+
+		template<class T1>
+		T1 exec();
+
+		void clear_cmd();
+		std::string current_statement();
 	};
+
+
 
 	class transaction : boost::noncopyable {
 	private:
@@ -77,13 +116,15 @@ namespace sqlite {
 	class command : boost::noncopyable {
 	private:
 		friend class reader;
-
+		friend class transaction;
+		friend class connection;
 		connection &con;
 		struct sqlite3_stmt *stmt;
 		unsigned int refs;
 		int argc;
 
 	public:
+		command(connection &con );
 		command(connection &con, const char *sql);
 		command(connection &con, const wchar_t *sql);
 		command(connection &con, const std::string &sql);
@@ -98,13 +139,10 @@ namespace sqlite {
 
 		void command::bind( int index, const void *data, int datalen );
 
-		void command::bind(int index, const char *data, int datalen);
-
-		void command::bind(int index, const wchar_t *data, int datalen);
-
-
 		template<typename T>
 		T exec();
+
+		void close();
 	};
 
 
@@ -135,20 +173,34 @@ namespace sqlite {
 		void close();
 
 		template<typename T>
-		T get(int index=0);
+		T get(int index);
+
+		template<typename T>
+		T get();
 
 		std::string getcolname(int index);
 		std::wstring getcolname16(int index);
 	};
 
+
+
+
 	// specializations
-	template<class T1, class T2>
+	template<class T1> inline
+	T1 connection::exec(){
+		this->validate_db();
+		command c( *this, _cmd.curval() );
+		this->clear_cmd();
+		return c.exec<T1>();
+	}
+
+ 	template<class T1, class T2> inline
 	T1 connection::exec(T2 sql){
 		this->validate_db();
 		return command(*this, sql ).exec<T1>();
 	}
 
-	template<typename T>
+	template<typename T> inline
 	T command::exec(){
 		reader r(this);
 		r.read();
@@ -203,6 +255,12 @@ namespace sqlite {
 		if(sqlite3_bind_double(this->stmt, index, data)!=SQLITE_OK)
 			throw database_error(this->con);
 	}
+
+	template <class T>
+	T reader::get(){
+		return this->get<T>( 0 );
+	}
+
 
 	template <class T>
 	T reader::get( int index ){

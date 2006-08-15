@@ -1,4 +1,5 @@
 #include <iostream>
+#include "spinny.hpp"
 #include "sqlite/sqlite.hpp"
 #include "id3lib/tag.h"
 #include "boost/thread/thread.hpp"
@@ -20,19 +21,55 @@ struct thread_alarm
 
        std::cout << "alarm sounded..." << std::endl;
    }
-
    int m_secs;
 };
 
-int
-main(int argc, char **argv)
+// int
+// main(int argc, char **argv) {
+// 	ID3_Tag myTag;
+// 	int secs = 1;
+// 	connection *conn = new connection();
+// 	cout << "Hello World" << endl;
+// 	std::cout << "setting alarm for 5 seconds..." << std::endl;
+// 	thread_alarm alarm(secs);
+// 	boost::thread thrd(alarm);
+// 	thrd.join();
+
+// 	return Spinny::run( argc, argv );
+// }
+
+
+
+
+#include <boost/thread/thread.hpp>
+#include <boost/thread/tss.hpp>
+#include <cassert>
+
+boost::thread_specific_ptr<int> value;
+
+boost::thread_specific_ptr<std::string> s_value;
+
+void increment()
 {
-	ID3_Tag myTag;
-	int secs = 5;
-	connection *conn = new connection();
-	cout << "Hello World" << endl;
-	std::cout << "setting alarm for 5 seconds..." << std::endl;
-	thread_alarm alarm(secs);
-	boost::thread thrd(alarm);
-	thrd.join();
+    int* p = value.get();
+    ++*p;
+}
+
+void thread_proc()
+{
+    value.reset(new int(0)); // initialize the thread's storage
+    for (int i=0; i<10; ++i)
+    {
+        increment();
+        int* p = value.get();
+        assert(*p == i+1);
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    boost::thread_group threads;
+    for (int i=0; i<5; ++i)
+        threads.create_thread(&thread_proc);
+    threads.join_all();
 }

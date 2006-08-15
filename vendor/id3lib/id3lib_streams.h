@@ -25,9 +25,13 @@
 #ifndef STREAMS_H_DEFINE
 #define STREAMS_H_DEFINE
 #include <fstream>
+#ifndef __GNUC__
 #pragma warning( disable : 4996)
 #include <iostream>
 #pragma warning( default : 4996)
+#else
+#include <iostream>
+#endif // __GNUC__ 
 #include <iosfwd>
 
 using std::ifstream;
