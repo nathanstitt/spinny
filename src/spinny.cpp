@@ -18,12 +18,15 @@ boost::thread_specific_ptr<sqlite::connection> _db;
 static Spinny *_instance=0;
 
 
+
 Spinny::Spinny(int argc, char **argv) :
 	_argc( argc ),
 	_argv( argv )
 {
 	_vm=parse_program_options(argc,argv);
 	_db.reset( new sqlite::connection( _vm["db"].as<string>() ) );
+
+
 }
 
 Spinny*
@@ -52,6 +55,7 @@ Spinny::run(int argc, char **argv)
 	try {
 		_instance=new Spinny( argc, argv );
 	}
+
 	catch( Spinny::CmdLineEx &e ){
 		return 0;
 	}

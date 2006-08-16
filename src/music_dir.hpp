@@ -17,19 +17,17 @@ class MusicDir : public sqlite::table {
 	sqlite::auto_id_t _parent_id;
 
 	static inline
-	const char* fields(){
-		return "id,parent_id,name";
-	}
+	const char* fields();
 
 	static inline
-	const char* table(){
-		return "music_dir";
-	}
-
+	const char* table();
 public:
-	string name(){ return _name; }
+	string name();
+
 	MusicDir find_by_id( sqlite::auto_id_t id );
+
 	MusicDir parent();
+
 	bool is_root();
 
 	boost::filesystem::path path();
@@ -38,27 +36,6 @@ public:
 };
 
 
-
-namespace sqlite{
-
- 	template <> inline
- 	MusicDir
-	reader::get(){
-		MusicDir md;
-		md._id=this->get<auto_id_t>(0);
-		md._name=this->get<string>(1);
-		md._parent_id=this->get<auto_id_t>(2);
-		return md;
-	}
-
-	template <> inline
-	void
-	command::bind( const MusicDir &md ){
-		this->bind( 0, md._id );
-		this->bind( 1, md._name );
-		this->bind( 2, md._parent_id );
-	};
-}
 
 
 #endif /* _MUSIC_DIR_H */

@@ -75,7 +75,7 @@ namespace sqlite {
 		template<class T1,class T2>
 		T1
 		find_by_field( const std::string &field, T2 value ){
-			*this << "select " << T1::fields() << " from " << T1::table() << " where field = " << value;
+			*this << "select " << T1::fields() << " from " << T1::table() << " where " << field << " = " << value;
 			return this->exec<T1>();
 		}
 
