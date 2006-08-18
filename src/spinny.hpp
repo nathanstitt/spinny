@@ -4,7 +4,7 @@
 #ifndef _SPINNY_H
 #define _SPINNY_H 1
 
-#include "sqlite/sqlite.hpp"
+#include "sqlite.hpp"
 #include "config.h"
 #include <boost/program_options.hpp>
 
@@ -18,17 +18,20 @@ public:
 
 	static int run( int argc, char **argv );
 
+	static void stop();
+
 	static Spinny* instance();
 
 	static sqlite::connection* Spinny::db();
 
 	template<typename T>
-	void config( const std::string &name ){
-		_vm[name].as<T>();
+ 	const T& config( const std::string &name ) const {
+		return _vm[name].as<T>(); 
 	}
 
 };
 
 
 #endif /* _SPINNY_H */
+
 

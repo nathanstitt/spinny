@@ -7,7 +7,7 @@ namespace sqlite{
 
  	template <> inline
  	MusicDir
-	reader::get(){
+	reader::get() const {
 		MusicDir md;
 		md._id=this->get<auto_id_t>(0);
 		md._name=this->get<string>(1);
@@ -24,41 +24,73 @@ namespace sqlite{
 	};
 }
 
-const char*
-MusicDir::fields(){
-	return "id,parent_id,name";
+class md_desc : public sqlite::table_desc {
+public:
+	virtual const char* table_name() const {
+		return "music_dir";
+	};
+	virtual int num_fields() const {
+		return 3;
+	}
+	virtual const char** fields() const {
+		static const char *fields[] = {
+			"id",
+			"parent_id",
+			"name",
+		};
+		return fields;
+	}
+	virtual const char** field_types() const {
+		static const char *field_types[] = {
+			"int",
+			"int",
+			"string",
+		};
+		return field_types;
+	};
+};
+
+static md_desc table_desc;
+
+const sqlite::table_desc*
+MusicDir::description(){
+	return &table_desc;
 }
 
-	
-const char*
-MusicDir::table(){
-	return "music_dir";
+
+
+MusicDir::MusicDir() {
+
 }
 
 
 MusicDir
-MusicDir::find_by_id( sqlite::auto_id_t id ){
-	return Spinny::db()->find_by_field<MusicDir>( "id", _id );
+MusicDir::find_by_id( sqlite::auto_id_t id ) {
+	return Spinny::db()->find_by_field<MusicDir>( "id", id );
 }
 
 MusicDir
-MusicDir::parent(){
+MusicDir::parent() const {
 	return Spinny::db()->find_by_field<MusicDir>( "parent_id", _parent_id );
 }
 
+void
+MusicDir::set_as_root(){
+	_parent_id=_id;
+}
 
 bool
-MusicDir::is_root(){
+MusicDir::is_root() const {
 	return ( _id == _parent_id );
 }
 
 string
-MusicDir::name(){
+MusicDir::name() const {
 	return _name; 
 }
 
 boost::filesystem::path
-MusicDir::path(){
+MusicDir::path() const {
 	vector<string> dirs;
 	dirs.push_back( _name );
 	MusicDir md = *this;

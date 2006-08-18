@@ -1,6 +1,14 @@
+/* @(#)config.h.cmake
+ */
+
+#ifndef _CONFIG_H_
+#define _CONFIG_H_ 1
 
 using namespace std;
-using namespace boost;
 
 #cmakedefine WINDOWS
 #cmakedefine UNIX_VARIANT
+
+
+#endif /* _CONFIG_H_ */
+

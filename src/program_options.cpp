@@ -37,10 +37,9 @@ parse_program_options(int ac, char* av[])
 {
        
         po::variables_map vm;
-    
 	po::options_description generic("Other options");
 	generic.add_options()
-		("db", "Directory to store music database in")
+		("db",po::value<std::string>(),"File to store music database in")
 		;
 
         // Declare a group of options that will be 
@@ -52,7 +51,10 @@ parse_program_options(int ac, char* av[])
 		("config,c","config file location")
 		;
 	cmd_line_opts.add( generic );
-	po::store(po::parse_command_line(ac, av, cmd_line_opts), vm);
+
+	po::parsed_options parsed = 
+		po::command_line_parser(ac, av).options(cmd_line_opts).allow_unregistered().run();      
+	po::store( parsed, vm);
 
 	if ( vm.count("help") ){
 		std::cout << cmd_line_opts << "\n";
