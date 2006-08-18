@@ -1,6 +1,8 @@
 #ifndef UNITTEST_TESTRESULTS_H
 #define UNITTEST_TESTRESULTS_H
 
+#include <stdexcept>
+
 namespace UnitTest {
 
 class TestReporter;
@@ -12,7 +14,7 @@ public:
     explicit TestResults(TestReporter* reporter = 0);
 
     void OnTestStart(TestDetails const& test);
-    void OnTestFailure(TestDetails const& test, char const* failure);
+    void OnTestFailure(TestDetails const& test, char const* failure, std::exception const* ex=0 );
     void OnTestFinish(TestDetails const& test, float secondsElapsed);
 
     int GetTotalTestCount() const;

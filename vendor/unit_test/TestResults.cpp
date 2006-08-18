@@ -1,8 +1,8 @@
 #include "TestResults.h"
 #include "TestReporter.h"
-
+#include <string>
 #include "TestDetails.h"
-
+#include <typeinfo> 
 namespace UnitTest {
 
 TestResults::TestResults(TestReporter* testReporter)
@@ -22,8 +22,16 @@ void TestResults::OnTestStart(TestDetails const& test)
         m_testReporter->ReportTestStart(test);
 }
 
-void TestResults::OnTestFailure(TestDetails const& test, char const* failure)
+void TestResults::OnTestFailure(TestDetails const& test, char const* failure, std::exception const* ex )
 {
+	std::string failed(failure);
+	if ( ex ){
+		const std::type_info& info = typeid(ex);
+		failed+=" : ";
+		failed+=info.name();
+		failed+=".what() = ";
+		failed+=ex->what();
+	}
     ++m_failureCount;
     if (!m_currentTestFailed)
     {
@@ -32,7 +40,7 @@ void TestResults::OnTestFailure(TestDetails const& test, char const* failure)
     }
 
     if (m_testReporter)
-        m_testReporter->ReportFailure(test, failure);
+	    m_testReporter->ReportFailure(test, failed.c_str() );
 }
 
 void TestResults::OnTestFinish(TestDetails const& test, float secondsElapsed)
