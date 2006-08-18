@@ -25,36 +25,32 @@
 
 #include <sqlite3.h>
 #include "sqlite.hpp"
+#include <iostream>
 
 namespace sqlite {
 
 	void
-	reader::validate( int index ){
+	reader::validate( int index ) const {
 		if(!this->cmd) throw database_error("reader is closed");
 		if((index)>(this->cmd->argc-1)) throw std::out_of_range("index out of range");
 	}
 
 	reader::reader() : cmd(NULL) {}
 
-	reader::reader(const reader &copy) : cmd(copy.cmd) {
-		if(this->cmd) ++this->cmd->refs;
-	}
-
-	reader::reader(command *cmd) : cmd(cmd) {
-		++cmd->refs;
-	}
+	reader::reader(command *cmd) : cmd(cmd) { }
 
 	reader::~reader() {
-		this->close();
+//		sqlite3_reset(this->cmd->stmt);
 	}
 
-	reader& reader::operator=(const reader &copy) {
-		this->close();
+	bool
+	reader::operator==(auto_id_t num) const {
+		return ( this->get<auto_id_t>() == num );
+	}
 
-		this->cmd=copy.cmd;
-		if(this->cmd) ++this->cmd->refs;
-
-		return *this;
+	bool
+	reader::operator==(const std::string &str) const {
+		return ( this->get<std::string>() == str );
 	}
 
 	bool
@@ -77,25 +73,14 @@ namespace sqlite {
 			throw database_error(this->cmd->con);
 	}
 
-	void reader::close() {
-		if(this->cmd) {
-			if(--this->cmd->refs==0) sqlite3_reset(this->cmd->stmt);
-			this->cmd=NULL;
-		}
-	}
 
 
-	std::string reader::getcolname(int index) {
+	std::string reader::colname(int index) const {
 		if(!this->cmd) throw database_error("reader is closed");
 		if((index)>(this->cmd->argc-1)) throw std::out_of_range("index out of range");
 		return sqlite3_column_name(this->cmd->stmt, index);
 	}
 
-	std::wstring reader::getcolname16(int index) {
-		if(!this->cmd) throw database_error("reader is closed");
-		if((index)>(this->cmd->argc-1)) throw std::out_of_range("index out of range");
-		return (const wchar_t*)sqlite3_column_name16(this->cmd->stmt, index);
-	}
 
 
 }

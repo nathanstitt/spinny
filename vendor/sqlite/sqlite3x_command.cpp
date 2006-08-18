@@ -28,44 +28,25 @@
 
 namespace sqlite {
 
-
-	command::command(connection &con) : con(con) {
- 		const char *tail=NULL;
-		if( sqlite3_prepare( con.db,con._cmd.curval().c_str(),con._cmd.curval().length() , &this->stmt, &tail)!=SQLITE_OK )
+	command::command(connection &con) : con(con), _reader(this) {
+		if( sqlite3_prepare( con.db,con._cmd.curval().c_str(),con._cmd.curval().length() , &this->stmt, 0)!=SQLITE_OK )
 			throw database_error(con);
 		con.clear_cmd();
 		this->argc=sqlite3_column_count(this->stmt);
 	}
 
-
-	command::command(connection &con, const char *sql) : con(con),refs(0) {
-		const char *tail=NULL;
-		if( sqlite3_prepare( con.db, sql, -1, &this->stmt, &tail)!=SQLITE_OK )
+        command::command(connection &con, const char *sql) : con(con),_reader(this) {
+		if( sqlite3_prepare( con.db, sql, -1, &this->stmt, 0)!=SQLITE_OK )
 			throw database_error(con);
 		this->argc=sqlite3_column_count(this->stmt);
 	}
 
-	command::command(connection &con, const wchar_t *sql) : con(con),refs(0) {
-		const wchar_t *tail=NULL;
-		if(sqlite3_prepare16(con.db, sql, -1, &this->stmt, (const void**)&tail)!=SQLITE_OK)
+	command::command(connection &con, const std::string &sql) : con(con),_reader(this) {
+		if(sqlite3_prepare(con.db, sql.data(), (int)sql.length(), &this->stmt, 0)!=SQLITE_OK)
 			throw database_error(con);
 		this->argc=sqlite3_column_count(this->stmt);
 	}
 
-	command::command(connection &con, const std::string &sql) : con(con),refs(0) {
-		const char *tail=NULL;
-		if(sqlite3_prepare(con.db, sql.data(), (int)sql.length(), &this->stmt, &tail)!=SQLITE_OK)
-			throw database_error(con);
-		this->argc=sqlite3_column_count(this->stmt);
-	}
-
-	command::command(connection &con, const std::wstring &sql) : con(con),refs(0) {
-		const wchar_t *tail=NULL;
-		if(sqlite3_prepare16(con.db, sql.data(), (int)sql.length()*2, &this->stmt, (const void**)&tail)!=SQLITE_OK)
-			throw database_error(con);
-
-		this->argc=sqlite3_column_count(this->stmt);
-	}
 
 	command::~command() {
 		if ( stmt )
@@ -75,6 +56,7 @@ namespace sqlite {
 	void
 	command::close(){
 		sqlite3_finalize(this->stmt);
+		_reader.cmd=0;
 		this->stmt=0;
 	}
 	
@@ -89,4 +71,15 @@ namespace sqlite {
 			throw database_error(this->con);
 	}
 
+	command::iterator
+	command::begin() { 
+		_reader.reset();
+		_reader.read();
+		return iterator( &_reader );
+	}
+
+	command::iterator
+	command::end(){
+		return iterator();
+	}
 }
