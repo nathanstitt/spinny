@@ -70,4 +70,24 @@ namespace sqlite {
 		return c;
 	}
 
+	bool
+	connection::save( table &obj ){
+		const ::sqlite::table::description *td=obj.table_description();
+		if ( ! obj.db_id() ){
+			*this << "insert into ( " << td->table_name();
+			td->insert_fields( *this, true );
+			*this << ") values (";
+			obj.table_insert_values( *this );
+			*this << ")";
+			this->exec<none>();
+			obj.set_db_id( this->insertid() );
+		} else {
+			*this << "update " << td->table_name() << " set ";
+			obj.table_update_values( *this );
+			* this << " where rowid=" << obj.db_id();
+			this->exec<none>();
+		}
+		return true;
+	}
+
 } // sqlite namespace

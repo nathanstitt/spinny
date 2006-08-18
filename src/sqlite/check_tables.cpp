@@ -7,10 +7,10 @@
 #include "sqlite.hpp"
 #include <algorithm>
 
-typedef std::list<sqlite::table_desc*> tables_list;
+typedef std::list<sqlite::table::description*> tables_list;
 
 tables_list*
-sqlite::register_db_table_check( sqlite::table_desc *table ) {
+sqlite::register_db_table_check( sqlite::table::description *table ) {
 
 	static tables_list *tables = new tables_list;
 
@@ -27,13 +27,19 @@ sqlite::check_and_create_tables( connection &con ){
 
 	tables_list* tables = register_db_table_check( NULL );
 
-	command cmd( con, "SELECT name FROM sqlite_master WHERE type='table'" );
-
 	for( tables_list::iterator table = tables->begin(); table != tables->end(); ++table ){
-		const char **fields=(*table)->fields();
-		const char **field_types=(*table)->field_types();
 
-		if (  std::find( cmd.begin(), cmd.end(), (*table)->table_name() ) == cmd.end() ){
+		con << "SELECT 1 FROM sqlite_master WHERE type='table' and name='"
+		    << (*table)->table_name()
+		    << "'";
+
+
+		int res= con.exec<int>();
+
+		if ( ! res ){
+			const char **fields=(*table)->fields();
+			const char **field_types=(*table)->field_types();
+
 			con << "create table " << (*table)->table_name() << "(";
 			for ( int i=0; i<(*table)->num_fields(); ++i ){
 				if ( i > 0 ){
@@ -42,6 +48,7 @@ sqlite::check_and_create_tables( connection &con ){
 				con << fields[i] << " " << field_types[i];
 			}
 			con << ")";
+
 			con.exec<none>();
 		}
 	}
