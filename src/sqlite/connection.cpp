@@ -30,7 +30,7 @@ namespace sqlite {
 		}
 	}
 
-	long long
+	id_t
 	connection::insertid() {
 		if(!this->db) throw database_error("database is not open");
 		return sqlite3_last_insert_rowid(this->db);

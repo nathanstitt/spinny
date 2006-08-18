@@ -9,9 +9,9 @@ namespace sqlite{
  	MusicDir
 	reader::get() const {
 		MusicDir md;
-		md._id=this->get<auto_id_t>(0);
+		md._id=this->get<id_t>(0);
 		md._name=this->get<string>(1);
-		md._parent_id=this->get<auto_id_t>(2);
+		md._parent_id=this->get<id_t>(2);
 		return md;
 	}
 
@@ -53,7 +53,7 @@ public:
 static md_desc table_desc;
 
 const sqlite::table_desc*
-MusicDir::description(){
+MusicDir::table_description(){
 	return &table_desc;
 }
 
@@ -65,7 +65,7 @@ MusicDir::MusicDir() {
 
 
 MusicDir
-MusicDir::find_by_id( sqlite::auto_id_t id ) {
+MusicDir::find_by_id( sqlite::id_t id ) {
 	return Spinny::db()->find_by_field<MusicDir>( "id", id );
 }
 

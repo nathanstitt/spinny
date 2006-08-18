@@ -1,6 +1,6 @@
 #include <iostream>
 #include "spinny.hpp"
-#include "sqlite/sqlite.hpp"
+#include "sqlite.hpp"
 #include "id3lib/tag.h"
 #include "boost/thread/thread.hpp"
 #include "boost/thread/xtime.hpp"

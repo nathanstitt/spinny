@@ -8,11 +8,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <stdexcept>
-#include <vector>
+#include <list>
 #include <iostream>
 using namespace std;
 
-#define SQLITE_GRANT_FRIENDSHIP \
+#define GRANT_SQLITE_FRIENDSHIP \
 	friend class sqlite::reader; \
 	friend class sqlite::command; \
 	friend class sqlite::connection; \
@@ -24,24 +24,35 @@ namespace sqlite {
 	class connection;
 
 	struct none{};
-	typedef long long auto_id_t;
-
+	typedef long long id_t;
 						
-	class table_desc {
-	public:
+	struct table_desc {
 		virtual ~table_desc(){}
+		table_desc();
 		virtual const char* table_name() const = 0;
 		virtual int num_fields() const = 0;
 		virtual const char** fields() const = 0;
 		virtual const char** field_types() const = 0;
 	};
 
+	// the constructor for table desc will register with this 
+	// function.
+	std::list< table_desc* > *
+	register_db_table_check( sqlite::table_desc *table );
+
+	// this will check the tables registered
+	// above to ensure they exist and have the 
+	// proper column names
+	// since sqlite doesn't enforce column types
+	// no attempt is made to check that columns
+	// are of the proper type
+	void
+	check_and_create_tables( connection &conn );
+
 	class table { // functionality may be needed later
 	public:
 
 	};
-
-	
 
 	class database_error : public std::runtime_error {
 	public:
@@ -66,7 +77,7 @@ namespace sqlite {
 	public:
 		bool operator==(const std::string &str) const;
 
-		bool operator==(auto_id_t num) const;
+		bool operator==(id_t num) const;
 
 		bool read();
 
@@ -172,7 +183,15 @@ namespace sqlite {
 		template<class T1,class T2>
 		T1
 		find_by_field( const std::string &field, T2 value ){
-			*this << "select " << T1::fields() << " from " << T1::table() << " where " << field << " = " << value;
+			*this << "select ";
+			const table_desc *td=T1::table_description();
+			for( int i=0; i < td->num_fields(); ++i ){
+				if ( i != 0 ) {
+					*this << ',';
+				}
+				*this << td->fields()[i];
+			}
+			*this << " from " << td->table_name() << " where " << field << " = " << value;
 			return this->exec<T1>();
 		}
 
@@ -180,7 +199,7 @@ namespace sqlite {
 
 		void close();
 
-		auto_id_t insertid();
+		id_t insertid();
 
 		void setbusytimeout(int ms);
 

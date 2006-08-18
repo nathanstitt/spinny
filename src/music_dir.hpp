@@ -9,21 +9,23 @@
 
 
 class MusicDir : public sqlite::table {
-	SQLITE_GRANT_FRIENDSHIP;
+	GRANT_SQLITE_FRIENDSHIP;
 
-	sqlite::auto_id_t _id;
+	sqlite::id_t _id;
 	string _name;	
-	sqlite::auto_id_t _parent_id;
+	sqlite::id_t _parent_id;
 public:
-	static const sqlite::table_desc* description();
-
 	MusicDir();
+
+	static
+	const sqlite::table_desc*
+	table_description();
 
 	string
 	name() const;
 
 	static MusicDir 
-	find_by_id( sqlite::auto_id_t id );
+	find_by_id( sqlite::id_t id );
 
 	MusicDir
 	parent() const;

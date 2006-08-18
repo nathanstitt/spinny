@@ -18,8 +18,8 @@ namespace sqlite {
 	}
 
 	bool
-	reader::operator==(auto_id_t num) const {
-		return ( this->get<auto_id_t>() == num );
+	reader::operator==(id_t num) const {
+		return ( this->get<id_t>() == num );
 	}
 
 	bool
