@@ -1,8 +1,9 @@
-/* @(#)table_desc.cpp
+/* @(#)table.cpp
  */
 
 
 #include "sqlite.hpp"
+#include <typeinfo>
 
 using namespace sqlite;
 
@@ -12,7 +13,7 @@ table::table() : _id( 0 ){ }
 
 void
 table::set_db_id( sqlite::id_t id ) {
-	id=_id;
+	_id=id;
 };
 
 sqlite::id_t
@@ -20,9 +21,10 @@ table::db_id() const {
 	return _id;
 };
 
+
 bool
-table::save( sqlite::connection &con ){
-	return con.save( *this );
+table::operator == ( const table &other ) const {
+	return  ( this->db_id() == other.db_id() );
 }
 
 bool
@@ -42,8 +44,8 @@ table::description::description(){
 }
 
 void
-table::description::insert_fields( std::ostream &str, bool ignore_first ) const {
-	for( int i=ignore_first; i < this->num_fields(); ++i ){
+table::description::insert_fields( std::ostream &str ) const {
+	for( int i=0; i < this->num_fields(); ++i ){
 		if ( i != 0 ) {
 			str << ',';
 		}

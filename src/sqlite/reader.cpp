@@ -6,7 +6,7 @@ namespace sqlite {
 	void
 	reader::validate( int index ) const {
 		if(!this->cmd) throw database_error("reader is closed");
-		if((index)>(this->cmd->argc-1)) throw std::out_of_range("index out of range");
+		if((index)>(this->cmd->num_columns-1)) throw std::out_of_range("index out of range");
 	}
 
 	reader::reader() : cmd(NULL) {}
@@ -19,12 +19,12 @@ namespace sqlite {
 
 	bool
 	reader::operator==(id_t num) const {
-		return ( this->get<id_t>() == num );
+		return ( this->get<id_t>(0) == num );
 	}
 
 	bool
 	reader::operator==(const std::string &str) const {
-		return ( this->get<std::string>() == str );
+		return ( this->get<std::string>(0) == str );
 	}
 
 	bool
@@ -51,7 +51,7 @@ namespace sqlite {
 
 	std::string reader::colname(int index) const {
 		if(!this->cmd) throw database_error("reader is closed");
-		if((index)>(this->cmd->argc-1)) throw std::out_of_range("index out of range");
+		if((index)>(this->cmd->num_columns-1)) throw std::out_of_range("index out of range");
 		return sqlite3_column_name(this->cmd->stmt, index);
 	}
 

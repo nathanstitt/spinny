@@ -1,56 +1,54 @@
-
-
 #include "testing.hpp"
-#include "sqlite_testing.hpp"
 
+using namespace sqlite;
 
 SUITE(SqliteConnection) {
 
 TEST( Open ) {
 	connection con;
-	CHECK( ! filesystem::exists(SQLITE_TEST_FILE) );
-	con.open( SQLITE_TEST_FILE );
-	CHECK( filesystem::exists(SQLITE_TEST_FILE) );
+	CHECK( ! filesystem::exists(SQLITE_TEST_DB_FILE) );
+	con.open( SQLITE_TEST_DB_FILE );
+	CHECK( filesystem::exists(SQLITE_TEST_DB_FILE) );
 	con.close();
-	CHECK( filesystem::remove( SQLITE_TEST_FILE ) );
+	CHECK( filesystem::remove( SQLITE_TEST_DB_FILE ) );
 }
 
 TEST( ExecWithArg){
-	Conn c;
-	c.con.exec<none>("insert into foo values (42,'billy goat')");
-	CHECK_EQUAL( c.con.exec<int>("select * from foo limit 1"), 42 );
+	DummyApp c;
+	c.con->exec<none>("insert into testing (col1,col2) values (42,'billy goat')");
+	CHECK_EQUAL( c.con->exec<int>("select * from testing limit 1"), 42 );
 }
 
 TEST( ExecWithoutArg){
-	Conn c;
-	c.con << "insert into foo values ( 87,'billy goat' )";
-	c.con.exec<none>();
-	c.con << "select * from foo limit 1";
-	CHECK_EQUAL( c.con.exec<int>(), 87 );
+	DummyApp c;
+	*c.con << "insert into testing (col1,col2) values ( 87,'billy goat' )";
+	c.con->exec<none>();
+	*c.con << "select * from testing limit 1";
+	CHECK_EQUAL( c.con->exec<int>(), 87 );
 }
 
 TEST( Close ){
-	connection con( SQLITE_TEST_FILE );
+	connection con( SQLITE_TEST_DB_FILE );
 	con.exec<none>("create table foo1(int)");
 	con.close();
 	CHECK_THROW( con.exec<none>("create table foo2(int)"), database_error );
-	CHECK( filesystem::remove( SQLITE_TEST_FILE ) );
+	CHECK( filesystem::remove( SQLITE_TEST_DB_FILE ) );
 }
 
 TEST( InsertID ){
-	Conn c;
-	CHECK_EQUAL( c.con.insertid(), 0 );
-	c.con << "insert into foo values(34,'billy goat')";
-	c.con.exec<none>();
-	CHECK( c.con.insertid() > 0 );
+	DummyApp c;
+	CHECK_EQUAL( c.con->insertid(), 0 );
+	*c.con << "insert into testing (col1,col2) values (34,'billy goat')";
+	c.con->exec<none>();
+	CHECK( c.con->insertid() > 0 );
 }
 
 TEST( DBCreate ){
 	{
-		connection con( SQLITE_TEST_FILE );
+		connection con( SQLITE_TEST_DB_FILE );
 	}
-	CHECK( filesystem::exists( SQLITE_TEST_FILE ) );
-	CHECK( filesystem::remove( SQLITE_TEST_FILE ) );
+	CHECK( filesystem::exists( SQLITE_TEST_DB_FILE ) );
+	CHECK( filesystem::remove( SQLITE_TEST_DB_FILE ) );
 }
 
 TEST( Stream ) {
@@ -61,7 +59,11 @@ TEST( Stream ) {
 	CHECK_EQUAL( con.current_statement(), "" );
 }
 
+TEST( Save ){
+	DummyApp c;
+	
 
+}
 
 
 } // SUITE(SqliteConnection)

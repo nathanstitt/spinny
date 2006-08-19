@@ -7,6 +7,9 @@
 #include "sqlite.hpp"
 #include "config.h"
 #include <boost/program_options.hpp>
+#include <boost/log/log.hpp>
+
+BOOST_DECLARE_LOG(app)
 
 class Spinny {
 	int _argc;

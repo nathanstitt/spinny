@@ -6,7 +6,7 @@
 
 #include "spinny.hpp"
 #include <boost/filesystem/operations.hpp>
-
+#include <vector>
 
 class MusicDir : public sqlite::table {
 	GRANT_SQLITE_FRIENDSHIP;
@@ -14,33 +14,37 @@ class MusicDir : public sqlite::table {
 	sqlite::id_t _id;
 	string _name;	
 	sqlite::id_t _parent_id;
-public:
 	MusicDir();
 
-	static
-	const sqlite::table_desc*
-	table_description();
+	virtual void table_insert_values( std::ostream &str ) const;
+	virtual void table_update_values( std::ostream &str ) const;
+	void initialize_from_db( const sqlite::reader *reader );
+ 	static const sqlite::table::description* table_description();
+ 	virtual const description* m_table_description() const;
+public:
+	static MusicDir
+	create_root( const boost::filesystem::path &path );
 
-	string
-	name() const;
+	static 
+	std::vector<MusicDir>
+	roots();
 
-	static MusicDir 
-	find_by_id( sqlite::id_t id );
+ 	bool
+ 	is_root() const;
 
-	MusicDir
-	parent() const;
+	bool save();
 
-	void
-	set_as_root();
+ 	string name() const;
 
-	bool
-	is_root() const;
+  	MusicDir
+  	parent() const;
 
-	boost::filesystem::path
-	path() const;
 
-	void
-	sync();
+// 	boost::filesystem::path
+// 	path() const;
+
+// 	void
+// 	sync();
 };
 
 

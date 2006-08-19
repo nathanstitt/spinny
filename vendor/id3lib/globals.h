@@ -510,7 +510,6 @@ ID3_STRUCT(Mp3_Headerinfo)
 };
 
 #define ID3_NR_OF_V1_GENRES 148
-
 static const char *ID3_v1_genre_description[ID3_NR_OF_V1_GENRES] =
 {
   "Blues",             //0
@@ -663,6 +662,7 @@ static const char *ID3_v1_genre_description[ID3_NR_OF_V1_GENRES] =
   "JPop",                  //146
   "Synthpop"               //147
 };
+
 
 #define ID3_V1GENRE2DESCRIPTION(x) (x < ID3_NR_OF_V1_GENRES && x >= 0) ? ID3_v1_genre_description[x] : NULL
 

@@ -6,6 +6,7 @@
 
 using namespace std;
 
+#cmakedefine TESTING_FIXTURES_PATH "@TESTING_FIXTURES_PATH@"
 #cmakedefine WINDOWS
 #cmakedefine UNIX_VARIANT
 

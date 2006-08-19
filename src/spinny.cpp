@@ -5,9 +5,13 @@
 #include "spinny.hpp"
 #include <vector>
 #include <boost/thread/tss.hpp>
+#include <boost/log/functions.hpp>
 
 using namespace boost;
 using namespace std;
+
+BOOST_DEFINE_LOG(app, "app")
+
 
 boost::program_options::variables_map
 parse_program_options(int ac, char* av[]);
@@ -39,7 +43,6 @@ sqlite::connection*
 Spinny::db(){
 	sqlite::connection *conn=_db.get();
 	if ( ! conn ){
-
 		conn=new sqlite::connection( Spinny::instance()->_vm["db"].as<string>() );
 		_db.reset( conn );
 	}
@@ -51,6 +54,11 @@ Spinny::db(){
 int
 Spinny::run(int argc, char **argv)
 {
+	boost::logging::manipulate_logs("*")
+		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" );
+
+	BOOST_LOGL(app, warn) << "Spinny starting up";
+
 	if ( _instance != 0 ){
 		throw( "Spinny::run called twice!" );
 	}
@@ -63,6 +71,9 @@ Spinny::run(int argc, char **argv)
 		return 0;
 	}
 
+
+
+	sqlite::check_and_create_tables( *Spinny::db() );
 
 	return 0;
 }

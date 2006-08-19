@@ -1,13 +1,13 @@
 #include "testing.hpp"
-#include "sqlite_testing.hpp"
 
+using namespace sqlite;
 
 SUITE(SqliteReader) {
 
 TEST( Get ){
-	Conn c;
-	c.con.exec<none>("insert into foo (col1,col2) values ( 42,'FooBear' )");
-	command cmd(c.con,"select col1,col2 from foo order by col1");
+	DummyApp c;
+	c.con->exec<none>("insert into testing (col1,col2) values ( 42,'FooBear' )");
+	command cmd(*c.con,"select col1,col2 from testing order by col1");
 	command::iterator it=cmd.begin();
 	// hehe
 	reader &r=*it;
@@ -15,14 +15,14 @@ TEST( Get ){
 	CHECK_EQUAL( 42, r.get<int>(0) );
 	CHECK_EQUAL( "FooBear", r.get<string>(1) );
 	CHECK_EQUAL( 0, r.get<int>(1) );
-	CHECK_EQUAL( "42", r.get<std::string>() );
-	CHECK_EQUAL( 42, r.get<double>() );
+	CHECK_EQUAL( "42", r.get<std::string>(0) );
+	CHECK_EQUAL( 42, r.get<double>(0) );
 }
 
 
 TEST( ColName ){
-	Conn c;
-	command cmd(c.con,"select col1,col2 from foo order by col1");
+	DummyApp c;
+	command cmd(*c.con,"select col1,col2 from testing order by col1");
 	command::iterator it=cmd.begin();
 	// hehe
 	reader &r=*it;
@@ -32,9 +32,9 @@ TEST( ColName ){
 }
 
 TEST( Equality ){
-	Conn c;
-	c.con.exec<none>("insert into foo (col1,col2) values ( 42,'FooBear' )");
-	command cmd(c.con,"select col1 from foo order by col1");
+	DummyApp c;
+	c.con->exec<none>("insert into testing (col1,col2) values ( 42,'FooBear' )");
+	command cmd(*c.con,"select col1 from testing order by col1");
 	command::iterator it=cmd.begin();
 	// hehe
 	reader &r=*it;

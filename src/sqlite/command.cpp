@@ -5,20 +5,23 @@ namespace sqlite {
 	command::command(connection &con) : con(con), _reader(this) {
 		if( sqlite3_prepare( con.db,con._cmd.curval().c_str(),con._cmd.curval().length() , &this->stmt, 0)!=SQLITE_OK )
 			throw database_error(con);
+		BOOST_LOG(sql) << sqlite3_data_count(this->stmt) << " : " <<  con._cmd.curval();
 		con.clear_cmd();
-		this->argc=sqlite3_column_count(this->stmt);
+		this->num_columns=sqlite3_column_count(this->stmt);
 	}
 
-        command::command(connection &con, const char *sql) : con(con),_reader(this) {
-		if( sqlite3_prepare( con.db, sql, -1, &this->stmt, 0)!=SQLITE_OK )
+        command::command(connection &con, const char *sqlstmt) : con(con),_reader(this) {
+		if( sqlite3_prepare( con.db, sqlstmt, -1, &this->stmt, 0)!=SQLITE_OK )
 			throw database_error(con);
-		this->argc=sqlite3_column_count(this->stmt);
+		this->num_columns=sqlite3_column_count(this->stmt);
+		BOOST_LOG(sql) << sqlite3_data_count(this->stmt) << " : " <<  sqlstmt;
 	}
 
-	command::command(connection &con, const std::string &sql) : con(con),_reader(this) {
-		if(sqlite3_prepare(con.db, sql.data(), (int)sql.length(), &this->stmt, 0)!=SQLITE_OK)
+	command::command(connection &con, const std::string &sqlstmt) : con(con),_reader(this) {
+		if(sqlite3_prepare(con.db, sqlstmt.data(), (int)sqlstmt.length(), &this->stmt, 0)!=SQLITE_OK)
 			throw database_error(con);
-		this->argc=sqlite3_column_count(this->stmt);
+		BOOST_LOG(sql) << sqlite3_data_count(this->stmt) << " : " <<  sqlstmt;
+		this->num_columns=sqlite3_column_count(this->stmt);
 	}
 
 
@@ -56,4 +59,5 @@ namespace sqlite {
 	command::end(){
 		return iterator();
 	}
+
 }

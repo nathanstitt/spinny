@@ -6,11 +6,16 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
+#include "boost/algorithm/string.hpp"
 #include <boost/iterator/iterator_facade.hpp>
 #include <stdexcept>
 #include <list>
 #include <iostream>
+#include <boost/log/log.hpp>
 using namespace std;
+
+BOOST_DECLARE_LOG(sql)
+
 
 #define GRANT_SQLITE_FRIENDSHIP \
 	friend class sqlite::reader; \
@@ -19,6 +24,17 @@ using namespace std;
 
 namespace sqlite {
 
+	template<class T> inline
+	T q( const T &val ){
+		return val;
+	}
+
+	template<> inline
+	std::string q( const std::string &val ){
+		return boost::replace_all_copy(val, "'","''" );
+	}
+
+
 	class reader;
 	class command;
 	class connection;
@@ -26,19 +42,37 @@ namespace sqlite {
 	struct none{};
 	typedef long long id_t;
 						
-	struct table_desc {
-		virtual ~table_desc(){}
-		table_desc();
-		virtual const char* table_name() const = 0;
-		virtual int num_fields() const = 0;
-		virtual const char** fields() const = 0;
-		virtual const char** field_types() const = 0;
+	class table {
+		id_t _id;
+	protected:
+		table();
+	public:
+		virtual bool operator == ( const table &other ) const;
+		struct description {
+			virtual ~description();
+			description();
+			virtual void insert_fields( std::ostream &str ) const;
+			virtual const char* table_name() const = 0;
+			virtual int num_fields() const = 0;
+			virtual const char** fields() const = 0;
+			virtual const char** field_types() const = 0;
+		};
+		virtual ~table();
+		bool needs_saved();
+		virtual id_t db_id() const;
+		virtual void set_db_id( id_t );
+
+		virtual bool save() = 0;
+		virtual void initialize_from_db( const reader* ) = 0;
+		virtual const description* m_table_description() const = 0;
+		virtual void table_insert_values( std::ostream &str ) const = 0;
+		virtual void table_update_values( std::ostream &str ) const = 0;
 	};
 
 	// the constructor for table desc will register with this 
 	// function.
-	std::list< table_desc* > *
-	register_db_table_check( sqlite::table_desc *table );
+	std::list< table::description* > *
+	register_db_table_check( sqlite::table::description *table );
 
 	// this will check the tables registered
 	// above to ensure they exist and have the 
@@ -49,10 +83,6 @@ namespace sqlite {
 	void
 	check_and_create_tables( connection &conn );
 
-	class table { // functionality may be needed later
-	public:
-
-	};
 
 	class database_error : public std::runtime_error {
 	public:
@@ -69,7 +99,6 @@ namespace sqlite {
 
 		reader(command *cmd);
 		void validate( int index ) const;
-
 		reader();
 		reader(const reader &copy);
 
@@ -93,6 +122,16 @@ namespace sqlite {
 	};
 
 
+	template<class T>
+	struct slurp{
+		slurp() : ii( container, container.end() ) { }
+		void operator()( sqlite::reader &r ){
+			*ii = r.get<typename T::value_type>();
+		}
+		T container;
+		std::insert_iterator<T> ii;
+	};
+
 
 	class command : boost::noncopyable {
 	private:
@@ -102,8 +141,7 @@ namespace sqlite {
 		connection &con;
 
 		struct sqlite3_stmt *stmt;
-
-		int argc;
+		int num_columns;
 
 		reader _reader;
 	public:
@@ -113,7 +151,7 @@ namespace sqlite {
 		~command();
 
 		template<typename T>
-		void bind( T data );
+		void bind( const T& data );
 
 		template<typename T>
 		void bind( int index, T data );
@@ -156,6 +194,10 @@ namespace sqlite {
 
 	};
 
+
+
+
+
 	class connection : boost::noncopyable, public std::ostream {
 	private:
 		class buffer : public std::streambuf {
@@ -168,9 +210,7 @@ namespace sqlite {
 			int overflow(int c);
 			std::string _buffer;
 		};
-
 		buffer _cmd;
-
 		friend class command;
 		friend class database_error;
 		struct sqlite3 *db;
@@ -181,19 +221,62 @@ namespace sqlite {
  		~connection();
 
 		template<class T1,class T2>
-		T1
-		find_by_field( const std::string &field, T2 value ){
+		boost::shared_ptr<command>
+		load_many(  const std::string &field, const T2 &value, int limit=0 ){
 			*this << "select ";
-			const table_desc *td=T1::table_description();
-			for( int i=0; i < td->num_fields(); ++i ){
-				if ( i != 0 ) {
-					*this << ',';
-				}
-				*this << td->fields()[i];
+			const ::sqlite::table::description *td=T1::table_description();
+			td->insert_fields( *this );
+			*this << ",rowid from " << td->table_name() << " where " << field << " = " << q(value);
+			if ( limit ){
+				*this << " limit " << limit;
 			}
-			*this << " from " << td->table_name() << " where " << field << " = " << value;
-			return this->exec<T1>();
+			command *cmd = new command( *this,  _cmd.curval() );
+			boost::shared_ptr<command> ret( cmd );
+			BOOST_LOG(sql) << "load_many of " << typeid(T1).name();
+			this->clear_cmd();
+			return ret;
 		}
+
+
+		template<class T1,class T2>
+		T1
+		load_one( const std::string &field, const T2 &value ){
+			boost::shared_ptr<command> cmd = this->load_many<T1,T2>( field, value, 1 );
+			command::iterator iter = cmd->begin();
+			T1 obj = iter->get<T1>();
+			return obj;
+		}
+
+		template<class T1,class T2>
+		T1
+		load( T2 value ){
+			return this->load_one<T1,T2>( "rowid", value );
+		}
+
+
+		template<class T>
+		bool
+		connection::save( T &obj ){
+			const ::sqlite::table::description *td=T::table_description();
+			if ( ! obj.db_id() ){
+				*this << "insert into " << td->table_name() << "(";
+				td->insert_fields( *this );
+				*this << ") values (";
+				obj.table_insert_values( *this );
+				*this << ")";
+				BOOST_LOG(sql) << "save (insert) of " << typeid(T).name();
+				this->exec<none>();
+				obj.set_db_id( this->insertid() );
+			} else {
+				*this << "update " << td->table_name() << " set ";
+				obj.table_update_values( *this );
+				* this << " where rowid=" << obj.db_id();
+				BOOST_LOG(sql) << "save (update) of " << typeid(T).name();
+				this->exec<none>();
+			}
+			return true;
+		}
+
 
 		void open( const std::string &db );
 
@@ -213,7 +296,6 @@ namespace sqlite {
 
 		std::string current_statement();
 	};
-
 
 
 	class transaction : boost::noncopyable {
@@ -254,7 +336,7 @@ namespace sqlite {
 	template<typename T> inline
 	T command::exec(){
 		_reader.read();
-		return _reader.get<T>();
+		return _reader.get<T>(0);
 	}
 
 	template<> inline
@@ -270,6 +352,10 @@ namespace sqlite {
 		this->bind( index,data, strnlen( data, 1024 ) );
 	}
 
+	template<typename T> inline
+	void command::bind( const T &obj ){
+		obj.bind_to_db_stmt( this );
+	}
 
 	template<> inline
 	void command::bind(int index, int data) {
@@ -311,7 +397,10 @@ namespace sqlite {
 	// reader::get
 	template <class T>
 	T reader::get() const {
-		return this->get<T>( 0 );
+		T obj;
+		obj.initialize_from_db( this );
+		obj.set_db_id( this->get<id_t>( this->cmd->num_columns-1 ) );
+		return obj;
 	}
 
 

@@ -1,0 +1,244 @@
+*** log directory -> should be 'logging'.
+
+*** another functor (rather than prepend_time) that uses Boost.DateTime for higher-resolution timestamps.
+
+*** > append_enter should be renamed append_newline. Enter is not a chracter, it
+> is a key on a keyboard. Likewise "enter" should be changed to "newline"
+> throughout the docs.
+
+*** > boost/log/extra directory. Does this name really make sense? Shouldn't this
+> just be "appenders"? I won't comment on the quality of the code in here,
+
+*** Provide a Jamfile to build the examples.
+
+*** DEFAULT_INDEX, DEFAULT_CACHE_LIMIT should be lower-cased 
+
+*** A list of macros and their function would be helpful.
+
+*** > I would really like to have the option to simply replace the stream
+> type in the default log manager, instead of the whole thing. This
+> would make structured logging trivial.
+
+*** docs in doxygen
+
+*** autolink from dll - allow for BOOST_LOG_NO_DYN_LINK, to disable exporting of log lib
+
+*** > Code snippets for header and implementation file should
+> be more visually separated.
+
+*** > Code snippets may have more comments. Overcommenting
+> is positive thing, especially for first few examples.
+
+*** > using namespace boost::logging;
+> is missing in code snippets.
+
+*** > There should be table of all available modifiers
+> and all available appenders at this moment.
+> This table should contain one-line mini-examples.
+
+*** > An idea for another modifier: limit the text
+> to gives maximal length. It may happend the dump is
+> unexpectedly large and would
+> fill disk/overwrite cache/take too much time/be unreadable.
+> 
+> Limiting one log size would help here a lot
+> and would relieve end user of doing it manually.
+> 
+> 
+> -----------------------
+> 
+> Another idea for a modifier: limit length
+> of line in dump and automatically insert newline
+> after N characters.
+
+*** > Order in which appenders and modifiers are called is
+> not specified.
+In modifier_logger.html, at the end, I did explain the order. Maybe I can place a link to it, from a FAQ or so.
+
+*** > What if I do:
+> 
+> manipulate_logs("*").xyz(....).abc(...);
+> 
+> manipulate_logs("*").abc(....).xyz(...);
+> 
+> 
+> Will the last call overwrite the previous or will
+> they accumulate? Should be explained here.
+
+*** > "appender_array" - confusing documentation, no idea what is says.
+
+*** > rolling_file_appender - example needed, picture would help.
+> Name should be "rotating....".
+> periodic_file_appender - should have parameters
+> to delete old log files (by time, by count or by size).
+> 
+> 
+> Example is missing, docs is insufficient.
+> 
+> 
+> The name should be changed.
+> 
+> -------------------------
+> 
+> shared_memory_appender - insufficient docs,
+> example missing.
+> It should be explicitly said here there are
+> no delays or caching when writing into shmem.
+> Docs doesn't says what happend when shmem is full.
+> I think the only reasonable behavior is to overwrite
+> last logs in FIFO manner.
+> 
+> 
+> Is it possible to use several shmems? Docs should say
+> and should have couple of examples.
+ 
+*** > Static destruction: currently the library cannot
+> reliably log from destructors of static objects.
+> The Jason's library contains support for this situation.
+
+*** > 11. Feature request: quite often I am not interested
+>     not in absolute time (2005/12/11 16:33) but in
+>     time offset from some event.
+> 
+> I suggest to add API:
+> 
+> manipulate_logs(...).set_time_start_point(
+>    bool either_in_all_threads_or_just_in_current_thread
+>    );
+> 
+> 
+> and escape sequences:
+> 
+> $Xms   - e.g. "12 ms", "78321 ms" (only milliseconds are used)
+> $Xsec  - e.g. "2 s, 23 ms" (only seconds and millis)
+> $Xmin  - e.g. "3 m, 21 s, 10 ms"
+> $Xhour - e.g. "1 h, 33 m, 20 s, 54 ms"
+> $Xday  - e.g. "2 d, 1 h, 33 m, 20 s, 54 ms"
+
+*** > 12. Feature request: thread ID (both Win32 and POSIX)
+>     is of low use. I suggest to add API to specify
+>     string name as alternative to number:
+> 
+> .prepend_thread_name()
+> 
+> manipulate_logs(...).set_current_thread_name("gui thread");
+
+*** > This is what was likely discussed all over: for
+> some apps (e.g. embedded with tight constraints)
+> I may wish to remove all logging code completely:
+> 
+> 
+> BOOST_LOG(app, (<< "x = " << x));
+> 
+> Some compilers may not optimize strings and logging support
+> aways from the code - they won't be called but they will
+> be present in the executable. A way to surely get rid of them
+> should exists.
+
+*** > The example should show mix of runtime and
+> compile time loggers working together.
+
+*** > 19. examples.html: every example could be linked here,
+>     together with short description.
+
+*** > Nice to have docs wish: a page discussing stranghts
+> of this logger vs other common ones (log4cpp etc).
+
+*** > Documentation about performance of the library is missing
+> - absolute times, # of dynamic allocations per typical log, etc.
+
+*** > Docs should have table of all macros (visible to user)
+> and info whether they can be defined by user.
+> 
+> For example now BOOST_LOG_NO_LIB is not mentioned anywhere
+> and it is unclear what it is for.
+
+*** > Length of lines may be limited.
+> Some lines have over 240 characters and that
+> very hard to read.
+> I'd say that 90-100 chars is reasonable limit.
+
+*** > 5. File and line
+> This solution completely ignores file and line number of trace entry. IMO 
+> They are essential and should be collected for every entry (may not be 
+> reported - depends on prefix format)
+
+*** > 7. #ifdef UNICODE
+> #ifdef UNICODE are spread all over the code. It needs to be centralized
+
+*** explain how it works for DLLs as well
+- also create example/test for it
+
+*** this should work:
+> void SomeClass::Dump(boost::logging::level_type eLevel,
+> 		     boost::logging::logger& rLog)
+> {
+> 	BOOST_SCOPEDLOGL(rLog, eLevel)
+> 			<< "Some Msg" << m_iSomeMemberVariable << endl;
+> }
+
+*** > 2. Design: Enter/Exit function scope support
+> I believe it's required for log library to provide some kind of support for 
+> scope tracking. It could be an addon to core functionality to it needs to be 
+> configurable.
+
+*** >>Besides, even if you don't call it and you write 256 messages to a log,
+>>the caching will automatically turn itself off and flush. The same
+> 
+> 
+> And what if log is not configured yet? What will happened? We will loose all 
+> those 256 messages or program will crash?
+Allow to have a safe log - where I should output if all else fails.
+Ok, I have not handled this case yet. I need to handle it -- have a "safe log", where I will write if program exists with cache still turned on, and logs have not been initialized yet.
+
+*** >>>9. Time string cashing
+>>>prepend_time and prepend_time_strf calls are not cashed. It's a lot of 
+>>>work
+>>>for nothing.
+>>
+>>Please explain.
+> 
+> 
+> You may have 1000 messages per second. And you format time string for every 
+> single one.
+
+*** >>>10. write_msg locking
+>>>write_msg shouldn't lock on appenders writing. Each appender should be
+>>>locked independently instead.
+>>
+>>It's because appenders/modifiers could be added/deleted while someone is
+>>writing a message to the log. Thus, it needs to be thread-safe.
+> 
+> 
+> You need to find an alternative solution. Every output has to be locked 
+> independently. This is one of the "premature pessimization" you force on the 
+> user.
+Can  I do this?
+
+
+
+
+
+
+
+
+
+*** what if I'm using a plugin DLL which uses boost.log in another DLL?
+ If this plugin DLL is unloaded explicitly, when Boost.Log DLL is unloaded, will
+ cause Access Violations (since the logs were created in a DLL that was already unloaded).
+ Need to fix this.
+ 
+
+*** compile-time logs: write docs about it
+
+**** appenders to Event log
+
+**** alternate logging manager
+
+***********
+Redirecting cout / cerr to a trace.
+
+For example we use some 3rd party libraries which write errors to cout / 
+cerr etc, so we allow the option of running (via a command line option) 
+in console mode (anything written to std output appears), or silent 
+mode, where cout / cerr is redirected to its own trace.

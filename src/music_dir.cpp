@@ -2,39 +2,19 @@
 
 #include "music_dir.hpp"
 #include <vector>
+#include <algorithm>
+#include <iterator>
 
-namespace sqlite{
-
- 	template <> inline
- 	MusicDir
-	reader::get() const {
-		MusicDir md;
-		md._id=this->get<id_t>(0);
-		md._name=this->get<string>(1);
-		md._parent_id=this->get<id_t>(2);
-		return md;
-	}
-
-	template <> inline
-	void
-	command::bind( const MusicDir &md ){
-		this->bind( 0, md._id );
-		this->bind( 1, md._name );
-		this->bind( 2, md._parent_id );
-	};
-}
-
-class md_desc : public sqlite::table_desc {
+class md_desc : public sqlite::table::description {
 public:
 	virtual const char* table_name() const {
 		return "music_dir";
 	};
 	virtual int num_fields() const {
-		return 3;
+		return 2;
 	}
 	virtual const char** fields() const {
 		static const char *fields[] = {
-			"id",
 			"parent_id",
 			"name",
 		};
@@ -42,7 +22,6 @@ public:
 	}
 	virtual const char** field_types() const {
 		static const char *field_types[] = {
-			"int",
 			"int",
 			"string",
 		};
@@ -52,55 +31,104 @@ public:
 
 static md_desc table_desc;
 
-const sqlite::table_desc*
+
+const sqlite::table::description*
 MusicDir::table_description(){
 	return &table_desc;
 }
 
 
+const sqlite::table::description*
+MusicDir::m_table_description() const {
+	return &table_desc;
+}
+
+
+void
+MusicDir::table_insert_values( std::ostream &str ) const {
+	str << _parent_id << ",'" << sqlite::q(_name) << "'";
+}
+
+void
+MusicDir::table_update_values( std::ostream &str ) const {
+	str << "parent_id=" << _parent_id << "," << "name='" << sqlite::q(_name) << "'";
+}
+
+
+void
+MusicDir::initialize_from_db( const sqlite::reader *reader ) {
+	_parent_id = reader->get<int>(0);
+	_name	   = reader->get<std::string>(1);
+}
 
 MusicDir::MusicDir() {
 
 }
 
 
-MusicDir
-MusicDir::find_by_id( sqlite::id_t id ) {
-	return Spinny::db()->find_by_field<MusicDir>( "id", id );
-}
+// public methods
+
+
 
 MusicDir
-MusicDir::parent() const {
-	return Spinny::db()->find_by_field<MusicDir>( "parent_id", _parent_id );
+MusicDir::create_root( const boost::filesystem::path &path ){
+	MusicDir md;
+	md._name=path.string();
+	md._parent_id = 0;
+	md.save();
+	return md;
 }
 
-void
-MusicDir::set_as_root(){
-	_parent_id=_id;
+
+
+std::vector<MusicDir>
+MusicDir::roots(){
+	boost::shared_ptr<sqlite::command> cmd = Spinny::db()->load_many<MusicDir>( "parent_id", 0 );
+	sqlite::slurp< std::vector<MusicDir> > sp;
+	std::for_each( cmd->begin(), cmd->end(), sp );
+	return sp.container;
 }
 
 bool
-MusicDir::is_root() const {
-	return ( _id == _parent_id );
+MusicDir::save() {
+	return Spinny::db()->save<MusicDir>(*this);
 }
+
+
+bool
+MusicDir::is_root() const {
+ 	return ( _parent_id == 0 );
+}
+
 
 string
 MusicDir::name() const {
 	return _name; 
 }
 
-boost::filesystem::path
-MusicDir::path() const {
-	vector<string> dirs;
-	dirs.push_back( _name );
-	MusicDir md = *this;
-	while ( ! md.is_root() ) {
-		md=md.parent();
-		dirs.push_back( md._name );
-	}
-	boost::filesystem::path p("");
-	for ( vector<string>::reverse_iterator ri = dirs.rbegin(); ri != dirs.rend(); ++ri ){
-		p /= *ri;
-	}
-	return p;
+
+
+MusicDir
+MusicDir::parent() const {
+	return Spinny::db()->load<MusicDir>( _parent_id );
 }
+
+
+
+
+
+// boost::filesystem::path
+// MusicDir::path() const {
+// 	vector<string> dirs;
+// 	dirs.push_back( _name );
+// 	MusicDir md = *this;
+// 	while ( ! md.is_root() ) {
+// 		md=md.parent();
+// 		dirs.push_back( md._name );
+// 	}
+// 	boost::filesystem::path p("");
+// 	for ( vector<string>::reverse_iterator ri = dirs.rbegin(); ri != dirs.rend(); ++ri ){
+// 		p /= *ri;
+// 	}
+// 	return p;
+// }

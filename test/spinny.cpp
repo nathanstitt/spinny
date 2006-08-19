@@ -15,7 +15,6 @@ static  char *help_args[] =
 	"-h",
 };
 
-#define SQLITE_TEST_DB_FILE "./test.db"
 
 #define STD_ARG_SIZE 3
 static  char *std_args[STD_ARG_SIZE] =
