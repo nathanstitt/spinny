@@ -8,32 +8,23 @@
 #include <boost/lexical_cast.hpp>
 #include "boost/algorithm/string.hpp"
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/type_traits/is_integral.hpp>
 #include <stdexcept>
 #include <list>
 #include <iostream>
 #include <boost/log/log.hpp>
+#include <boost/call_traits.hpp>
 using namespace std;
 
 BOOST_DECLARE_LOG(sql)
 
 
-#define GRANT_SQLITE_FRIENDSHIP \
-	friend class sqlite::reader; \
-	friend class sqlite::command; \
-	friend class sqlite::connection; \
 
 namespace sqlite {
 
-	template<class T> inline
-	T q( const T &val ){
-		return val;
-	}
-
-	template<> inline
-	std::string q( const std::string &val ){
-		return boost::replace_all_copy(val, "'","''" );
-	}
-
+	int		q( int arg );
+	long long	q( long long &arg );
+	std::string	q( const std::string &val );
 
 	class reader;
 	class command;
@@ -41,7 +32,7 @@ namespace sqlite {
 
 	struct none{};
 	typedef long long id_t;
-						
+
 	class table {
 		id_t _id;
 	protected:
@@ -95,7 +86,7 @@ namespace sqlite {
 	private:
 		friend class command;
 
-		command *cmd;
+		command *_cmd;
 
 		reader(command *cmd);
 		void validate( int index ) const;
@@ -103,7 +94,11 @@ namespace sqlite {
 		reader(const reader &copy);
 
 		~reader();
+
 	public:
+		template<typename T>
+		void initialize_obj( T &obj ) const;
+
 		bool operator==(const std::string &str) const;
 
 		bool operator==(id_t num) const;
@@ -122,33 +117,24 @@ namespace sqlite {
 	};
 
 
-	template<class T>
-	struct slurp{
-		slurp() : ii( container, container.end() ) { }
-		void operator()( sqlite::reader &r ){
-			*ii = r.get<typename T::value_type>();
-		}
-		T container;
-		std::insert_iterator<T> ii;
-	};
-
-
 	class command : boost::noncopyable {
 	private:
 		friend class reader;
 		friend class transaction;
 		friend class connection;
-		connection &con;
-
-		struct sqlite3_stmt *stmt;
-		int num_columns;
-
+		connection &_con;
+		struct sqlite3_stmt *_stmt;
 		reader _reader;
 	public:
+		command(connection *con );
+		command(connection *con, const std::string &sql );
 		command(connection &con );
-		command(connection &con, const char *sql );
 		command(connection &con, const std::string &sql );
 		~command();
+
+		int num_rows();
+
+		int num_columns();
 
 		template<typename T>
 		void bind( const T& data );
@@ -163,37 +149,80 @@ namespace sqlite {
 
 		void close();
 
-		class iterator
-			: public boost::iterator_facade<iterator, reader,boost::forward_traversal_tag>
+		class reader_iterator : public boost::iterator_facade<reader_iterator, reader, boost::forward_traversal_tag>
 		{
-		public:
-			iterator() : _r(0) {}
-			explicit iterator( reader *r ) :  _r( r ) {}
-		private:
+			friend class ::sqlite::command;
 			friend class boost::iterator_core_access;
-
-			void increment(){
-				if ( ! _r->read() ){
-					_r=0;
-				}
-			}
-			
-			bool equal( iterator const& other ) const {
-				return other._r == this->_r;
-			}
-			
-			reader& dereference() const {
-				return *_r;
-			}
-
+			explicit reader_iterator( reader *r ) :  _r( r ) { }
+			void increment(){ if ( ! _r->read() ) _r=0; }
+			bool equal( reader_iterator const& other ) const { return other._r == this->_r; }
+			reader& dereference() const { return *_r; }
 			reader *_r;
+		public:
+			reader_iterator() : _r(0) {}
 		};
 
-		iterator begin();
-		iterator end();
+		reader_iterator reader_begin();
+		reader_iterator reader_end();
 
+		template<class T>
+		class iterator :
+			public boost::iterator_facade< ::sqlite::command::iterator<T>, T, boost::forward_traversal_tag>
+		{
+			friend class ::sqlite::command;
+			friend class boost::iterator_core_access;
+			explicit iterator( reader *r ) :  _r( r ), obj( _r->get<T>() ) { }
+			void increment(){ 
+				if ( ! _r->read() ) {
+					_r=0; 
+				} else {
+					obj=_r->get<T>();
+				}
+			}
+			bool equal( ::sqlite::command::iterator<T> const& other ) const { 
+				return other._r == this->_r;
+			}
+
+			T& dereference() const {
+				return obj;
+			}
+			reader *_r;
+			mutable T obj;
+		public:
+			iterator() : _r(0) {}
+		};
+
+		template<class T>
+		iterator<T> begin(){
+			_reader.reset();
+			if ( _reader.read() ) {
+				return iterator<T>( &_reader );
+			} else {
+				return this->end<T>();
+			}
+		}
+
+		template<class T>
+		iterator<T> end(){
+			return iterator<T>();
+		}
 	};
 
+
+	template<typename T>
+	struct result_set {
+		typedef command::iterator<T> iterator;
+
+		result_set( command *c ) : cmd(c){ }
+
+		iterator
+		begin(){ return cmd->begin<T>(); }
+
+		iterator
+		end(){ return cmd->end<T>(); }
+
+		boost::shared_ptr<command> cmd;
+	};
 
 
 
@@ -221,17 +250,17 @@ namespace sqlite {
  		~connection();
 
 		template<class T1,class T2>
-		boost::shared_ptr<command>
-		load_many(  const std::string &field, const T2 &value, int limit=0 ){
+		result_set<T1>
+		load_many(  const std::string &field, const T2 &value, int limit=0,const std::string op="=" ){
 			*this << "select ";
 			const ::sqlite::table::description *td=T1::table_description();
 			td->insert_fields( *this );
-			*this << ",rowid from " << td->table_name() << " where " << field << " = " << q(value);
+			*this << ",rowid from " << td->table_name() << " where " << field << op << q(value);
 			if ( limit ){
 				*this << " limit " << limit;
 			}
 			command *cmd = new command( *this,  _cmd.curval() );
-			boost::shared_ptr<command> ret( cmd );
+			result_set<T1> ret( cmd );
 			BOOST_LOG(sql) << "load_many of " << typeid(T1).name();
 			this->clear_cmd();
 			return ret;
@@ -241,10 +270,8 @@ namespace sqlite {
 		template<class T1,class T2>
 		T1
 		load_one( const std::string &field, const T2 &value ){
-			boost::shared_ptr<command> cmd = this->load_many<T1,T2>( field, value, 1 );
-			command::iterator iter = cmd->begin();
-			T1 obj = iter->get<T1>();
-			return obj;
+			result_set<T1> rs=this->load_many<T1,T2>( field, value, 1 );
+			return *(rs.begin());
 		}
 
 		template<class T1,class T2>
@@ -360,46 +387,76 @@ namespace sqlite {
 	template<> inline
 	void command::bind(int index, int data) {
 		_reader.reset();
-		if(sqlite3_bind_int(this->stmt, index, data)!=SQLITE_OK)
-			throw database_error(this->con);
+		if(sqlite3_bind_int(this->_stmt, index, data)!=SQLITE_OK)
+			throw database_error(this->_con);
 	}
 	
 	template<> inline
 	void command::bind( int index, const std::string &data){
 		_reader.reset();
-		if(sqlite3_bind_text(this->stmt, index, data.data(), (int)data.length(), SQLITE_TRANSIENT)!=SQLITE_OK)
-			throw database_error(this->con);
+		if(sqlite3_bind_text(this->_stmt, index, data.data(), (int)data.length(), SQLITE_TRANSIENT)!=SQLITE_OK)
+			throw database_error(this->_con);
 	}
 
 
 	template<> inline
 	void command::bind(int index, const std::wstring &data){
 		_reader.reset();
-		if(sqlite3_bind_text16(this->stmt, index, data.data(), (int)data.length()*2, SQLITE_TRANSIENT)!=SQLITE_OK)
-			throw database_error(this->con);
+		if(sqlite3_bind_text16(this->_stmt, index, data.data(), (int)data.length()*2, SQLITE_TRANSIENT)!=SQLITE_OK)
+			throw database_error(this->_con);
 
 	}
 
 	template<> inline
 	void command::bind(int index, long long data) {
 		_reader.reset();
-		if(sqlite3_bind_int64(this->stmt, index, data)!=SQLITE_OK)
-			throw database_error(this->con);
+		if(sqlite3_bind_int64(this->_stmt, index, data)!=SQLITE_OK)
+			throw database_error(this->_con);
 	}
 
 	template<> inline
 	void command::bind(int index, double data) {
 		_reader.reset();
-		if(sqlite3_bind_double(this->stmt, index, data)!=SQLITE_OK)
-			throw database_error(this->con);
+		if(sqlite3_bind_double(this->_stmt, index, data)!=SQLITE_OK)
+			throw database_error(this->_con);
+	}
+
+
+	namespace detail{
+
+		template <bool b>
+		struct initialize_obj
+		{
+			template <typename T>
+			static void perform( T &obj, const reader *r )
+				{ }
+		};
+
+		template <>
+		struct initialize_obj<true>
+		{
+			template <typename T>
+			static void perform( T &obj, const reader *r ) {
+				r->initialize_obj( obj );
+			}
+		};
+
+
+	}
+
+	template<typename T>
+	void
+	reader::initialize_obj( T &obj ) const {
+		obj.initialize_from_db( this );
+		obj.set_db_id( this->get<id_t>( this->_cmd->num_columns()-1 ) );
 	}
 
 	// reader::get
+
 	template <class T>
 	T reader::get() const {
 		T obj;
-		obj.initialize_from_db( this );
-		obj.set_db_id( this->get<id_t>( this->cmd->num_columns-1 ) );
+		detail::initialize_obj< boost::is_class<T>::value >::perform( obj,this );
 		return obj;
 	}
 
@@ -407,37 +464,37 @@ namespace sqlite {
 	template <class T>
 	T reader::get( int index ) const {
 		validate(index);
-		return boost::lexical_cast<T>( sqlite3_column_text(this->cmd->stmt, index) );
+		return boost::lexical_cast<T>( sqlite3_column_text(this->_cmd->_stmt, index) );
 	}
 
 	template <> inline
 	int reader::get( int index ) const {
 		validate(index);
-		return sqlite3_column_int(this->cmd->stmt, index);
+		return sqlite3_column_int(this->_cmd->_stmt, index);
 	}
 
 	template <> inline
 	long long reader::get( int index ) const {
 		validate(index);
-		return sqlite3_column_int64(this->cmd->stmt, index);
+		return sqlite3_column_int64(this->_cmd->_stmt, index);
 	}
 		
 	template <> inline
 	double reader::get( int index ) const {
 		validate(index);
-		return sqlite3_column_double(this->cmd->stmt, index);
+		return sqlite3_column_double(this->_cmd->_stmt, index);
 	}
 
 	template <> inline
 	std::string reader::get( int index ) const {
 		validate(index);
-		return std::string((const char*)sqlite3_column_text(this->cmd->stmt, index), sqlite3_column_bytes(this->cmd->stmt, index));
+		return std::string((const char*)sqlite3_column_text(this->_cmd->_stmt, index), sqlite3_column_bytes(this->_cmd->_stmt, index));
 	}
 
 	template<> inline
 	std::wstring reader::get(int index) const {
 		validate(index);
-		return std::wstring((const wchar_t*)sqlite3_column_text16(this->cmd->stmt, index), sqlite3_column_bytes16(this->cmd->stmt, index)/2);
+		return std::wstring((const wchar_t*)sqlite3_column_text16(this->_cmd->_stmt, index), sqlite3_column_bytes16(this->_cmd->_stmt, index)/2);
 	}
 
 

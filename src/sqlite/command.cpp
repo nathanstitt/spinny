@@ -2,62 +2,80 @@
 
 namespace sqlite {
 
-	command::command(connection &con) : con(con), _reader(this) {
-		if( sqlite3_prepare( con.db,con._cmd.curval().c_str(),con._cmd.curval().length() , &this->stmt, 0)!=SQLITE_OK )
-			throw database_error(con);
-		BOOST_LOG(sql) << sqlite3_data_count(this->stmt) << " : " <<  con._cmd.curval();
-		con.clear_cmd();
-		this->num_columns=sqlite3_column_count(this->stmt);
+	command::command(connection *c) : _con(*c), _reader(this) {
+		BOOST_LOG(sql) << " : " <<  _con._cmd.curval();
+		if( sqlite3_prepare( _con.db,_con._cmd.curval().c_str(),_con._cmd.curval().length() , &this->_stmt, 0)!=SQLITE_OK )
+			throw database_error(_con);
+		_con.clear_cmd();
 	}
 
-        command::command(connection &con, const char *sqlstmt) : con(con),_reader(this) {
-		if( sqlite3_prepare( con.db, sqlstmt, -1, &this->stmt, 0)!=SQLITE_OK )
-			throw database_error(con);
-		this->num_columns=sqlite3_column_count(this->stmt);
-		BOOST_LOG(sql) << sqlite3_data_count(this->stmt) << " : " <<  sqlstmt;
+	command::command(connection *c, const std::string &sqlstmt) : _con(*c),_reader(this) {
+		BOOST_LOG(sql) <<  sqlstmt;
+		if(sqlite3_prepare(_con.db, sqlstmt.data(), (int)sqlstmt.length(), &this->_stmt, 0)!=SQLITE_OK)
+			throw database_error(_con);
 	}
 
-	command::command(connection &con, const std::string &sqlstmt) : con(con),_reader(this) {
-		if(sqlite3_prepare(con.db, sqlstmt.data(), (int)sqlstmt.length(), &this->stmt, 0)!=SQLITE_OK)
-			throw database_error(con);
-		BOOST_LOG(sql) << sqlite3_data_count(this->stmt) << " : " <<  sqlstmt;
-		this->num_columns=sqlite3_column_count(this->stmt);
+
+	command::command(connection &c) : _con(c), _reader(this) {
+		BOOST_LOG(sql) <<  _con._cmd.curval();
+		if( sqlite3_prepare( _con.db,_con._cmd.curval().c_str(),_con._cmd.curval().length() , &this->_stmt, 0)!=SQLITE_OK )
+			throw database_error(_con);
+		_con.clear_cmd();
+	}
+
+	command::command(connection &c, const std::string &sqlstmt) : _con(c),_reader(this) {
+		BOOST_LOG(sql) <<  sqlstmt;
+		if(sqlite3_prepare(_con.db, sqlstmt.data(), (int)sqlstmt.length(), &this->_stmt, 0)!=SQLITE_OK)
+			throw database_error(_con);
 	}
 
 
 	command::~command() {
-		if ( stmt )
-			sqlite3_finalize(this->stmt);
+		if ( _stmt )
+			sqlite3_finalize(this->_stmt);
+	}
+
+ 	int
+ 	command::num_rows(){
+ 		return sqlite3_data_count(this->_stmt);
+ 	}
+
+	int
+	command::num_columns(){
+		return sqlite3_column_count(this->_stmt);
 	}
 
 	void
 	command::close(){
-		sqlite3_finalize(this->stmt);
-		_reader.cmd=0;
-		this->stmt=0;
+		sqlite3_finalize(this->_stmt);
+		_reader._cmd=0;
+		this->_stmt=0;
 	}
 	
 	void command::bind( int index, const void *data, int datalen ) {
 		int res;
 		if ( datalen == 0 ){
-			res=sqlite3_bind_null(this->stmt, index);
+			res=sqlite3_bind_null(this->_stmt, index);
 		} else {
-			res=sqlite3_bind_blob(this->stmt, index, data, datalen, SQLITE_TRANSIENT);
+			res=sqlite3_bind_blob(this->_stmt, index, data, datalen, SQLITE_TRANSIENT);
 		}
 		if (res!=SQLITE_OK)
-			throw database_error(this->con);
+			throw database_error(this->_con);
 	}
 
-	command::iterator
-	command::begin() { 
+	command::reader_iterator
+	command::reader_begin() { 
 		_reader.reset();
-		_reader.read();
-		return iterator( &_reader );
+		if ( _reader.read() ){
+			return reader_iterator( &_reader );
+		} else {
+			return this->reader_end();
+		}
 	}
 
-	command::iterator
-	command::end(){
-		return iterator();
+	command::reader_iterator
+	command::reader_end(){
+		return reader_iterator();
 	}
 
 }

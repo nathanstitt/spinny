@@ -8,7 +8,7 @@ TEST( Get ){
 	DummyApp c;
 	c.con->exec<none>("insert into testing (col1,col2) values ( 42,'FooBear' )");
 	command cmd(*c.con,"select col1,col2 from testing order by col1");
-	command::iterator it=cmd.begin();
+	command::reader_iterator it=cmd.reader_begin();
 	// hehe
 	reader &r=*it;
 
@@ -22,8 +22,10 @@ TEST( Get ){
 
 TEST( ColName ){
 	DummyApp c;
+	c.con->exec<none>("insert into testing (col1,col2) values ( 42,'FooBear' )");
 	command cmd(*c.con,"select col1,col2 from testing order by col1");
-	command::iterator it=cmd.begin();
+	command::reader_iterator it=cmd.reader_begin();
+
 	// hehe
 	reader &r=*it;
 
@@ -35,7 +37,9 @@ TEST( Equality ){
 	DummyApp c;
 	c.con->exec<none>("insert into testing (col1,col2) values ( 42,'FooBear' )");
 	command cmd(*c.con,"select col1 from testing order by col1");
-	command::iterator it=cmd.begin();
+
+	command::reader_iterator it=cmd.reader_begin();
+	CHECK( it != cmd.reader_end() );
 	// hehe
 	reader &r=*it;
 

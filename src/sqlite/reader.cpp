@@ -5,16 +5,16 @@ namespace sqlite {
 
 	void
 	reader::validate( int index ) const {
-		if(!this->cmd) throw database_error("reader is closed");
-		if((index)>(this->cmd->num_columns-1)) throw std::out_of_range("index out of range");
+		if(!this->_cmd) throw database_error("reader is closed");
+		if((index)>(this->_cmd->num_columns()-1)) throw std::out_of_range("index out of range");
 	}
 
-	reader::reader() : cmd(NULL) {}
+	reader::reader() : _cmd(NULL) {}
 
-	reader::reader(command *cmd) : cmd(cmd) { }
+	reader::reader(command *cmd) : _cmd(cmd) { }
 
 	reader::~reader() {
-//		sqlite3_reset(this->cmd->stmt);
+//		sqlite3_reset(this->_cmd->_stmt);
 	}
 
 	bool
@@ -29,30 +29,30 @@ namespace sqlite {
 
 	bool
 	reader::read() {
-		if(!this->cmd) throw database_error("reader is closed");
-		switch( sqlite3_step( this->cmd->stmt ) ) {
+		if(!this->_cmd) throw database_error("reader is closed");
+		switch( sqlite3_step( this->_cmd->_stmt ) ) {
 		case SQLITE_ROW:
 			return true;
 		case SQLITE_DONE:
 			return false;
 		default:
-			throw database_error(this->cmd->con);
+			throw database_error(this->_cmd->_con);
 		}
 	}
 
 	void reader::reset() {
-		if(!this->cmd) throw database_error("reader is closed");
+		if(!this->_cmd) throw database_error("reader is closed");
 
-		if(sqlite3_reset(this->cmd->stmt)!=SQLITE_OK)
-			throw database_error(this->cmd->con);
+		if(sqlite3_reset(this->_cmd->_stmt)!=SQLITE_OK)
+			throw database_error(this->_cmd->_con);
 	}
 
 
 
 	std::string reader::colname(int index) const {
-		if(!this->cmd) throw database_error("reader is closed");
-		if((index)>(this->cmd->num_columns-1)) throw std::out_of_range("index out of range");
-		return sqlite3_column_name(this->cmd->stmt, index);
+		if(!this->_cmd) throw database_error("reader is closed");
+		if((index)>(this->_cmd->num_columns()-1)) throw std::out_of_range("index out of range");
+		return sqlite3_column_name(this->_cmd->_stmt, index);
 	}
 
 

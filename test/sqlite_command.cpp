@@ -36,8 +36,7 @@ TEST( Close ){
 	CHECK_THROW( cmd.bind(1, 42), sqlite::database_error );
 }
 
-TEST( Iterate ){
-
+TEST( ReaderIterate ){
 	DummyApp c;
 	{
 		*c.con << "insert into testing (col1) values ( ? )";
@@ -50,30 +49,67 @@ TEST( Iterate ){
 		cmd.exec<sqlite::none>();
 	}
 	command cmd(*c.con,"select sum(col1) from testing");
-	command::iterator it=cmd.begin();
+	command::reader_iterator it=cmd.reader_begin();
 	CHECK_EQUAL( 101, it->get<int>(0) );
 
-	command c2(*c.con,"select col1 from testing order by col1");
-	command::iterator it2=c2.begin();
+	// how about for no matches?
+	command failing_cmd(*c.con,"select col1 from testing where col1=-1");
+	CHECK( failing_cmd.reader_begin() == failing_cmd.reader_end() );
 
-	CHECK( it2 != c2.end() );
+	command c2(*c.con,"select col1 from testing order by col1");
+	command::reader_iterator it2=c2.reader_begin();
+
+	CHECK( it2 != c2.reader_end() );
 	CHECK_EQUAL( 23, it2->get<int>(0) );
 	++it2;
-	CHECK( it2 != c2.end() );
+	CHECK( it2 != c2.reader_end() );
 	CHECK_EQUAL( 36, it2->get<int>(0) );
 
 	++it2;
-	CHECK( it2 != c2.end() );
+	CHECK( it2 != c2.reader_end() );
 	CHECK_EQUAL( 42, it2->get<int>(0) );
 	++it2;
 
-	CHECK( it2 == c2.end() );
+	CHECK( it2 == c2.reader_end() );
 
 	// but can we start over with the results?
-	it2=c2.begin();
-	CHECK( it2 != c2.end() );
+	it2=c2.reader_begin();
+	CHECK( it2 != c2.reader_end() );
 	CHECK_EQUAL( 23, it2->get<int>(0) );
 	
+}
+
+TEST( TmplIterate ){
+	DummyApp c;
+
+	c.con->exec<sqlite::none>( "insert into testing (col1,col2, col3) values ( 12,'Bowzer', 14 )" );
+
+	command cmd( *c.con, "select col1,col2,col3,rowid from testing limit 1" );
+	command::iterator<FooDoggy> it=cmd.begin<FooDoggy>();
+
+	CHECK_EQUAL( "Bowzer", it->name );
+	CHECK_EQUAL( 1, it->id );
+	CHECK_EQUAL( 14, it->num_bones );
+
+	// how about for no matches?
+	command failing_cmd(*c.con,"select col1,col2,col3,rowid from testing where col1=-1");
+	CHECK( failing_cmd.begin<int>() == failing_cmd.end<int>() );
+
+ 	std::vector<FooDoggy> v;
+
+	CHECK( it != cmd.end<FooDoggy>() );
+	v.push_back(*it);
+	++it;
+	CHECK( it == cmd.end<FooDoggy>() );
+
+	command::iterator<FooDoggy> it2=cmd.begin<FooDoggy>();
+	CHECK( it2 != cmd.end<FooDoggy>() );
+	CHECK( it == cmd.end<FooDoggy>() );
+
+
+//  	std::copy( cmd.begin<FooDoggy>(), cmd.end<FooDoggy>(), v.begin() );
+ 	cout << "SIZE: " << v.size() << endl;
+
 }
 
 TEST( InsertTemplatedValues ) {
@@ -96,12 +132,20 @@ TEST( InsertTemplatedValues ) {
 TEST( SelectTemplatedValues ) {
 	DummyApp c;
 	c.con->exec<none>("insert into testing (col1,col2,col3) values( 23,'BowWow', 42 )");
-
 	command cmd(*c.con,"select col1,col2,col3,rowid from testing");
+ 	FooDoggy fd = cmd.reader_begin()->get<FooDoggy>();
 
- 	FooDoggy fd( cmd.begin()->get<FooDoggy>() );
-//  	CHECK_EQUAL( 23, fd.age );
-//  	CHECK_EQUAL( "BowWow", fd.name );
+ 	CHECK_EQUAL( 23, fd.age );
+ 	CHECK_EQUAL( "BowWow", fd.name );
+}
+
+TEST( RowColumnCounts ){
+	DummyApp c;
+	c.con->exec<none>("insert into testing (col1,col2,col3) values( 23,'BowWow', 42 )");
+	c.con->exec<none>("insert into testing (col1,col2,col3) values( 23,'BowWow', 42 )");
+	sqlite::command cmd( *c.con, "select col1,col3 from testing" );
+	CHECK_EQUAL( 0, cmd.num_rows() );
+	CHECK_EQUAL( 2, cmd.num_columns() );
 }
 
 

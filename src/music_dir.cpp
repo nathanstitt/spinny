@@ -46,12 +46,12 @@ MusicDir::m_table_description() const {
 
 void
 MusicDir::table_insert_values( std::ostream &str ) const {
-	str << _parent_id << ",'" << sqlite::q(_name) << "'";
+	str << _parent_id << "," << sqlite::q(_name);
 }
 
 void
 MusicDir::table_update_values( std::ostream &str ) const {
-	str << "parent_id=" << _parent_id << "," << "name='" << sqlite::q(_name) << "'";
+	str << "parent_id=" << _parent_id << "," << "name=" << sqlite::q(_name);
 }
 
 
@@ -81,12 +81,9 @@ MusicDir::create_root( const boost::filesystem::path &path ){
 
 
 
-std::vector<MusicDir>
+MusicDir::result_set
 MusicDir::roots(){
-	boost::shared_ptr<sqlite::command> cmd = Spinny::db()->load_many<MusicDir>( "parent_id", 0 );
-	sqlite::slurp< std::vector<MusicDir> > sp;
-	std::for_each( cmd->begin(), cmd->end(), sp );
-	return sp.container;
+	return Spinny::db()->load_many<MusicDir>( "parent_id", 0 );
 }
 
 bool
@@ -114,21 +111,35 @@ MusicDir::parent() const {
 }
 
 
+MusicDir::result_set
+MusicDir::children() const {
+	return Spinny::db()->load_many<MusicDir>( "parent_id", db_id() );
+}
 
 
 
-// boost::filesystem::path
-// MusicDir::path() const {
-// 	vector<string> dirs;
-// 	dirs.push_back( _name );
-// 	MusicDir md = *this;
-// 	while ( ! md.is_root() ) {
-// 		md=md.parent();
-// 		dirs.push_back( md._name );
-// 	}
-// 	boost::filesystem::path p("");
-// 	for ( vector<string>::reverse_iterator ri = dirs.rbegin(); ri != dirs.rend(); ++ri ){
-// 		p /= *ri;
-// 	}
-// 	return p;
-// }
+
+
+boost::filesystem::path
+MusicDir::path() const {
+	vector<string> dirs;
+	dirs.push_back( _name );
+	MusicDir md = *this;
+	while ( ! md.is_root() ) {
+		md=md.parent();
+		dirs.push_back( md._name );
+	}
+	boost::filesystem::path p("");
+	for ( vector<string>::reverse_iterator ri = dirs.rbegin(); ri != dirs.rend(); ++ri ){
+		p /= *ri;
+	}
+
+	return p;
+}
+
+
+void
+MusicDir::sync(){
+	
+
+}

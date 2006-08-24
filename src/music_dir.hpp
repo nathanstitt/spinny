@@ -9,7 +9,7 @@
 #include <vector>
 
 class MusicDir : public sqlite::table {
-	GRANT_SQLITE_FRIENDSHIP;
+	GRANT_NEEDED_FRIENDSHIP(MusicDir);
 
 	sqlite::id_t _id;
 	string _name;	
@@ -22,11 +22,14 @@ class MusicDir : public sqlite::table {
  	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 public:
+	typedef ::sqlite::result_set<MusicDir> result_set;
+	typedef ::sqlite::result_set<MusicDir>::iterator iterator;
+
 	static MusicDir
 	create_root( const boost::filesystem::path &path );
 
 	static 
-	std::vector<MusicDir>
+	result_set
 	roots();
 
  	bool
@@ -39,13 +42,21 @@ public:
   	MusicDir
   	parent() const;
 
+	result_set
+	children() const;
 
-// 	boost::filesystem::path
-// 	path() const;
+  	boost::filesystem::path
+  	path() const;
 
-// 	void
-// 	sync();
+ 	void
+ 	sync();
 };
+
+
+
+
+
+
 
 
 
