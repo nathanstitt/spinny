@@ -64,10 +64,7 @@ struct EnableLogging {
 			.add_modifier(&boost::logging::append_enter,"enter");
 	}
 	
-	~EnableLogging(){
-//  		boost::logging::manipulate_logs("*")
-//  			.enable( boost::logging::level::disable_all );
-	}
+
 
 
 };
