@@ -58,13 +58,14 @@ extern "C" void cleanup_slots(void* p)
     }
 }
 
+
 void init_tss_data()
 {
     std::auto_ptr<tss_data_t> temp(new tss_data_t);
 
 #if defined(BOOST_HAS_WINTHREADS)
     //Force the cleanup implementation library to be linked in
-    tss_cleanup_implemented();
+ //   tss_cleanup_implemented();
 
     //Allocate tls slot
     temp->native_key = TlsAlloc();

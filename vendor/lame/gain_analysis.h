@@ -33,6 +33,8 @@
 #else
 # if HAVE_STDINT_H
 #  include <stdint.h>
+#else 
+#  include <pstdint.h>
 # endif
 #endif
 

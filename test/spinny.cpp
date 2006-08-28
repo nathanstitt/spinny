@@ -4,10 +4,11 @@
 #include "spinny.hpp"
 
 
+#include <cstdlib>
 
 
 
-SUITE(Spinny) {
+SUITE(SpinnySuite) {
 
 
 static  char *help_args[] =
@@ -33,11 +34,11 @@ static sqlite::connection* con1 = 0;
 static sqlite::connection* con2 = 0;
 void set_con1(){
 	con1 = Spinny::db();
-	sleep(1);
+	Sleep(1);
 }
 void set_con2(){
 	con2 = Spinny::db();
-	sleep(1);
+	Sleep(1);
 }
 
 
@@ -60,11 +61,11 @@ TEST( Run ){
  	Spinny::run(  STD_ARG_SIZE, std_args );
  	Spinny::stop();
 	CHECK( boost::filesystem::remove( SQLITE_TEST_DB_FILE ) );
-}} // SUITE( Spinny )
+}} // SUITE( SpinnySuite )
 
 
 int
 spinny( int argc, char * argv[] ) 
 {
-	return UnitTest::RunAllTests("Spinny");
+	return UnitTest::RunAllTests("SpinnySuite");
 }

@@ -8,6 +8,11 @@
 using namespace std;
 using namespace sqlite;
 
+void tss_cleanup_implemented(void)
+    {
+}
+
+
 struct thread_alarm
 {
    thread_alarm(int secs) : m_secs(secs) { }

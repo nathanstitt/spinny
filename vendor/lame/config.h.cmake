@@ -68,20 +68,20 @@
 
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#define HAVE_INTTYPES_H 1
+#cmakedefine HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <limits.h> header file. */
-#define HAVE_LIMITS_H 1
+#cmakedefine HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the <linux/soundcard.h> header file. */
-#define HAVE_LINUX_SOUNDCARD_H 1
+#cmakedefine HAVE_LINUX_SOUNDCARD_H 1
 
 /* Define to 1 if long double works and has more range or precision than
    double. */
 #define HAVE_LONG_DOUBLE 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
+#cmakedefine HAVE_MEMORY_H 1
 
 /* build with mpglib support */
 #define HAVE_MPGLIB 1
@@ -93,34 +93,34 @@
 /* #undef HAVE_NCURSES_TERMCAP_H */
 
 /* Define to 1 if you have the `socket' function. */
-#define HAVE_SOCKET 1
+#cmakedefine HAVE_SOCKET 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#define HAVE_STDINT_H 1
+#cmakedefine HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#define HAVE_STDLIB_H 1
+#cmakedefine HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-#define HAVE_STRINGS_H 1
+#cmakedefine HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#define HAVE_STRING_H 1
+#cmakedefine HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strtol' function. */
-#define HAVE_STRTOL 1
+#cmakedefine HAVE_STRTOL 1
 
 /* Define to 1 if you have the <sys/soundcard.h> header file. */
-#define HAVE_SYS_SOUNDCARD_H 1
+#cmakedefine HAVE_SYS_SOUNDCARD_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#define HAVE_SYS_STAT_H 1
+#cmakedefine HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/time.h> header file. */
-#define HAVE_SYS_TIME_H 1
+#cmakedefine HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#define HAVE_SYS_TYPES_H 1
+#cmakedefine HAVE_SYS_TYPES_H 1
 
 /* add uint16_t type */
 #define HAVE_UINT16_T 1
@@ -149,7 +149,7 @@
 #endif
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#define HAVE_UNISTD_H 1
+#cmakedefine HAVE_UNISTD_H 1
 
 /* winsock */
 /* #undef HAVE_WINSOCKET */

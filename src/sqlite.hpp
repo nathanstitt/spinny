@@ -283,7 +283,7 @@ namespace sqlite {
 
 		template<class T>
 		bool
-		connection::save( T &obj ){
+		save( T &obj ){
 			const ::sqlite::table::description *td=T::table_description();
 			if ( ! obj.db_id() ){
 				*this << "insert into " << td->table_name() << "(";
