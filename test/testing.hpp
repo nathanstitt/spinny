@@ -30,9 +30,8 @@ static  char *std_args[STD_ARG_SIZE] =
 struct DummyApp : boost::noncopyable 
 {
 	DummyApp() {
-		if ( ! boost::filesystem::exists( TESTING_FIXTURES_PATH ) ){
-			boost::filesystem::create_directory( TESTING_FIXTURES_PATH );
-		}
+		boost::filesystem::create_directory(
+			boost::filesystem::path( TESTING_FIXTURES_PATH, boost::filesystem::native ) );
 		Spinny::run( STD_ARG_SIZE, std_args );
   		con=Spinny::db();
 		con->exec<sqlite::none>("create table testing( col1 int, col2 string, col3 int )");

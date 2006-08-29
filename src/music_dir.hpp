@@ -5,13 +5,12 @@
 #define _MUSIC_DIR_H 1
 
 #include "spinny.hpp"
-#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 #include <vector>
 
 class MusicDir : public sqlite::table {
 	GRANT_NEEDED_FRIENDSHIP(MusicDir);
 
-	sqlite::id_t _id;
 	string _name;	
 	sqlite::id_t _parent_id;
 	MusicDir();
@@ -21,6 +20,10 @@ class MusicDir : public sqlite::table {
 	void initialize_from_db( const sqlite::reader *reader );
  	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
+
+
+	void examine_file( const boost::filesystem::path &path );
+	MusicDir add_child( const boost::filesystem::path &path );
 public:
 	typedef ::sqlite::result_set<MusicDir> result_set;
 	typedef ::sqlite::result_set<MusicDir>::iterator iterator;
@@ -47,6 +50,9 @@ public:
 
   	boost::filesystem::path
   	path() const;
+
+	bool
+	is_valid();
 
  	void
  	sync();

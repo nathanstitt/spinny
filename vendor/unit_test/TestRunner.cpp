@@ -1,6 +1,6 @@
 #include "TestRunner.h"
 #include "TestResults.h"
-#include "Test.h"
+#include "test.h"
 #include "TestList.h"
 #include "TestReporter.h"
 #include "TestReporterStdout.h"

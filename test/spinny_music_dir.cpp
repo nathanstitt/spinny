@@ -12,7 +12,7 @@ SUITE(SpinnyMusicDir) {
 TEST( CreateRoot ){
 	DummyApp da;
 
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
+	boost::filesystem::path mpath( TESTING_FIXTURES_PATH, boost::filesystem::native );
 	mpath/="music";
 	MusicDir md = MusicDir::create_root( mpath );
   	CHECK( md.is_root() );
@@ -29,7 +29,7 @@ TEST( CreateRoot ){
 
 TEST( Name ){
 	DummyApp da;
-	da.con->exec<sqlite::none>( "insert into music_dir (parent_id, name ) values ( 340, 'foo' )" );
+	da.con->exec<sqlite::none>( "insert into music_dirs (parent_id, name ) values ( 340, 'foo' )" );
 	sqlite::id_t id = da.con->insertid();
 	MusicDir md = da.con->load<MusicDir>( id  );
 	CHECK_EQUAL( "foo", md.name() );
@@ -38,9 +38,9 @@ TEST( Name ){
 TEST( Parent ){
 	DummyApp da;
 
-	da.con->exec<sqlite::none>( "insert into music_dir (parent_id,name ) values ( 0, 'parent' )" );
+	da.con->exec<sqlite::none>( "insert into music_dirs (parent_id,name ) values ( 0, 'parent' )" );
 	sqlite::id_t parent_id = da.con->insertid();
-	*da.con << "insert into music_dir (parent_id,name ) values ( " << parent_id << ", 'child' )";
+	*da.con << "insert into music_dirs (parent_id,name ) values ( " << parent_id << ", 'child' )";
 	da.con->exec<sqlite::none>();
 	sqlite::id_t child_id = da.con->insertid();
 
@@ -67,10 +67,10 @@ TEST( Table ){
 TEST( Children ){
 	DummyApp da;
 
-	da.con->exec<sqlite::none>( "insert into music_dir ( parent_id,name ) values ( 0, 'parent' )" );
+	da.con->exec<sqlite::none>( "insert into music_dirs ( parent_id,name ) values ( 0, 'parent' )" );
 	sqlite::id_t parent_id = da.con->insertid();
 	CHECK( parent_id );
-	*da.con << "insert into music_dir ( parent_id,name ) values ( " << parent_id << ", 'child' )";
+	*da.con << "insert into music_dirs ( parent_id,name ) values ( " << parent_id << ", 'child' )";
 	da.con->exec<sqlite::none>();
 	sqlite::id_t child_id = da.con->insertid();
 
@@ -88,7 +88,7 @@ TEST( Children ){
 TEST( Path ){
 	DummyApp da;
 
-	boost::filesystem::path orig_path( TESTING_FIXTURES_PATH );
+	boost::filesystem::path orig_path( TESTING_FIXTURES_PATH, boost::filesystem::native );
 	orig_path/="music";
 	MusicDir md = MusicDir::create_root( orig_path );
   	CHECK( md.is_root() );
@@ -101,7 +101,7 @@ TEST( Path ){
 TEST( Sync ){
 	DummyApp da;
 
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
+	boost::filesystem::path mpath( TESTING_FIXTURES_PATH, boost::filesystem::native );
 	mpath/="music";
 
 	if ( ! boost::filesystem::exists(mpath ) ){
@@ -122,9 +122,9 @@ TEST( Sync ){
 
 	MusicDir::result_set childs2 = md.children();
 
-// 	CHECK( childs2.begin() != childs2.end() );
+ 	CHECK( childs2.begin() != childs2.end() );
 
-// 	CHECK_EQUAL( "foo", childs2.begin()->name() );
+ 	CHECK_EQUAL( "foo", childs2.begin()->name() );
 
 }
 

@@ -2,7 +2,7 @@
 #define UNITTESTCPP_H
 
 #include "Config.h"
-#include "Test.h"
+#include "test.h"
 #include "TestList.h"
 #include "TestSuite.h"
 #include "TestResults.h"

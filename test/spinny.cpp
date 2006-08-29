@@ -6,6 +6,9 @@
 
 #include <cstdlib>
 
+#ifdef WINDOWS
+#define sleep Sleep
+#endif
 
 
 SUITE(SpinnySuite) {
@@ -34,11 +37,11 @@ static sqlite::connection* con1 = 0;
 static sqlite::connection* con2 = 0;
 void set_con1(){
 	con1 = Spinny::db();
-	Sleep(1);
+	sleep(1);
 }
 void set_con2(){
 	con2 = Spinny::db();
-	Sleep(1);
+	sleep(1);
 }
 
 

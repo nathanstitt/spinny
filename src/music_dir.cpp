@@ -1,6 +1,7 @@
 
 
 #include "music_dir.hpp"
+#include <boost/filesystem/operations.hpp>
 #include <vector>
 #include <algorithm>
 #include <iterator>
@@ -8,7 +9,7 @@
 class md_desc : public sqlite::table::description {
 public:
 	virtual const char* table_name() const {
-		return "music_dir";
+		return "music_dirs";
 	};
 	virtual int num_fields() const {
 		return 2;
@@ -51,7 +52,7 @@ MusicDir::table_insert_values( std::ostream &str ) const {
 
 void
 MusicDir::table_update_values( std::ostream &str ) const {
-	str << "parent_id=" << _parent_id << "," << "name=" << sqlite::q(_name);
+	str << "parent_id=" << _parent_id << ",name=" << sqlite::q(_name);
 }
 
 
@@ -61,7 +62,7 @@ MusicDir::initialize_from_db( const sqlite::reader *reader ) {
 	_name	   = reader->get<std::string>(1);
 }
 
-MusicDir::MusicDir() {
+MusicDir::MusicDir() : sqlite::table(), _parent_id(0), _name("") {
 
 }
 
@@ -79,6 +80,14 @@ MusicDir::create_root( const boost::filesystem::path &path ){
 	return md;
 }
 
+MusicDir
+MusicDir::add_child( const boost::filesystem::path &path ){
+	MusicDir md;
+	md._name=path.leaf();
+	md._parent_id = this->db_id();
+	md.save();
+	return md;
+}
 
 
 MusicDir::result_set
@@ -138,8 +147,32 @@ MusicDir::path() const {
 }
 
 
+bool
+MusicDir::is_valid(){
+	return boost::filesystem::exists( this->path() );
+}
+
 void
-MusicDir::sync(){
-	
+MusicDir::examine_file( const boost::filesystem::path &path ){
 
 }
+
+void
+MusicDir::sync(){
+	boost::filesystem::path path = this->path();
+
+	if ( ! boost::filesystem::exists( this->path() ) )
+		return;
+
+	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+
+	for ( boost::filesystem::directory_iterator itr( path ); itr != end_itr; ++itr ){
+		if ( boost::filesystem::is_directory( *itr ) ) {
+			MusicDir child = this->add_child( *itr );
+			child.sync();
+		} else {
+			this->examine_file( *itr );
+		}
+	}
+}
+

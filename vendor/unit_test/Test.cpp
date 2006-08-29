@@ -1,5 +1,5 @@
 #include "Config.h"
-#include "Test.h"
+#include "test.h"
 #include "TestList.h"
 #include "TestResults.h"
 #include "AssertException.h"

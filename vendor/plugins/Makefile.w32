@@ -1,0 +1,39 @@
+# Makefile for Window 95/NT builds.
+
+CC=cl
+CFLAGS=-GX
+LIBS=
+LINK=link
+
+SOURCE=PITest.cpp ClassFactory.cpp DynamicLibrary.cpp SimpleMath.cpp
+
+all:	PITest.exe COMLikeMath.dll GoodMath.dll BadMath.dll TimeTest.dll
+
+PITest.exe:	$(OBJS)
+	$(CC) $(CFLAGS) -MD -o $@ $(SOURCE) $(LIBS)
+
+COMLikeMath.dll:	COMLikeMath.cpp
+	$(CC) $(CFLAGS) -MD -c $?
+	$(LINK) /DLL $*.obj
+
+GoodMath.dll:	GoodMath.cpp
+	$(CC) $(CFLAGS) -MD -c $?
+	$(LINK) /DLL $*.obj
+
+BadMath.dll:	BadMath.cpp
+	$(CC) $(CFLAGS) -MD -c $?
+	$(LINK) /DLL $*.obj
+
+TimeTest.dll:	TimeTest.cpp
+	$(CC) $(CFLAGS) -MD -c $?
+	$(LINK) /DLL $*.obj
+
+clean:
+	del *.obj
+	del *.lib
+	del *.exp
+	if exist PITest.exe del PITest.exe
+	if exist COMLikeMath.dll del COMLikeMath.dll
+	if exist GoodMath.dll del GoodMath.dll
+	if exist BadMath.dll del BadMath.dll
+	if exist TimeTest.dll del TimeTest.dll
