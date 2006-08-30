@@ -1,7 +1,7 @@
 #include "song.hpp"
 
 #include "boost/filesystem/operations.hpp"
-#include <id3/tag.h>
+#include "id3lib/tag.h"
 
 class song_desc : public sqlite::table::description {
 public:

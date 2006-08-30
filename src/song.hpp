@@ -16,7 +16,7 @@ class Song : public sqlite::table {
 	GRANT_NEEDED_FRIENDSHIP(Song);
 
 
-	int _dir_id;
+	sqlite::id_t _dir_id;
 	std::string _file_name;
 	std::string _title;
 	int _track;

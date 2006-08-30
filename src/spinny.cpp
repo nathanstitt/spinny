@@ -73,7 +73,7 @@ Spinny::run(int argc, char **argv)
 		_instance=new Spinny( argc, argv );
 	}
 
-	catch( Spinny::CmdLineEx &e ){
+	catch( Spinny::CmdLineEx & ){
 		return 0;
 	}
 

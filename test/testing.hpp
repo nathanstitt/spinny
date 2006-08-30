@@ -27,8 +27,8 @@ static  char *std_args[STD_ARG_SIZE] =
 	SQLITE_TEST_DB_FILE,
 };
 
-struct DummyApp : boost::noncopyable 
-{
+class DummyApp : boost::noncopyable {
+public:
 	DummyApp() {
 		boost::filesystem::create_directory(
 			boost::filesystem::path( TESTING_FIXTURES_PATH, boost::filesystem::native ) );
