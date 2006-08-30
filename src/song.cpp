@@ -1,6 +1,7 @@
 #include "song.hpp"
 
 #include "boost/filesystem/operations.hpp"
+#include <id3/tag.h>
 
 class song_desc : public sqlite::table::description {
 public:
@@ -78,6 +79,7 @@ Song::initialize_from_db( const sqlite::reader *reader ) {
 	_length	   = reader->get<int>(4);
 	_bitrate   = reader->get<int>(5);
 	_year	   = reader->get<int>(6);
+	_dir       = MusicDir::load( _dir_id );
 }
 
 
@@ -93,18 +95,65 @@ Song::is_interesting( const boost::filesystem::path &path ){
 }
 
 
-boost::shared_ptr<Song>
+
+Song::ptr
 Song::create_from_file( const MusicDir &md, const std::string name ){
 	boost::filesystem::path path = md.path() / name;
 	if ( ! boost::filesystem::exists( path ) || ! is_interesting( path ) ) {
 		throw file_error("can't create as doesn't exist, or just plain don't care..." );
 	}
+
 	Song *song = new Song;
 	song->_dir_id = md.db_id();
 	song->_file_name=name;
+	song->_dir = md;
 
-//	song->_title=
-	return boost::shared_ptr<Song>( song );
+	ID3_Tag tag( song->path().string().c_str() );
+	ID3_Field *field;
+	ID3_Frame *frame;
+
+	frame = tag.Find( ID3FID_TITLE );
+	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
+		song->_title=field->GetRawText();
+	}
+
+	try {
+		frame = tag.Find( ID3FID_TRACKNUM );
+		if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
+			song->_track=boost::lexical_cast<int>( field->GetRawText() );
+		}
+	} catch( boost::bad_lexical_cast & ){
+		song->_track=0;
+	}
+
+	const Mp3_Headerinfo *header = tag.GetMp3HeaderInfo();
+	if ( header ) {
+		song->_length = header->time;
+		song->_bitrate= header->bitrate;
+		
+	} else {
+		song->_length = 0;
+	}
+
+	try {
+		frame = tag.Find( ID3FID_YEAR );
+		if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
+			song->_year=boost::lexical_cast<int>( field->GetRawText() );
+		}
+	} catch( boost::bad_lexical_cast & ){
+		song->_year=0;
+	}
+
+	song->save();
+
+	return Song::ptr( song );
+}
+
+
+
+boost::filesystem::path
+Song::path() const{
+	return _dir.path() / _file_name;
 }
 
 
@@ -112,3 +161,30 @@ bool
 Song::save(){
 	return Spinny::db()->save<Song>(*this);
 }
+
+std::string
+Song::title() const {
+	return _title;
+}
+
+int
+Song::track() const {
+	return _track;
+}
+
+int
+Song::bitrate() const {
+	return _bitrate;
+}
+
+int
+Song::length() const {
+	return _length;
+}
+
+
+int
+Song::year() const {
+	return _year;
+}
+

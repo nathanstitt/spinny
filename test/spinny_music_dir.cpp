@@ -1,6 +1,7 @@
 #include "testing.hpp"
 
 #include "music_dir.hpp"
+#include "song.hpp"
 #include "boost/filesystem/path.hpp"
 #include "boost/filesystem/operations.hpp"
 
@@ -12,7 +13,7 @@ SUITE(SpinnyMusicDir) {
 TEST( CreateRoot ){
 	DummyApp da;
 
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH, boost::filesystem::native );
+	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
 	mpath/="music";
 	MusicDir md = MusicDir::create_root( mpath );
   	CHECK( md.is_root() );
@@ -25,6 +26,20 @@ TEST( CreateRoot ){
 	CHECK( *it == md );
 
 	CHECK( roots.end() != std::find( roots.begin(), roots.end(), md ) );
+}
+
+TEST( Load ){
+	DummyApp da;
+
+	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
+	mpath/="music";
+	MusicDir md1 = MusicDir::create_root( mpath );
+  	CHECK( md1.is_root() );
+
+	MusicDir md2 = MusicDir::load( md1.db_id() );
+
+	CHECK( md1 == md2 );
+	CHECK_EQUAL( md1.name(), md2.name() );
 }
 
 TEST( Name ){
@@ -88,25 +103,19 @@ TEST( Children ){
 TEST( Path ){
 	DummyApp da;
 
-	boost::filesystem::path orig_path( TESTING_FIXTURES_PATH, boost::filesystem::native );
+	boost::filesystem::path orig_path( TESTING_FIXTURES_PATH );
 	orig_path/="music";
 	MusicDir md = MusicDir::create_root( orig_path );
   	CHECK( md.is_root() );
-
 	CHECK( orig_path == md.path() );
 
 }
 
-
 TEST( Sync ){
 	DummyApp da;
 
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH, boost::filesystem::native );
+	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
 	mpath/="music";
-
-	if ( ! boost::filesystem::exists(mpath ) ){
-		boost::filesystem::create_directory( mpath );
-	}
 
 	MusicDir md = MusicDir::create_root( mpath );
   	CHECK( md.is_root() );
@@ -126,6 +135,22 @@ TEST( Sync ){
 
  	CHECK_EQUAL( "foo", childs2.begin()->name() );
 
+}
+
+struct name_eq{
+	bool operator()( Song &s ){
+		return s.title() == "Blue Mode (Take 1)";
+	}
+};
+
+TEST( Songs ){
+	DummyApp da;
+	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
+	MusicDir md = MusicDir::create_root( mpath / "music" );
+	md.sync();
+	Song::result_set songs = md.songs();
+	CHECK( songs.begin() != songs.end() );
+	CHECK( std::find_if( songs.begin(), songs.end(), name_eq() ) != songs.end() );
 }
 
 } // SUITE(SpinnyMusicDir)

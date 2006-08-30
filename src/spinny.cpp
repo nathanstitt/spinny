@@ -6,6 +6,7 @@
 #include <vector>
 #include <boost/thread/tss.hpp>
 #include <boost/log/functions.hpp>
+#include <boost/filesystem/path.hpp>
 
 using namespace boost;
 using namespace std;
@@ -57,6 +58,10 @@ Spinny::run(int argc, char **argv)
 {
 	boost::logging::manipulate_logs("*")
 		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" );
+
+	if ( boost::filesystem::path::default_name_check_writable() ) {
+		boost::filesystem::path::default_name_check( boost::filesystem::native );
+	}
 
 	BOOST_LOGL(app, warn) << "Spinny starting up";
 

@@ -10,6 +10,8 @@
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 
+class MusicDir;
+
 class Song : public sqlite::table {
 	GRANT_NEEDED_FRIENDSHIP(Song);
 
@@ -28,18 +30,42 @@ class Song : public sqlite::table {
  	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
+	MusicDir _dir;
 
 	Song();
 
 public:
-	static bool is_interesting( const boost::filesystem::path &path );
+	typedef ::sqlite::result_set<Song> result_set;
+	typedef boost::shared_ptr<Song> ptr;
 
-	static boost::shared_ptr<Song> create_from_file( const MusicDir &md, const std::string name );
+	static bool is_interesting( const boost::filesystem::path &path );
+	static ptr create_from_file( const MusicDir &md, const std::string name );
 
 	bool save();
 
+	MusicDir*
+	directory() const;
+
+	boost::filesystem::path
+  	path() const;
 
 
+	std::string
+	title() const;
+
+	int
+	track() const;
+
+	int
+	length() const;
+
+	int
+	bitrate() const;
+
+	int
+	year() const;
+
+	
 	struct file_error : public std::runtime_error {
 		file_error( const char *msg );
 	};

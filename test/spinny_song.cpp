@@ -8,6 +8,7 @@
 #include <iostream>
 
 
+
 SUITE(SpinnySong) {
 
 
@@ -15,11 +16,6 @@ TEST( Table ){
 	DummyApp da;
 	CHECK( da.test_table_obj<Song>() );
 }
-
-
-
-
-
 
 TEST( Interesting ){
 	DummyApp da;
@@ -36,24 +32,38 @@ TEST( Interesting ){
 	CHECK( Song::is_interesting( mpath/"song.MP3" ) );
 }
 
-
 TEST( Create ){
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH, boost::filesystem::native );
-	mpath/="music";
-
-	boost::filesystem::remove_all( mpath );
-
-	boost::filesystem::create_directory( mpath );
-
-	MusicDir md = MusicDir::create_root( mpath );
-
-	CHECK_THROW( Song::create_from_file( md, "song.mp3" ), Song::file_error );
-	
-	boost::filesystem::ofstream file( mpath );
-
-	CHECK( Song::create_from_file( md,"song.mp3" ) );
-
+	DummyApp da;
+	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
+  	MusicDir md = MusicDir::create_root( mpath / "music" );
+ 	CHECK_THROW( Song::create_from_file( md, "song.mp3" ), Song::file_error );
+	Song::ptr song = Song::create_from_file( md,"ozzy.mp3" );
+	CHECK_EQUAL( "Bark At The Moon", song->title() );
 }
+
+TEST( SetFromTag ){
+	DummyApp da;
+
+	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
+
+   	MusicDir md = MusicDir::create_root( mpath / "music" );
+
+	Song::ptr song = Song::create_from_file( md,"sonny_stitt.mp3" );
+
+	CHECK_EQUAL( "Blue Mode (Take 1)", song->title() );
+	CHECK_EQUAL( 3, song->track() );
+	CHECK_EQUAL( 313, song->length() );
+	CHECK_EQUAL( 128000, song->bitrate() );
+	CHECK_EQUAL( 1952, song->year() );
+}
+
+
+
+
+
+
+
+
 }
 
 

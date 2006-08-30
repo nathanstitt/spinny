@@ -14,7 +14,7 @@ using namespace std;
 	friend class sqlite::command::iterator<classnm>
 
 
-#cmakedefine TESTING_FIXTURES_PATH "@TESTING_FIXTURES_PATH@"
+#cmakedefine TESTING_FIXTURES_PATH "@CMAKE_CURRENT_BINARY_DIR@/../test/fixtures"
 #cmakedefine WINDOWS
 #cmakedefine UNIX_VARIANT
 

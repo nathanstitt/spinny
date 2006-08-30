@@ -1,7 +1,8 @@
 
 
 #include "music_dir.hpp"
-#include <boost/filesystem/operations.hpp>
+#include "boost/filesystem/operations.hpp"
+#include "song.hpp" 
 #include <vector>
 #include <algorithm>
 #include <iterator>
@@ -73,20 +74,25 @@ MusicDir::MusicDir() : sqlite::table(), _parent_id(0), _name("") {
 
 MusicDir
 MusicDir::create_root( const boost::filesystem::path &path ){
+ 	MusicDir md;
+ 	md._name=path.string();
+ 	md._parent_id = 0;
+ 	md.save();
+	return md;
+}
+
+MusicDir
+MusicDir::add_child( const std::string &name ){
 	MusicDir md;
-	md._name=path.string();
-	md._parent_id = 0;
+	md._name=name;
+	md._parent_id = this->db_id();
 	md.save();
 	return md;
 }
 
 MusicDir
-MusicDir::add_child( const boost::filesystem::path &path ){
-	MusicDir md;
-	md._name=path.leaf();
-	md._parent_id = this->db_id();
-	md.save();
-	return md;
+MusicDir::load( sqlite::id_t db_id ){
+	return Spinny::db()->load<MusicDir>( db_id );
 }
 
 
@@ -119,6 +125,10 @@ MusicDir::parent() const {
 	return Spinny::db()->load<MusicDir>( _parent_id );
 }
 
+Song::result_set
+MusicDir::songs(){
+ 	return Spinny::db()->load_many<Song>( "dir_id", db_id() );
+}
 
 MusicDir::result_set
 MusicDir::children() const {
@@ -138,9 +148,9 @@ MusicDir::path() const {
 		md=md.parent();
 		dirs.push_back( md._name );
 	}
-	boost::filesystem::path p("");
+	boost::filesystem::path p("", boost::filesystem::native );
 	for ( vector<string>::reverse_iterator ri = dirs.rbegin(); ri != dirs.rend(); ++ri ){
-		p /= *ri;
+		p /= *ri; 
 	}
 
 	return p;
@@ -152,27 +162,23 @@ MusicDir::is_valid(){
 	return boost::filesystem::exists( this->path() );
 }
 
-void
-MusicDir::examine_file( const boost::filesystem::path &path ){
-
-}
 
 void
 MusicDir::sync(){
 	boost::filesystem::path path = this->path();
 
-	if ( ! boost::filesystem::exists( this->path() ) )
-		return;
+ 	if ( ! boost::filesystem::exists( this->path() ) )
+ 		return;
 
-	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+ 	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
 
-	for ( boost::filesystem::directory_iterator itr( path ); itr != end_itr; ++itr ){
-		if ( boost::filesystem::is_directory( *itr ) ) {
-			MusicDir child = this->add_child( *itr );
-			child.sync();
-		} else {
-			this->examine_file( *itr );
-		}
-	}
+ 	for ( boost::filesystem::directory_iterator itr( path ); itr != end_itr; ++itr ){
+ 		if ( boost::filesystem::is_directory( *itr ) ) {
+ 			MusicDir child = this->add_child( itr->leaf() );
+ 			child.sync();
+ 		} else if ( Song::is_interesting( *itr ) ){
+			Song::create_from_file( *this, itr->leaf() );
+ 		}
+ 	}
 }
 
