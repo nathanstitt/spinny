@@ -35,9 +35,9 @@ TEST( Interesting ){
 TEST( Create ){
 	DummyApp da;
 	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-  	MusicDir md = MusicDir::create_root( mpath / "music" );
- 	CHECK_THROW( Song::create_from_file( md, "song.mp3" ), Song::file_error );
-	Song::ptr song = Song::create_from_file( md,"ozzy.mp3" );
+	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
+ 	CHECK_THROW( Song::create_from_file( *md, "song.mp3" ), Song::file_error );
+	Song::ptr song = Song::create_from_file( *md,"ozzy.mp3" );
 	CHECK_EQUAL( "Bark At The Moon", song->title() );
 }
 
@@ -46,9 +46,12 @@ TEST( SetFromTag ){
 
 	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
 
-   	MusicDir md = MusicDir::create_root( mpath / "music" );
+	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
 
-	Song::ptr song = Song::create_from_file( md,"sonny_stitt.mp3" );
+	Song::ptr song = Song::create_from_file( *md,"sonny_stitt.mp3" );
+
+// 	Artist a=da.con->load<Artist>( 1 );
+// 	CHECK( song->artist() == a );
 
 	CHECK_EQUAL( "Blue Mode (Take 1)", song->title() );
 	CHECK_EQUAL( 3, song->track() );

@@ -22,6 +22,41 @@
 
 	namespace sqlite {
 
+		class reader;
+
+		namespace detail{
+
+			template <typename T, bool b>
+			struct best_type
+			{
+				typedef T ret_type;
+
+				static ret_type create(){
+					T v;
+					return v;
+				};
+
+				static T* get_ptr( ret_type &val ){ return &val; }
+
+				static void initialize( ret_type obj, const reader *r ) {}
+			};
+
+			template <typename T>
+			struct best_type<T, true>
+			{
+				typedef boost::shared_ptr<T> ret_type;
+
+				static T* get_ptr( ret_type &val ){ return val.get(); }
+				
+				static ret_type create(){ return ret_type(new T()); }
+
+				static void initialize( ret_type obj, const reader *r );
+			};
+
+
+		}
+
+
 		typedef long long id_t;
 		const id_t&	q( const id_t &arg );
 		const long long&	q( const long long &arg );
@@ -84,6 +119,16 @@
 		};
 
 
+		template< typename T >
+		struct dref_eq {
+			T obj;
+			dref_eq( T &o) : obj(o) { }
+			bool operator()( T &other ){
+				return ( *other == *obj );
+			}
+		};
+
+
 		class reader {
 		private:
 			friend class command;
@@ -99,7 +144,7 @@
 
 		public:
 			template<typename T>
-			void initialize_obj( T &obj ) const;
+			void initialize_obj( boost::shared_ptr<T> obj ) const;
 
 			bool operator==(const std::string &str) const;
 
@@ -113,7 +158,8 @@
 			T get(int index) const;
 
 			template<typename T>
-			T get() const;
+			typename detail::best_type< T, boost::is_class<T>::value >::ret_type
+			get() const;
 
 			std::string colname(int index) const;
 		};
@@ -169,7 +215,9 @@
 
 			template<class T>
 			class iterator :
-				public boost::iterator_facade< ::sqlite::command::iterator<T>, T, boost::forward_traversal_tag>
+				public boost::iterator_facade< ::sqlite::command::iterator<T>, 
+							       typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::ret_type,
+							       boost::forward_traversal_tag>
 			{
 				friend class ::sqlite::command;
 				friend class boost::iterator_core_access;
@@ -181,15 +229,20 @@
 						obj=_r->get<T>();
 					}
 				}
+
 				bool equal( ::sqlite::command::iterator<T> const& other ) const { 
 					return other._r == this->_r;
 				}
 
-				T& dereference() const {
+				typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::ret_type&
+				dereference() const {
 					return obj;
 				}
 				reader *_r;
-				mutable T obj;
+
+				mutable 
+				typename detail::best_type< T, boost::is_class<T>::value >::ret_type
+				obj;
 			public:
 				iterator() : _r(0) {}
 			};
@@ -269,17 +322,17 @@
 			}
 
 
-			template<class T1,class T2>
-			T1
+			template<class T,class T2>
+			typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::ret_type
 			load_one( const std::string &field, const T2 &value ){
-				result_set<T1> rs=this->load_many<T1,T2>( field, value, 1 );
+				result_set<T> rs=this->load_many<T,T2>( field, value, 1 );
 				return *(rs.begin());
 			}
 
-			template<class T1,class T2>
-			T1
+			template<class T,class T2>
+			typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::ret_type
 			load( T2 value ){
-				return this->load_one<T1,T2>( "rowid", value );
+				return this->load_one<T,T2>( "rowid", value );
 			}
 
 
@@ -423,42 +476,30 @@
 				throw database_error(this->_con);
 		}
 
-
-		namespace detail{
-
-			template <bool b>
-			struct initialize_obj
-			{
-				template <typename T>
-				static void perform( T &obj, const reader *r )
-					{ }
-			};
-
-			template <>
-			struct initialize_obj<true>
-			{
-				template <typename T>
-				static void perform( T &obj, const reader *r ) {
-					r->initialize_obj( obj );
-				}
-			};
-
-
+		namespace detail {
+			template <typename T>
+			void best_type<T,true>::initialize( ret_type obj, const reader *r ) {
+				r->initialize_obj( obj );
+			}
 		}
+
+
 
 		template<typename T>
 		void
-		reader::initialize_obj( T &obj ) const {
-			obj.initialize_from_db( this );
-			obj.set_db_id( this->get<id_t>( this->_cmd->num_columns()-1 ) );
+		reader::initialize_obj( boost::shared_ptr<T> obj ) const {
+			obj->initialize_from_db( this );
+			obj->set_db_id( this->get<id_t>( this->_cmd->num_columns()-1 ) );
 		}
 
 		// reader::get
 
 		template <class T>
-		T reader::get() const {
-			T obj;
-			detail::initialize_obj< boost::is_class<T>::value >::perform( obj,this );
+		typename detail::best_type< T, boost::is_class<T>::value >::ret_type
+		reader::get() const {
+			typename detail::best_type< T, boost::is_class<T>::value >::ret_type obj = 
+				detail::best_type< T, boost::is_class<T>::value >::create();
+			detail::best_type< T, boost::is_class<T>::value >::initialize( obj,this );
 			return obj;
 		}
 

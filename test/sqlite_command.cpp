@@ -87,9 +87,9 @@ TEST( TmplIterate ){
 	command cmd( *c.con, "select col1,col2,col3,rowid from testing limit 1" );
 	command::iterator<FooDoggy> it=cmd.begin<FooDoggy>();
 
-	CHECK_EQUAL( "Bowzer", it->name );
-	CHECK_EQUAL( 1, it->id );
-	CHECK_EQUAL( 14, it->num_bones );
+	CHECK_EQUAL( "Bowzer", (*it)->name );
+	CHECK_EQUAL( 1, (*it)->id );
+	CHECK_EQUAL( 14, (*it)->num_bones );
 
 	// how about for no matches?
 	command failing_cmd(*c.con,"select col1,col2,col3,rowid from testing where col1=-1");
@@ -98,7 +98,7 @@ TEST( TmplIterate ){
  	std::vector<FooDoggy> v;
 
 	CHECK( it != cmd.end<FooDoggy>() );
-	v.push_back(*it);
+	v.push_back(**it);
 	++it;
 	CHECK( it == cmd.end<FooDoggy>() );
 
@@ -133,10 +133,10 @@ TEST( SelectTemplatedValues ) {
 	DummyApp c;
 	c.con->exec<none>("insert into testing (col1,col2,col3) values( 23,'BowWow', 42 )");
 	command cmd(*c.con,"select col1,col2,col3,rowid from testing");
- 	FooDoggy fd = cmd.reader_begin()->get<FooDoggy>();
+	boost::shared_ptr<FooDoggy> fd = cmd.reader_begin()->get<FooDoggy>();
 
- 	CHECK_EQUAL( 23, fd.age );
- 	CHECK_EQUAL( "BowWow", fd.name );
+ 	CHECK_EQUAL( 23, fd->age );
+ 	CHECK_EQUAL( "BowWow", fd->name );
 }
 
 TEST( RowColumnCounts ){

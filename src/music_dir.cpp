@@ -72,25 +72,23 @@ MusicDir::MusicDir() : sqlite::table(), _parent_id(0), _name("") {
 
 
 
-MusicDir
+MusicDir::ptr
 MusicDir::create_root( const boost::filesystem::path &path ){
- 	MusicDir md;
- 	md._name=path.string();
- 	md._parent_id = 0;
- 	md.save();
+	MusicDir::ptr md( new MusicDir );
+ 	md->_name=path.string();
+ 	md->_parent_id = 0;
 	return md;
 }
 
-MusicDir
+MusicDir::ptr
 MusicDir::add_child( const std::string &name ){
-	MusicDir md;
-	md._name=name;
-	md._parent_id = this->db_id();
-	md.save();
+	MusicDir::ptr md( new MusicDir );
+	md->_name=name;
+	md->_parent_id = this->db_id();
 	return md;
 }
 
-MusicDir
+MusicDir::ptr
 MusicDir::load( sqlite::id_t db_id ){
 	return Spinny::db()->load<MusicDir>( db_id );
 }
@@ -120,7 +118,7 @@ MusicDir::name() const {
 
 
 
-MusicDir
+MusicDir::ptr
 MusicDir::parent() const {
 	return Spinny::db()->load<MusicDir>( _parent_id );
 }
@@ -143,10 +141,11 @@ boost::filesystem::path
 MusicDir::path() const {
 	vector<string> dirs;
 	dirs.push_back( _name );
-	MusicDir md = *this;
-	while ( ! md.is_root() ) {
-		md=md.parent();
-		dirs.push_back( md._name );
+	const MusicDir *md = this;
+	while ( ! md->is_root() ) {
+		ptr p = md->parent();
+		md=&(*p);
+		dirs.push_back( md->_name );
 	}
 	boost::filesystem::path p("", boost::filesystem::native );
 	for ( vector<string>::reverse_iterator ri = dirs.rbegin(); ri != dirs.rend(); ++ri ){
@@ -174,8 +173,9 @@ MusicDir::sync(){
 
  	for ( boost::filesystem::directory_iterator itr( path ); itr != end_itr; ++itr ){
  		if ( boost::filesystem::is_directory( *itr ) ) {
- 			MusicDir child = this->add_child( itr->leaf() );
- 			child.sync();
+			MusicDir::ptr child = this->add_child( itr->leaf() );
+			child->save();
+ 			child->sync();
  		} else if ( Song::is_interesting( *itr ) ){
 			Song::create_from_file( *this, itr->leaf() );
  		}

@@ -3,7 +3,7 @@
 
 
 #include "sqlite.hpp"
-#include <typeinfo>
+
 
 using namespace sqlite;
 

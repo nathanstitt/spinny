@@ -11,7 +11,8 @@ using namespace std;
 	friend class sqlite::connection; \
 	friend class sqlite::command; \
         friend class sqlite::reader; \
-	friend class sqlite::command::iterator<classnm>
+	friend class sqlite::command::iterator<classnm>; \
+	friend struct sqlite::detail::best_type<classnm,true>
 
 
 #cmakedefine TESTING_FIXTURES_PATH "@CMAKE_CURRENT_BINARY_DIR@/../test/fixtures"

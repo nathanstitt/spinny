@@ -12,6 +12,11 @@
 class Song;
 
 class MusicDir : public sqlite::table {
+public:
+	typedef boost::shared_ptr<MusicDir> ptr;
+	typedef ::sqlite::result_set<MusicDir> result_set;
+	typedef ::sqlite::result_set<MusicDir>::iterator iterator;
+private:
 	GRANT_NEEDED_FRIENDSHIP(MusicDir);
 	friend class Song;
 
@@ -25,17 +30,14 @@ class MusicDir : public sqlite::table {
  	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
+	MusicDir::ptr add_child( const std::string &name );
 
-	MusicDir add_child( const std::string &name );
 public:
 
-	typedef ::sqlite::result_set<MusicDir> result_set;
-	typedef ::sqlite::result_set<MusicDir>::iterator iterator;
-
-	static MusicDir
+	static MusicDir::ptr
 	load( sqlite::id_t db_id );
 
-	static MusicDir
+	static MusicDir::ptr
 	create_root( const boost::filesystem::path &path );
 
 	static 
@@ -52,7 +54,7 @@ public:
 
  	string name() const;
 
-  	MusicDir
+	MusicDir::ptr
   	parent() const;
 
 	result_set

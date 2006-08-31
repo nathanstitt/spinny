@@ -96,15 +96,15 @@ DummyApp::test_table_obj(){
 
 	con->exec<sqlite::none>();
 	sqlite::id_t new_id = con->insertid();
-        T ft = con->load<T>( new_id );
+	boost::shared_ptr<T> ft = con->load<T>( new_id );
 
-	ft.set_db_id( 0 );
+	ft->set_db_id( 0 );
 
 	*con << "delete from " << desc->table_name() << " where rowid=" << new_id;
 	con->exec<sqlite::none>();
 
-	ft.save();
-	new_id = ft.db_id();
+	ft->save();
+	new_id = ft->db_id();
 
 	for ( int i=0; i< desc->num_fields(); ++i ){
 		*con << "select " << desc->fields()[i] << " from " << desc->table_name() << " where rowid=" << new_id;

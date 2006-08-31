@@ -41,11 +41,11 @@ TEST( SaveNew ){
 	CHECK_EQUAL( 43, row->get<int>(0) );
 	CHECK_EQUAL( "testing foo table", row->get<std::string>(1) );
 
-	FooTable ft2=da.con->load<FooTable>( ft.db_id() );
+	boost::shared_ptr<FooTable> ft2=da.con->load<FooTable>( ft.db_id() );
 
-	CHECK_EQUAL( ft.db_id(), ft2.db_id() );
-	CHECK_EQUAL( ft.parent_id, ft2.parent_id );
-	CHECK_EQUAL( ft.name, ft2.name );
+	CHECK_EQUAL( ft.db_id(), ft2->db_id() );
+	CHECK_EQUAL( ft.parent_id, ft2->parent_id );
+	CHECK_EQUAL( ft.name, ft2->name );
 }
 
 TEST( SaveExisting ){
@@ -61,10 +61,10 @@ TEST( SaveExisting ){
 	ft.name="Green";
 	CHECK( ft.save() );
 
-	FooTable ft2=da.con->load<FooTable>( ft.db_id() );
+	boost::shared_ptr<FooTable> ft2=da.con->load<FooTable>( ft.db_id() );
 
-	CHECK_EQUAL( ft.db_id(), ft2.db_id() );
-	CHECK_EQUAL( ft.parent_id, ft2.parent_id );
+	CHECK_EQUAL( ft.db_id(), ft2->db_id() );
+	CHECK_EQUAL( ft.parent_id, ft2->parent_id );
 	CHECK_EQUAL( "Green", ft.name );
 
 }

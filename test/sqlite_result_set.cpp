@@ -19,11 +19,11 @@ TEST( Set ){
 	sqlite::result_set<FooTable>::iterator it = rs.begin();
 
 	CHECK( it != rs.end() );
-	CHECK_EQUAL( "root", it->name );
+	CHECK_EQUAL( "root", (*it)->name );
 	it++;
-	CHECK_EQUAL( "child1", it->name );
+	CHECK_EQUAL( "child1", (*it)->name );
 	++it;
-	CHECK_EQUAL( "child2", it->name );
+	CHECK_EQUAL( "child2", (*it)->name );
 	++it;
 	CHECK( it == rs.end() );
 }

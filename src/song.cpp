@@ -9,11 +9,12 @@ public:
 		return "songs";
 	};
 	virtual int num_fields() const {
-		return 7;
+		return 8;
 	}
 	virtual const char** fields() const {
 		static const char *fields[] = {
 			"dir_id",
+			"artist_id",
 			"file_name",
 			"title",
 			"track",
@@ -25,6 +26,7 @@ public:
 	}
 	virtual const char** field_types() const {
 		static const char *field_types[] = {
+			"int",
 			"int",
 			"string",
 			"string",
@@ -54,13 +56,14 @@ Song::m_table_description() const {
 
 void
 Song::table_insert_values( std::ostream &str ) const {
-	str << _dir_id << "," << sqlite::q(_file_name) << "," << sqlite::q(_title)
+	str << _dir_id << "," << _artist_id << "," << sqlite::q(_file_name) << "," << sqlite::q(_title)
 	    << "," << _track << "," << _length << "," << _bitrate << "," << _year;
 }
 
 void
 Song::table_update_values( std::ostream &str ) const {
 	str << "dir_id=" << _dir_id 
+	    << "artist_id=" << _artist_id
 	    << ",file_name=" << sqlite::q(_file_name) 
 	    << ",title=" << sqlite::q(_title)
 	    << ",track=" << _track 
@@ -72,19 +75,24 @@ Song::table_update_values( std::ostream &str ) const {
 
 void
 Song::initialize_from_db( const sqlite::reader *reader ) {
-	_dir_id = reader->get<int>(0);
-	_file_name = reader->get<std::string>(1);
-	_title	   = reader->get<std::string>(2);
-	_track	   = reader->get<int>(3);
-	_length	   = reader->get<int>(4);
-	_bitrate   = reader->get<int>(5);
-	_year	   = reader->get<int>(6);
+	_dir_id    = reader->get<sqlite::id_t>(0);
+	_artist_id = reader->get<sqlite::id_t>(1);
+	_file_name = reader->get<std::string>(2);
+	_title	   = reader->get<std::string>(3);
+	_track	   = reader->get<int>(4);
+	_length	   = reader->get<int>(5);
+	_bitrate   = reader->get<int>(6);
+	_year	   = reader->get<int>(7);
 	_dir       = MusicDir::load( _dir_id );
 }
 
 
 Song::Song() : sqlite::table(),
-	       _dir_id(0), _file_name(""), _title(""), _track(0), _length(0), _bitrate( 0 ), _year( 0 ) {}
+	       _dir_id(0),_artist_id(0), _file_name(""), _title(""), _track(0), _length(0), _bitrate( 0 ), _year( 0 ) {}
+
+
+
+// END DB METHODS
 
 
 Song::file_error::file_error(const char *msg ) : std::runtime_error( msg ) { }
@@ -97,7 +105,7 @@ Song::is_interesting( const boost::filesystem::path &path ){
 
 
 Song::ptr
-Song::create_from_file( const MusicDir &md, const std::string name ){
+Song::create_from_file(  const MusicDir &md, const std::string name ){
 	boost::filesystem::path path = md.path() / name;
 	if ( ! boost::filesystem::exists( path ) || ! is_interesting( path ) ) {
 		throw file_error("can't create as doesn't exist, or just plain don't care..." );
@@ -106,7 +114,7 @@ Song::create_from_file( const MusicDir &md, const std::string name ){
 	Song *song = new Song;
 	song->_dir_id = md.db_id();
 	song->_file_name=name;
-	song->_dir = md;
+	song->_dir = MusicDir::ptr( new MusicDir(md) );
 
 	ID3_Tag tag( song->path().string().c_str() );
 	ID3_Field *field;
@@ -116,6 +124,12 @@ Song::create_from_file( const MusicDir &md, const std::string name ){
 	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
 		song->_title=field->GetRawText();
 	}
+
+// 	frame = tag.Find( ID3FID_LEADARTIST );
+// 	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
+		
+// 		song->_title=field->GetRawText();
+// 	}
 
 	try {
 		frame = tag.Find( ID3FID_TRACKNUM );
@@ -153,7 +167,7 @@ Song::create_from_file( const MusicDir &md, const std::string name ){
 
 boost::filesystem::path
 Song::path() const{
-	return _dir.path() / _file_name;
+	return _dir->path() / _file_name;
 }
 
 
