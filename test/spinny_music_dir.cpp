@@ -26,11 +26,11 @@ TEST( CreateRoot ){
 
   	MusicDir::iterator it=roots.begin();
 
-  	CHECK_EQUAL( mpath.string(), (*it)->name() );
+  	CHECK_EQUAL( mpath.string(), it->name() );
 
-	CHECK( **it == *md );
+	CHECK( *it == *md );
 
-	CHECK( roots.end() != std::find_if( roots.begin(), roots.end(), sqlite::dref_eq<MusicDir::ptr>(md) ) );
+	CHECK( roots.end() != std::find_if( roots.begin(), roots.end(), sqlite::dref_eq<MusicDir>(md) ) );
 }
 
 TEST( Load ){
@@ -104,7 +104,7 @@ TEST( Children ){
  	MusicDir::result_set children=parent->children();
  	CHECK( children.end() != children.begin() );
 
- 	CHECK( std::find_if( children.begin(), children.end(), sqlite::dref_eq<MusicDir::ptr>(child) ) != children.end() );
+ 	CHECK( std::find_if( children.begin(), children.end(), sqlite::dref_eq<MusicDir>(child) ) != children.end() );
 }
 
 
@@ -141,13 +141,13 @@ TEST( Sync ){
 
  	CHECK( childs2.begin() != childs2.end() );
 
- 	CHECK_EQUAL( "foo", (*childs2.begin())->name() );
+ 	CHECK_EQUAL( "foo", childs2.begin()->name() );
 
 }
 
 struct name_eq{
-	bool operator()( Song::ptr &s ){
-		return s->title() == "Blue Mode (Take 1)";
+	bool operator()( Song &s ){
+		return s.title() == "Blue Mode (Take 1)";
 	}
 };
 

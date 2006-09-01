@@ -9,10 +9,10 @@
 #include <stdexcept>
 #include "unit_test/test.h"
 #include "boost/filesystem/operations.hpp"
-#include <boost/noncopyable.hpp>
-#include "sqlite.hpp"
+#include "boost/noncopyable.hpp"
+#include "sqlite/sqlite.hpp"
 #include "spinny.hpp"
-#include <boost/log/functions.hpp>
+#include "boost/log/functions.hpp"
 
 // evil I know... just couldn't help myself
 using namespace std;
