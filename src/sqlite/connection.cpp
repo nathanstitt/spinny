@@ -28,7 +28,7 @@ namespace sqlite {
 		}
 		str << " | ";
 		for ( int x=0; x<cols; ++x ){
-			str.width( std::max( v.size(), static_cast<size_t>(20) ) );
+			str.width( max( v.size(), static_cast<size_t>(20) ) );
 			str << row->colname( x ) + " | ";
 		}
 		BOOST_LOG(sql) << str.str();
@@ -37,7 +37,7 @@ namespace sqlite {
 			str << " | ";
 			for ( int x=0; x<cols; ++x ){
 				v=row->get<string>( x );
-				str.width( std::max( v.size(), static_cast<size_t>(20) ) );
+				str.width( max( v.size(), static_cast<size_t>(20) ) );
 				str << v + " | ";
 			}
 			BOOST_LOG(sql) << str.str();

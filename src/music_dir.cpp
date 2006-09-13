@@ -4,7 +4,7 @@
 #include "boost/filesystem/operations.hpp"
 #include "song.hpp" 
 #include <vector>
-#include <algorithm>
+
 #include <list>
 #include <iterator>
 
@@ -197,7 +197,7 @@ MusicDir::sync(){
 			try {
 				Song::create_from_file( *this, itr->leaf() );
 			}
-			catch( Song::file_error &err ){ }
+			catch( Song::file_error & ){ }
  		}
  	}
 }

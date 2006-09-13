@@ -4,6 +4,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_ 1
 
+#include <algorithm>
 using namespace std;
 
 #define GRANT_NEEDED_FRIENDSHIP(classnm) \

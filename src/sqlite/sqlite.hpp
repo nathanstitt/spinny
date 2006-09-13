@@ -37,8 +37,7 @@ namespace sqlite {
 			static ref_type as_ref_type( stored_type &val ){ return val; }
 
 			static stored_type create(){
-				T v;
-				return v;
+				return T();
 			};
 			static void initialize( const stored_type obj, const reader *r ) {}
 		};
