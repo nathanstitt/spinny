@@ -50,7 +50,7 @@ public:
  	bool
  	is_root() const;
 
-	bool save();
+	bool save() const;
 
  	string name() const;
 

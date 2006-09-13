@@ -60,7 +60,7 @@ struct FooTable : public sqlite::table {
 	sqlite::id_t parent_id;
 	string name;	
 
-	bool save() {
+	bool save() const {
 		return Spinny::db()->save<FooTable>(*this);
 	}
 

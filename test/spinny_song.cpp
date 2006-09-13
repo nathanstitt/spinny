@@ -36,8 +36,11 @@ TEST( Create ){
 	DummyApp da;
 	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
 	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
+	md->save();
  	CHECK_THROW( Song::create_from_file( *md, "song.mp3" ), Song::file_error );
+
 	Song::ptr song = Song::create_from_file( *md,"ozzy.mp3" );
+
 	CHECK_EQUAL( "Bark At The Moon", song->title() );
 }
 
@@ -47,11 +50,8 @@ TEST( SetFromTag ){
 	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
 
 	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
-
+	md->save();
 	Song::ptr song = Song::create_from_file( *md,"sonny_stitt.mp3" );
-
-// 	Artist a=da.con->load<Artist>( 1 );
-// 	CHECK( song->artist() == a );
 
 	CHECK_EQUAL( "Blue Mode (Take 1)", song->title() );
 	CHECK_EQUAL( 3, song->track() );
@@ -59,13 +59,6 @@ TEST( SetFromTag ){
 	CHECK_EQUAL( 128000, song->bitrate() );
 	CHECK_EQUAL( 1952, song->year() );
 }
-
-
-
-
-
-
-
 
 }
 

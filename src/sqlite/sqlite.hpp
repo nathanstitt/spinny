@@ -40,7 +40,7 @@ namespace sqlite {
 				T v;
 				return v;
 			};
-			static void initialize( stored_type obj, const reader *r ) {}
+			static void initialize( const stored_type obj, const reader *r ) {}
 		};
 
 		template <typename T>
@@ -49,7 +49,7 @@ namespace sqlite {
 			typedef T& ref_type;
 			static ref_type as_ref_type( stored_type &val ){ return *(val.get()); }
 			static stored_type create(){ return stored_type(new T()); }
-			static void initialize( stored_type obj, const reader *r );
+			static void initialize( const stored_type obj, const reader *r );
 		};
 	}
 
@@ -75,7 +75,7 @@ namespace sqlite {
 	// a base class which can be inherited from
 	// for easy reading objects from sqlite
 	class table {
-		id_t _id;
+		mutable id_t _id;
 	protected:
 		table();
 	public:
@@ -94,12 +94,13 @@ namespace sqlite {
 			virtual const char** field_types() const = 0;
 		};
 		virtual ~table();
-		bool needs_saved();
+		virtual bool needs_saved() const;
+		virtual bool save_if_needed() const;
 		virtual id_t db_id() const;
-		virtual void set_db_id( id_t );
+		virtual void set_db_id( id_t ) const;
 
 		// the below are pure virtual
-		virtual bool save() = 0;
+		virtual bool save() const = 0;
 		virtual void initialize_from_db( const reader* ) = 0;
 		virtual const description* m_table_description() const = 0;
 		virtual void table_insert_values( std::ostream &str ) const = 0;
@@ -265,7 +266,7 @@ namespace sqlite {
 			// boost::safe_ptr wrapper, therefore allowing the object to persist
 			// past the iterator moving on to the next row
 			typename detail::best_type< T, boost::is_class<T>::value >::stored_type
-			safe_ptr(){
+			shared_ptr(){
 				return obj;
 			}
 
@@ -329,9 +330,20 @@ namespace sqlite {
 		struct sqlite3 *db;
 		void validate_db();
 	public:
+		void log_table_contents( const std::string &name, int limit=10 );
 		connection();
 		connection(const std::string &db );
 		~connection();
+		
+		template<class T>
+		result_set<T>
+		load_many(){
+			command *cmd = new command( *this,  _cmd.curval() );
+			result_set<T> ret( cmd );
+			BOOST_LOG(sql) << "load_many of " << typeid(T).name();
+			this->clear_cmd();
+			return ret;
+		}
 
 		// load many sqlite::table objects
 		template<class T1,class T2>
@@ -340,15 +352,14 @@ namespace sqlite {
 			*this << "select ";
 			const ::sqlite::table::description *td=T1::table_description();
 			td->insert_fields( *this );
-			*this << ",rowid from " << td->table_name() << " where " << field << op << q(value);
+			*this << ",rowid from " << td->table_name();
+			if ( ! field.empty() ){
+				*this << " where " << field << op << q(value);
+			}
 			if ( limit ){
 				*this << " limit " << limit;
 			}
-			command *cmd = new command( *this,  _cmd.curval() );
-			result_set<T1> ret( cmd );
-			BOOST_LOG(sql) << "load_many of " << typeid(T1).name();
-			this->clear_cmd();
-			return ret;
+			return this->load_many<T1>();
 		}
 
 
@@ -357,7 +368,7 @@ namespace sqlite {
 		typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::stored_type
 		load_one( const std::string &field, const T2 &value ){
 			result_set<T> rs=this->load_many<T,T2>( field, value, 1 );
-			return rs.begin().safe_ptr();
+			return rs.begin().shared_ptr();
 		}
 
 		// load a sqlite::table object where rowid = value
@@ -373,7 +384,7 @@ namespace sqlite {
 		// it does NOT pay attention to the needs_saved() method
 		template<class T>
 		bool
-		save( T &obj ){
+		save( const T &obj ){
 			const ::sqlite::table::description *td=T::table_description();
 			if ( ! obj.db_id() ){
 				*this << "insert into " << td->table_name() << "(";
@@ -391,6 +402,7 @@ namespace sqlite {
 				BOOST_LOG(sql) << "save (update) of " << typeid(T).name();
 				this->exec<none>();
 			}
+			BOOST_LOG(sql) << "ID: " << obj.db_id();
 			return true;
 		}
 
@@ -525,7 +537,7 @@ namespace sqlite {
 
 	namespace detail {
 		template <typename T>
-		void best_type<T,true>::initialize( stored_type obj, const reader *r ) {
+		void best_type<T,true>::initialize( const stored_type obj, const reader *r ) {
 			r->initialize_obj( obj );
 		}
 	}
@@ -534,7 +546,7 @@ namespace sqlite {
 
 	template<typename T>
 	void
-	reader::initialize_obj( boost::shared_ptr<T> obj ) const {
+	reader::initialize_obj( const boost::shared_ptr<T> obj ) const {
 		obj->initialize_from_db( this );
 		obj->set_db_id( this->get<id_t>( this->_cmd->num_columns()-1 ) );
 	}

@@ -3,8 +3,8 @@
 
 #include <config.h>
 #include "artist.hpp"
-
 #include "song.hpp"
+#include "album.hpp"
 
 #include "boost/filesystem/operations.hpp"
 #include "id3lib/tag.h"
@@ -31,7 +31,33 @@ public:
 	};
 };
 
+class albums_artists_desc : public sqlite::table::description {
+public:
+	virtual const char* table_name() const {
+		return "albums_artists";
+	};
+	virtual int num_fields() const {
+		return 2;
+	}
+	virtual const char** fields() const {
+		static const char *fields[] = {
+			"album_id",
+			"artist_id",
+		};
+		return fields;
+	}
+	virtual const char** field_types() const {
+		static const char *field_types[] = {
+			"int",
+			"int",
+		};
+		return field_types;
+	};
+};
+
+
 static artist_desc table_desc;
+static albums_artists_desc albums_artists_table_desc;
 
 
 const sqlite::table::description*
@@ -68,11 +94,16 @@ Artist::Artist() : sqlite::table(),
 
 
 bool
-Artist::save(){
+Artist::save() const {
 	return Spinny::db()->save(*this);
 }
 // END DB METHODS
 
+
+Artist::result_set
+Artist::all(){
+	return Spinny::db()->load_many<Artist>( "", 0 );
+}
 
 
 Song::result_set
@@ -81,12 +112,43 @@ Artist::songs() const {
 }
 
 
-// Artist::ptr
-// Artist::load_or_create( const std::string &name ){
-// 	Artist a = Spinny::db()->load<Song>( "name", name );
-// 	if ( a.loaded() ){
-// 		return a;
-// 	} else {
-		
-// 	}
-// }
+
+Artist::result_set
+Artist::with_album( const Album *alb ){
+	sqlite::connection *con = Spinny::db();
+	*con << "select ";
+	table_desc.insert_fields( *con );
+	*con << ",artists.rowid from artists, albums_artists where artists.rowid=albums_artists.artist_id"
+	     << " and albums_artists.album_id = " << alb->db_id();
+	return con->load_many<Artist>();
+}
+
+Album::result_set
+Artist::albums() const {
+	sqlite::connection *con = Spinny::db();
+	const sqlite::table::description *td = Album::table_description();
+	*con << "select ";
+	td->insert_fields( *con );
+	*con << ",albums.rowid from albums, albums_artists where albums.rowid=albums_artists.album_id"
+	     << " and albums_artists.artist_id = " << this->db_id();
+	return con->load_many<Album>();
+}
+
+
+Artist::ptr
+Artist::find_or_create( const std::string &name ){
+	Artist::ptr ret=Spinny::db()->load_one<Artist>( "name", name );
+	if ( ! ret ){
+		Artist *a = new Artist;
+		a->_name=name;
+		a->save();
+		ret.reset( a );
+	}
+	return ret;
+}
+
+
+std::string
+Artist::name() const {
+	return _name;
+}

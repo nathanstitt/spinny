@@ -137,11 +137,11 @@ TEST( Sync ){
 
 	md->sync();
 
-	MusicDir::result_set childs2 = md->children();
-
- 	CHECK( childs2.begin() != childs2.end() );
-
- 	CHECK_EQUAL( "foo", childs2.begin()->name() );
+	CHECK_EQUAL( 2, da.con->exec<int>( "select count(*) from music_dirs") );
+	CHECK_EQUAL( 9, da.con->exec<int>( "select count(*) from songs") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from artists") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from albums") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from albums_artists") );
 
 }
 
@@ -161,6 +161,8 @@ TEST( Songs ){
  	CHECK( songs.begin() != songs.end() );
  	CHECK( std::find_if( songs.begin(), songs.end(), name_eq() ) != songs.end() );
 }
+
+
 
 } // SUITE(SpinnyMusicDir)
 

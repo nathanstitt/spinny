@@ -12,7 +12,7 @@ table::~table(){}
 table::table() : _id( 0 ){ }
 
 void
-table::set_db_id( sqlite::id_t id ) {
+table::set_db_id( sqlite::id_t id ) const {
 	_id=id;
 };
 
@@ -28,11 +28,18 @@ table::operator == ( const table &other ) const {
 }
 
 bool
-table::needs_saved(){
+table::needs_saved() const {
 	return ( _id==0 );
 }
 
-
+bool
+table::save_if_needed() const {
+	if ( this->needs_saved() ){
+		return this->save();
+	} else {
+		return true;
+	}
+}
 
 table::description::~description(){
 

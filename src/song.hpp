@@ -6,11 +6,14 @@
 
 #include "spinny.hpp"
 #include "music_dir.hpp"
+
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 
 class MusicDir;
+class Album;
+class Artist;
 
 class Song : public sqlite::table {
 	GRANT_NEEDED_FRIENDSHIP(Song);
@@ -18,6 +21,7 @@ class Song : public sqlite::table {
 
 	sqlite::id_t _dir_id;
 	sqlite::id_t _artist_id;
+	sqlite::id_t _album_id;
 	std::string _file_name;
 	std::string _title;
 	int _track;
@@ -31,8 +35,6 @@ class Song : public sqlite::table {
  	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
-	MusicDir::ptr _dir;
-
 	Song();
 
 public:
@@ -42,17 +44,25 @@ public:
 	static bool is_interesting( const boost::filesystem::path &path );
 	static ptr create_from_file( const MusicDir &md, const std::string name );
 
-	bool save();
-
-	MusicDir*
-	directory() const;
+	bool save() const;
 
 	boost::filesystem::path
   	path() const;
 
+	boost::shared_ptr<MusicDir>
+	directory() const;
+
+	boost::shared_ptr<Album>
+	album() const;
+
+	boost::shared_ptr<Artist>
+	artist() const;
 
 	std::string
 	title() const;
+
+	std::string
+	name() const;
 
 	int
 	track() const;

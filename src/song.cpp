@@ -2,6 +2,8 @@
 
 #include "boost/filesystem/operations.hpp"
 #include "id3lib/tag.h"
+#include "artist.hpp"
+#include "album.hpp"
 
 class song_desc : public sqlite::table::description {
 public:
@@ -9,12 +11,13 @@ public:
 		return "songs";
 	};
 	virtual int num_fields() const {
-		return 8;
+		return 9;
 	}
 	virtual const char** fields() const {
 		static const char *fields[] = {
 			"dir_id",
 			"artist_id",
+			"album_id",
 			"file_name",
 			"title",
 			"track",
@@ -26,6 +29,7 @@ public:
 	}
 	virtual const char** field_types() const {
 		static const char *field_types[] = {
+			"int",
 			"int",
 			"int",
 			"string",
@@ -56,7 +60,7 @@ Song::m_table_description() const {
 
 void
 Song::table_insert_values( std::ostream &str ) const {
-	str << _dir_id << "," << _artist_id << "," << sqlite::q(_file_name) << "," << sqlite::q(_title)
+	str << _dir_id << "," << _artist_id << "," << _album_id << "," << sqlite::q(_file_name) << "," << sqlite::q(_title)
 	    << "," << _track << "," << _length << "," << _bitrate << "," << _year;
 }
 
@@ -64,6 +68,7 @@ void
 Song::table_update_values( std::ostream &str ) const {
 	str << "dir_id=" << _dir_id 
 	    << "artist_id=" << _artist_id
+	    << "album_id=" << _album_id
 	    << ",file_name=" << sqlite::q(_file_name) 
 	    << ",title=" << sqlite::q(_title)
 	    << ",track=" << _track 
@@ -77,13 +82,13 @@ void
 Song::initialize_from_db( const sqlite::reader *reader ) {
 	_dir_id    = reader->get<sqlite::id_t>(0);
 	_artist_id = reader->get<sqlite::id_t>(1);
-	_file_name = reader->get<std::string>(2);
-	_title	   = reader->get<std::string>(3);
-	_track	   = reader->get<int>(4);
-	_length	   = reader->get<int>(5);
-	_bitrate   = reader->get<int>(6);
-	_year	   = reader->get<int>(7);
-	_dir       = MusicDir::load( _dir_id );
+	_album_id  = reader->get<sqlite::id_t>(2);
+	_file_name = reader->get<std::string>(3);
+	_title	   = reader->get<std::string>(4);
+	_track	   = reader->get<int>(5);
+	_length	   = reader->get<int>(6);
+	_bitrate   = reader->get<int>(7);
+	_year	   = reader->get<int>(8);
 }
 
 
@@ -106,17 +111,19 @@ Song::is_interesting( const boost::filesystem::path &path ){
 
 Song::ptr
 Song::create_from_file(  const MusicDir &md, const std::string name ){
+	md.save_if_needed();
+
 	boost::filesystem::path path = md.path() / name;
+
 	if ( ! boost::filesystem::exists( path ) || ! is_interesting( path ) ) {
 		throw file_error("can't create as doesn't exist, or just plain don't care..." );
 	}
 
-	Song *song = new Song;
+	Song::ptr song = Song::ptr( new Song );
 	song->_dir_id = md.db_id();
 	song->_file_name=name;
-	song->_dir = MusicDir::ptr( new MusicDir(md) );
 
-	ID3_Tag tag( song->path().string().c_str() );
+	ID3_Tag tag( path.string().c_str() );
 	ID3_Field *field;
 	ID3_Frame *frame;
 
@@ -124,12 +131,21 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
 		song->_title=field->GetRawText();
 	}
+	Artist::ptr artist;
+ 	frame = tag.Find( ID3FID_LEADARTIST );
+ 	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
+		Artist::ptr a = Artist::find_or_create( field->GetRawText() );
+		artist.swap( a );
+ 		song->_artist_id=artist->db_id();
+ 	}
 
-// 	frame = tag.Find( ID3FID_LEADARTIST );
-// 	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-		
-// 		song->_title=field->GetRawText();
-// 	}
+ 	frame = tag.Find( ID3FID_ALBUM );
+ 	if ( artist && frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
+		Album::ptr a = Album::find_or_create( field->GetRawText() );
+		a->add_artist( artist );
+ 		song->_album_id=a->db_id();
+ 	}
+
 
 	try {
 		frame = tag.Find( ID3FID_TRACKNUM );
@@ -157,27 +173,51 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 	} catch( boost::bad_lexical_cast & ){
 		song->_year=0;
 	}
-
 	song->save();
 
-	return Song::ptr( song );
+	return song;
 }
 
 
 
 boost::filesystem::path
 Song::path() const{
-	return _dir->path() / _file_name;
+	MusicDir::ptr dir = this->directory();
+	return dir->path() / _file_name;
+}
+
+MusicDir::ptr
+Song::directory() const {
+	return Spinny::db()->load<MusicDir>( _dir_id );
+}
+
+
+Album::ptr
+Song::album() const {
+	Album::ptr al = Spinny::db()->load<Album>( _album_id );
+	BOOST_LOG(sql) << "LOADING: " << _album_id << " : " << al->name();
+	return al;
+}
+
+Artist::ptr
+Song::artist() const {
+	return Spinny::db()->load<Artist>( _artist_id );
 }
 
 
 bool
-Song::save(){
+Song::save() const {
 	return Spinny::db()->save<Song>(*this);
 }
 
 std::string
 Song::title() const {
+	return _title;
+}
+
+
+std::string
+Song::name() const {
 	return _title;
 }
 

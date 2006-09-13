@@ -10,7 +10,7 @@
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 
-class MusicDir;
+class Album;
 
 class Artist : public sqlite::table {
 	GRANT_NEEDED_FRIENDSHIP(Artist);
@@ -28,17 +28,29 @@ class Artist : public sqlite::table {
 public:
 	typedef ::sqlite::result_set<Artist> result_set;
 	typedef boost::shared_ptr<Artist> ptr;
-	bool save();
+	bool save() const;
 
 	// end db methods
+
+	Artist::result_set
+	static all();
+
+	static
+	Artist::ptr
+	find_or_create( const std::string &name );
+
+	static
+	result_set
+	with_album( const Album *alb );
+
+	sqlite::result_set<Album>
+	albums() const;
 
 	Song::result_set
 	songs() const;
 
-// 	static Song::ptr
-// 	load_or_create( const std::string &name );
-
-
+	std::string
+	name() const;
 };
 
 

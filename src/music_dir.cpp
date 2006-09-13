@@ -100,7 +100,7 @@ MusicDir::roots(){
 }
 
 bool
-MusicDir::save() {
+MusicDir::save() const {
 	return Spinny::db()->save<MusicDir>(*this);
 }
 
@@ -147,7 +147,7 @@ MusicDir::path() const {
 		md=&(*p);
 		dirs.push_back( md->_name );
 	}
-	boost::filesystem::path p("", boost::filesystem::native );
+	boost::filesystem::path p( "", boost::filesystem::native );
 	for ( vector<string>::reverse_iterator ri = dirs.rbegin(); ri != dirs.rend(); ++ri ){
 		p /= *ri; 
 	}
@@ -165,19 +165,22 @@ MusicDir::is_valid(){
 void
 MusicDir::sync(){
 	boost::filesystem::path path = this->path();
+	this->save_if_needed();
 
  	if ( ! boost::filesystem::exists( this->path() ) )
  		return;
 
  	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
-
- 	for ( boost::filesystem::directory_iterator itr( path ); itr != end_itr; ++itr ){
+ 	for ( boost::filesystem::directory_iterator itr( this->path() ); itr != end_itr; ++itr ){
  		if ( boost::filesystem::is_directory( *itr ) ) {
 			MusicDir::ptr child = this->add_child( itr->leaf() );
 			child->save();
  			child->sync();
  		} else if ( Song::is_interesting( *itr ) ){
-			Song::create_from_file( *this, itr->leaf() );
+			try {
+				Song::create_from_file( *this, itr->leaf() );
+			}
+			catch( Song::file_error &err ){ }
  		}
  	}
 }

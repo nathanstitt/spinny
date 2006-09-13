@@ -51,6 +51,14 @@ TEST( DBCreate ){
 	CHECK( filesystem::remove( SQLITE_TEST_DB_FILE ) );
 }
 
+TEST( Dump ){
+// how to test this?
+// settle for compilation	
+	DummyApp c;
+	c.con->log_table_contents( "testing" );
+	
+}
+
 TEST( Stream ) {
 	connection con;
 	con << "0123456789";
