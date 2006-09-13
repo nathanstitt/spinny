@@ -3,7 +3,7 @@
 
 
 #include "sqlite.hpp"
-
+#include "spinny.hpp"
 
 using namespace sqlite;
 
@@ -39,6 +39,16 @@ table::save_if_needed() const {
 	} else {
 		return true;
 	}
+}
+
+void
+table::destroy(){
+	if ( ! _id ){
+		return;
+	}
+	connection *con = Spinny::db();
+	*con << "delete from " << m_table_description()->table_name() << " where rowid=" << _id;
+	con->exec<sqlite::none>();
 }
 
 table::description::~description(){

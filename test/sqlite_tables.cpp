@@ -69,7 +69,22 @@ TEST( SaveExisting ){
 
 }
 
+TEST( Destroy ){
 
+	DummyApp da;
+	FooTable ft;
+	ft.parent_id = 43;
+	ft.name="testing foo table";
+	CHECK( ! ft.db_id() );
+	CHECK( ft.save() );
+	CHECK( ft.db_id() );
+
+	CHECK_EQUAL( 1, da.con->exec<int>( "select count(*) from foo_table") );
+
+	ft.destroy();
+
+	CHECK_EQUAL( 0, da.con->exec<int>( "select count(*) from foo_table") );
+}
 
 
 TEST( Comprehensive ) {

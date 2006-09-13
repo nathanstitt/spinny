@@ -143,6 +143,10 @@ TEST( Sync ){
 	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from albums") );
 	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from albums_artists") );
 
+	boost::filesystem::remove( mpath / "foo" );
+
+	CHECK_EQUAL( 1, da.con->exec<int>( "select count(*) from music_dirs") );
+
 }
 
 struct name_eq{

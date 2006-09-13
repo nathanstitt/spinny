@@ -5,6 +5,7 @@
 #include "song.hpp" 
 #include <vector>
 #include <algorithm>
+#include <list>
 #include <iterator>
 
 class md_desc : public sqlite::table::description {
@@ -161,14 +162,30 @@ MusicDir::is_valid(){
 	return boost::filesystem::exists( this->path() );
 }
 
+typedef std::list<boost::filesystem::path> list_t;
+
+template<class T> struct
+insert_path : public unary_function<T, void>
+{
+	insert_path( list_t &l ) : ii(l,l.begin()){ }
+	void operator() (T &x) { *ii++=x.path(); }
+	std::insert_iterator<list_t> ii;
+};
+
 
 void
 MusicDir::sync(){
 	boost::filesystem::path path = this->path();
 	this->save_if_needed();
 
+
  	if ( ! boost::filesystem::exists( this->path() ) )
  		return;
+
+	result_set rs = this->children();
+	list_t dirs;
+	std::for_each( rs.begin(), rs.end(), insert_path<MusicDir>(dirs) );
+	
 
  	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
  	for ( boost::filesystem::directory_iterator itr( this->path() ); itr != end_itr; ++itr ){

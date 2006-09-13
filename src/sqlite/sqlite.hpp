@@ -98,7 +98,8 @@ namespace sqlite {
 		virtual bool save_if_needed() const;
 		virtual id_t db_id() const;
 		virtual void set_db_id( id_t ) const;
-
+		virtual void destroy();
+		
 		// the below are pure virtual
 		virtual bool save() const = 0;
 		virtual void initialize_from_db( const reader* ) = 0;
