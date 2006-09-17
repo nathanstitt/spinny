@@ -4,7 +4,6 @@
 
 #include "sqlite.hpp"
 #include "boost/thread/tss.hpp"
-#include "spinny.hpp"
 
 BOOST_DEFINE_LOG(sql, "sql")
 

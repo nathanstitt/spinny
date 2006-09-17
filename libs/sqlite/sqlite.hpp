@@ -1,7 +1,7 @@
 #ifndef __SQLITE_HPP__
 #define __SQLITE_HPP__
 
-#include <sqlite/sqlite3.h>
+#include <c-sqlite/sqlite3.h>
 #include <string>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>

@@ -3,7 +3,6 @@
 
 
 #include "sqlite.hpp"
-#include "spinny.hpp"
 
 using namespace sqlite;
 
