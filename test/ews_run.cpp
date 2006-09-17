@@ -14,17 +14,20 @@ TEST( Start ){
 }
 
 TEST( ServeFile ){
-
-
 	DummyApp da;
 	EWSTestClient ews;
 
-
 	boost::filesystem::ofstream f( da.web_path / "test.txt" );
 	f << "A Test";
+	f.close();
 
-	
+	EWSTestClient::Page p = ews.get( "/test.txt" );
+
+	CHECK( filesystem::exists( da.web_path / "test.txt" ) );
+	CHECK_EQUAL( 200, p.status );
+	CHECK_EQUAL( "A Test", p.body );
 }
+
 
 } // SUITE(EwsRun)
 

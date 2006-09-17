@@ -12,10 +12,10 @@ TEST( Table ){
 
 
 TEST( FromSong ){
-
 	DummyApp da;
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+
 	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
 	Album::ptr alb = song->album();
 
@@ -24,10 +24,10 @@ TEST( FromSong ){
 
 
 TEST( Songs ){
-
 	DummyApp da;
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+
 	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
 	Album::ptr alb = song->album();
 
@@ -41,8 +41,9 @@ TEST( Songs ){
 
 TEST( All ){
 	DummyApp da;
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+
 	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
 
 	Album::result_set albums = Album::all();
@@ -63,10 +64,10 @@ struct name_eq{
 };
 
 TEST( Artists ){
-
 	DummyApp da;
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+
 	md->save();
 	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
 

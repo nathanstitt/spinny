@@ -36,14 +36,18 @@ public:
 			boost::filesystem::create_directory( web_path );
 			boost::filesystem::create_directory( music_path );
 
-			char const *args[5];
+			char const *args[9];
 			args[0] = "program";
 			args[1] = "--db";
 			args[2] = db_path.string().c_str();
 			args[3] = "--web_root";
 			args[4] = web_path.string().c_str();
+			args[5] = "--web_listen_address";
+			args[6] = "127.0.0.1";
+			args[7] = "--web_listen_port";
+			args[8] = "3001";
 
-			Spinny::run( 5, const_cast<char**>(args) );
+			Spinny::run( 9, const_cast<char**>(args) );
 			con=sqlite::db();
 			con->exec<sqlite::none>("create table testing( col1 int, col2 string, col3 int )");
 		}
@@ -57,7 +61,7 @@ public:
 	void
 	populate_music_fixtures(){
 		filesystem::directory_iterator end_itr;
-		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH ) / "vendor" / "id3lib" / "test-files" );
+		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH ) / "libs" / "id3lib" / "test-files" );
 		
 		for (  file ;file != end_itr; ++file ){
 			if ( file->leaf() != ".svn" ){

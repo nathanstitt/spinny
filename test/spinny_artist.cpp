@@ -22,12 +22,9 @@ struct name_eq{
 
 TEST( Songs ){
 	DummyApp da;
-
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-
-	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
-
- 	md->sync();
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+	md->sync();
 
  	Artist::result_set rs = Artist::all();
 
@@ -37,10 +34,10 @@ TEST( Songs ){
 }
 
 TEST( FromSong ){
-
 	DummyApp da;
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+
 	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
  
 	Artist::ptr artist = song->artist();

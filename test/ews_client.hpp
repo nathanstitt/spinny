@@ -35,7 +35,7 @@ struct EWSTestClient {
 
 	Page get( const std::string &url ){
 		Page ret;
-		asio::ip::tcp::resolver::query query( "localhost", "3000" );
+		asio::ip::tcp::resolver::query query( "localhost", "3001" );
 		asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 		asio::ip::tcp::resolver::iterator end;
 
@@ -94,26 +94,23 @@ struct EWSTestClient {
 		std::string header;
 		while (std::getline(response_stream, header) && header != "\r")
 			ret.headers += header + "\n";
-//			std::cout << header << "\n";
-//		std::cout << "\n";
+
+		std::stringstream body;
 
 		// Write whatever content we already have to output.
-//		if (response.size() > 0)
-			//ret.body=&response;
+		if (response.size() > 0)
+			body << &response;
 
-		std::string body;
-		while (std::getline(response_stream, body) && header != "\r"){
-			ret.body += body + "\n";
-		}
 
-// 		// Read until EOF, writing data to output as we go.
-// 		while (asio::read(socket, response,
-// 				  asio::transfer_at_least(1),
-// 				  asio::assign_error(error)))
-// 			ret.body += &response;
-// //			std::cout << &response;
-// 		if (error != asio::error::eof)
-// 			throw EWSTestClient::error( error.what() );
+ 		// Read until EOF, writing data to output as we go.
+ 		while (asio::read(socket, response,
+ 				  asio::transfer_at_least(1),
+ 				  asio::assign_error(error)))
+			body << &response;
+ 		if (error != asio::error::eof)
+ 			throw EWSTestClient::error( error.what() );
+
+		ret.body = body.str();
 
 		return ret;
 

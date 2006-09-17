@@ -24,7 +24,7 @@ ADD_EXECUTABLE( spinny main.cxx )
 
 ADD_LIBRARY( libspinny ${SPINNY_CPP_SRC} )
 
-TARGET_LINK_LIBRARIES( spinny sqlite boost id3lib zlib libspinny ews cppsqlite )
+TARGET_LINK_LIBRARIES( spinny sqlite boost id3lib zlib libspinny ews )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( spinny pthread )
