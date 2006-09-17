@@ -95,27 +95,27 @@ Artist::Artist() : sqlite::table(),
 
 bool
 Artist::save() const {
-	return Spinny::db()->save(*this);
+	return sqlite::db()->save(*this);
 }
 // END DB METHODS
 
 
 Artist::result_set
 Artist::all(){
-	return Spinny::db()->load_many<Artist>( "", 0 );
+	return sqlite::db()->load_many<Artist>( "", 0 );
 }
 
 
 Song::result_set
 Artist::songs() const {
-	return Spinny::db()->load_many<Song>( "artist_id", db_id() );
+	return sqlite::db()->load_many<Song>( "artist_id", db_id() );
 }
 
 
 
 Artist::result_set
 Artist::with_album( const Album *alb ){
-	sqlite::connection *con = Spinny::db();
+	sqlite::connection *con = sqlite::db();
 	*con << "select ";
 	table_desc.insert_fields( *con );
 	*con << ",artists.rowid from artists, albums_artists where artists.rowid=albums_artists.artist_id"
@@ -125,7 +125,7 @@ Artist::with_album( const Album *alb ){
 
 Album::result_set
 Artist::albums() const {
-	sqlite::connection *con = Spinny::db();
+	sqlite::connection *con = sqlite::db();
 	const sqlite::table::description *td = Album::table_description();
 	*con << "select ";
 	td->insert_fields( *con );
@@ -137,7 +137,7 @@ Artist::albums() const {
 
 Artist::ptr
 Artist::find_or_create( const std::string &name ){
-	Artist::ptr ret=Spinny::db()->load_one<Artist>( "name", name );
+	Artist::ptr ret=sqlite::db()->load_one<Artist>( "name", name );
 	if ( ! ret ){
 		Artist *a = new Artist;
 		a->_name=name;

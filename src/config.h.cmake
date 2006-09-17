@@ -16,6 +16,7 @@ using namespace std;
 	friend struct sqlite::detail::best_type<classnm,true>
 
 
+#cmakedefine SRC_PATH "@CMAKE_CURRENT_SOURCE_DIR@/../"
 #cmakedefine TESTING_FIXTURES_PATH "@CMAKE_CURRENT_BINARY_DIR@/../test/fixtures"
 #cmakedefine WINDOWS
 #cmakedefine UNIX_VARIANT

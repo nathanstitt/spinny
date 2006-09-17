@@ -38,10 +38,10 @@ public:
 
 	static
 	Album::ptr
-	find_or_create( const std::string &name );
+	find_or_create( const Artist::ptr &a, const std::string &name );
 
 	void
-	add_artist( Artist::ptr &artist );
+	add_artist( const Artist::ptr &artist );
 
 	Song::result_set
 	songs() const;

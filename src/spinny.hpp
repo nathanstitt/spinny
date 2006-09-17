@@ -11,6 +11,7 @@
 
 BOOST_DECLARE_LOG(app)
 
+
 class Spinny {
 	int _argc;
 	char **_argv;
@@ -24,8 +25,6 @@ public:
 	static void stop();
 
 	static Spinny* instance();
-
-	static sqlite::connection* Spinny::db();
 
 	template<typename T>
  	const T& config( const std::string &name ) const {

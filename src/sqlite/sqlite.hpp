@@ -20,7 +20,32 @@ BOOST_DECLARE_LOG(sql)
 
 namespace sqlite {
 
+	// forward declarations
 	class reader;
+	class command;
+	class connection;
+
+	// set the default db that will be 
+	// retuned by the db func below
+	void startup( const std::string &location );
+
+	// uses boost's thread safe storage
+	// to always return the same ptr per thread
+	connection* db();
+	// close down the cached connections
+	void stop_db();
+
+
+	// sqlite uses long long for the rowid
+	typedef long long id_t;
+
+	// quoteing functions
+	const id_t&	q( const id_t &arg );
+	const long long&	q( const long long &arg );
+	int		q( const int arg );
+	std::string	q( const std::string &val );
+	
+
 
 
 	// template functors and other utilities used internally
@@ -52,19 +77,6 @@ namespace sqlite {
 		};
 	}
 
-	// sqlite uses long long for the rowid
-	typedef long long id_t;
-
-	// quoteing functions
-	const id_t&	q( const id_t &arg );
-	const long long&	q( const long long &arg );
-	int		q( const int arg );
-	std::string	q( const std::string &val );
-
-	// forward declarations
-	class reader;
-	class command;
-	class connection;
 
 	// a special type, which is specialized
 	// to mean, don't bother returning anything usefull
@@ -119,7 +131,7 @@ namespace sqlite {
 	// no attempt is made to check that columns
 	// are of the proper type
 	void
-	check_and_create_tables( connection &conn );
+	check_and_create_tables();
 
 	// is thrown in various locations
 	class database_error : public std::runtime_error {
@@ -305,6 +317,15 @@ namespace sqlite {
 		iterator
 		end(){ return cmd->end<T>(); }
 
+		template<class T1>
+		void
+		copy_to( T1 &cont ){
+			std::insert_iterator<T1> ii( cont, cont.begin() );
+			for ( iterator i=begin(); i!=end(); ++i ){
+				*ii++=i.shared_ptr();
+			}
+		}
+		
 		boost::shared_ptr<command> cmd;
 	};
 
@@ -363,6 +384,7 @@ namespace sqlite {
 		}
 
 
+
 		// load one sqlite::table object
 		template<class T,class T2>
 		typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::stored_type
@@ -405,6 +427,7 @@ namespace sqlite {
 			BOOST_LOG(sql) << "ID: " << obj.db_id();
 			return true;
 		}
+
 
 
 		// open the connection to the db file

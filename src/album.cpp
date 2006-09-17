@@ -62,36 +62,37 @@ Album::Album() : sqlite::table(),
 
 bool
 Album::save() const {
-	return Spinny::db()->save(*this);
+	return sqlite::db()->save(*this);
 }
 // END DB METHODS
 
 Album::result_set
 Album::all(){
-	return Spinny::db()->load_many<Album>( "", 0 );
+	return sqlite::db()->load_many<Album>( "", 0 );
 }
 
 
 void
-Album::add_artist( Artist::ptr &artist ){
+Album::add_artist( const Artist::ptr &artist ){
 	this->save_if_needed();
-	sqlite::connection *con = Spinny::db();
+	sqlite::connection *con = sqlite::db();
 	*con << "insert into albums_artists( album_id, artist_id ) values ( " << this->db_id() << ","<< artist->db_id()<<")";
 	con->exec<sqlite::none>();
 }
 
 Song::result_set
 Album::songs() const {
-	return Spinny::db()->load_many<Song>( "album_id", db_id() );
+	return sqlite::db()->load_many<Song>( "album_id", db_id() );
 }
 
 Album::ptr
-Album::find_or_create( const std::string &name ){
-	Album::ptr ret=Spinny::db()->load_one<Album>( "name", name );
+Album::find_or_create( const Artist::ptr &artist, const std::string &name ){
+	Album::ptr ret=sqlite::db()->load_one<Album>( "name", name );
 	if ( ! ret ){
 		Album *a = new Album;
 		a->_name=name;
 		a->save();
+		a->add_artist( artist );
 		ret.reset( a );
 	}
 	return ret;

@@ -20,27 +20,18 @@ static  char *help_args[] =
 };
 
 
-#define STD_ARG_SIZE 3
-static  char *std_args[STD_ARG_SIZE] =
-{
-	"foo.exe",
-	"--db",
-	SQLITE_TEST_DB_FILE,
-};
+struct Spin : DummyApp {
 
-struct Spin {
-	Spin(){ Spinny::run( STD_ARG_SIZE, std_args );  }
-	~Spin(){ Spinny::stop(); }
 };
 
 static sqlite::connection* con1 = 0;
 static sqlite::connection* con2 = 0;
 void set_con1(){
-	con1 = Spinny::db();
+	con1 = sqlite::db();
 	sleep(1);
 }
 void set_con2(){
-	con2 = Spinny::db();
+	con2 = sqlite::db();
 	sleep(1);
 }
 
@@ -56,15 +47,11 @@ TEST( DB ){
 
 TEST( Config ){
 	Spin s;
-	CHECK_EQUAL( SQLITE_TEST_DB_FILE, Spinny::instance()->config<string>( "db" ) );
+	CHECK_EQUAL( s.db_path.string(), Spinny::instance()->config<string>( "db" ) );
 }
 
 
-TEST( Run ){
- 	Spinny::run(  STD_ARG_SIZE, std_args );
- 	Spinny::stop();
-	CHECK( boost::filesystem::remove( SQLITE_TEST_DB_FILE ) );
-}} // SUITE( SpinnySuite )
+} // SUITE( SpinnySuite )
 
 
 int

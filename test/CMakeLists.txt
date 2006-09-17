@@ -1,6 +1,5 @@
 
 
-
 ENABLE_TESTING()
 
 FILE(GLOB PATHED_TESTS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
@@ -16,7 +15,7 @@ CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx ${TESTS_SRC} )
 
 ADD_EXECUTABLE(${KIT}CxxTests ${Tests})
 
-TARGET_LINK_LIBRARIES(${KIT}CxxTests libspinny id3lib zlib boost sqlite unit_test )
+TARGET_LINK_LIBRARIES(${KIT}CxxTests libspinny id3lib zlib boost sqlite unit_test cppsqlite ews )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( ${KIT}CxxTests pthread )
@@ -35,18 +34,6 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/
   ${CMAKE_CURRENT_BINARY_DIR}/../src/ 
 )
-
-
-
-# COPY TESTING MP3's
-FILE(GLOB MP3S "${CMAKE_CURRENT_SOURCE_DIR}/../vendor/id3lib/test-files/*.mp3")
-FOREACH ( mp3 ${MP3S})
-  GET_FILENAME_COMPONENT(Mp3Name ${mp3} NAME)
-  EXEC_PROGRAM( ${CMAKE_COMMAND}
-    ARGS -E copy ${mp3} ${CMAKE_CURRENT_BINARY_DIR}/fixtures/music/${Mp3Name} 
-    OUTPUT_VARIABLE NULL
-    )
-ENDFOREACH( mp3 )
 
 
 IF(CMAKE_COMPILER_IS_GNUCXX)

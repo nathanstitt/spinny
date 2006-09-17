@@ -5,12 +5,13 @@ using namespace sqlite;
 SUITE(SqliteConnection) {
 
 TEST( Open ) {
+	boost::filesystem::path db("./test.db");
 	connection con;
-	CHECK( ! filesystem::exists(SQLITE_TEST_DB_FILE) );
-	con.open( SQLITE_TEST_DB_FILE );
-	CHECK( filesystem::exists(SQLITE_TEST_DB_FILE) );
+	CHECK( ! filesystem::exists( db.string() ) );
+	con.open( db.string() );
+	CHECK( filesystem::exists( db.string() ) );
 	con.close();
-	CHECK( filesystem::remove( SQLITE_TEST_DB_FILE ) );
+	CHECK( filesystem::remove( db.string() ) );
 }
 
 TEST( ExecWithArg){
@@ -28,11 +29,12 @@ TEST( ExecWithoutArg){
 }
 
 TEST( Close ){
-	connection con( SQLITE_TEST_DB_FILE );
+	boost::filesystem::path db("./test.db");
+	connection con( db.string() );
 	con.exec<none>("create table foo1(int)");
 	con.close();
 	CHECK_THROW( con.exec<none>("create table foo2(int)"), database_error );
-	CHECK( filesystem::remove( SQLITE_TEST_DB_FILE ) );
+	CHECK( filesystem::remove( db.string() ) );
 }
 
 TEST( InsertID ){
@@ -44,11 +46,12 @@ TEST( InsertID ){
 }
 
 TEST( DBCreate ){
+	boost::filesystem::path db("./test.db");
 	{
-		connection con( SQLITE_TEST_DB_FILE );
+		connection con( db.string() );
 	}
-	CHECK( filesystem::exists( SQLITE_TEST_DB_FILE ) );
-	CHECK( filesystem::remove( SQLITE_TEST_DB_FILE ) );
+	CHECK( filesystem::exists( db.string() ) );
+	CHECK( filesystem::remove( db.string() ) );
 }
 
 TEST( Dump ){

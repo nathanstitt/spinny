@@ -76,10 +76,13 @@ public:
 	int
 	year() const;
 
-	
+	std::string
+	filesystem_name() const;
+
 	struct file_error : public std::runtime_error {
 		file_error( const char *msg );
 	};
+
 
 };
 

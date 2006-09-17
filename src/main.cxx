@@ -71,7 +71,7 @@ void thread_proc()
     }
 }
 
-int main(int argc, char* argv[])
+int main(int , char*)
 {
     boost::thread_group threads;
     for (int i=0; i<5; ++i)

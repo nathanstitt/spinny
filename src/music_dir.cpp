@@ -4,7 +4,7 @@
 #include "boost/filesystem/operations.hpp"
 #include "song.hpp" 
 #include <vector>
-
+#include <limits>
 #include <list>
 #include <iterator>
 
@@ -91,18 +91,18 @@ MusicDir::add_child( const std::string &name ){
 
 MusicDir::ptr
 MusicDir::load( sqlite::id_t db_id ){
-	return Spinny::db()->load<MusicDir>( db_id );
+	return sqlite::db()->load<MusicDir>( db_id );
 }
 
 
 MusicDir::result_set
 MusicDir::roots(){
-	return Spinny::db()->load_many<MusicDir>( "parent_id", 0 );
+	return sqlite::db()->load_many<MusicDir>( "parent_id", 0 );
 }
 
 bool
 MusicDir::save() const {
-	return Spinny::db()->save<MusicDir>(*this);
+	return sqlite::db()->save<MusicDir>(*this);
 }
 
 
@@ -112,26 +112,25 @@ MusicDir::is_root() const {
 }
 
 
-string
-MusicDir::name() const {
-	return _name; 
+std::string
+MusicDir::filesystem_name() const {
+	return _name;
 }
-
 
 
 MusicDir::ptr
 MusicDir::parent() const {
-	return Spinny::db()->load<MusicDir>( _parent_id );
+	return sqlite::db()->load<MusicDir>( _parent_id );
 }
 
 Song::result_set
 MusicDir::songs(){
- 	return Spinny::db()->load_many<Song>( "dir_id", db_id() );
+ 	return sqlite::db()->load_many<Song>( "dir_id", db_id() );
 }
 
 MusicDir::result_set
 MusicDir::children() const {
-	return Spinny::db()->load_many<MusicDir>( "parent_id", db_id() );
+	return sqlite::db()->load_many<MusicDir>( "parent_id", db_id() );
 }
 
 
@@ -162,43 +161,106 @@ MusicDir::is_valid(){
 	return boost::filesystem::exists( this->path() );
 }
 
-typedef std::list<boost::filesystem::path> list_t;
+typedef std::list<MusicDir::ptr> dirs_list_t;
+typedef std::list<Song::ptr> songs_list_t;
 
-template<class T> struct
-insert_path : public unary_function<T, void>
-{
-	insert_path( list_t &l ) : ii(l,l.begin()){ }
-	void operator() (T &x) { *ii++=x.path(); }
-	std::insert_iterator<list_t> ii;
+template<typename T>
+struct name_eq {
+	name_eq( const std::string &s ) : str(s) { }
+	std::string str;
+	bool operator()( const typename T::value_type &s ){
+		return s->filesystem_name() == str;
+	}
+};
+
+template<typename T>
+struct Konan_The_Destroyer : public unary_function<T, void> {
+	void operator()( T &s ){
+		s->destroy();
+	}
 };
 
 
 void
-MusicDir::sync(){
+MusicDir::sync( unsigned char depth ){
 	boost::filesystem::path path = this->path();
 	this->save_if_needed();
 
+	if ( depth++ == numeric_limits<unsigned char>::max() ){
+		return;
+	}
 
  	if ( ! boost::filesystem::exists( this->path() ) )
  		return;
 
-	result_set rs = this->children();
-	list_t dirs;
-	std::for_each( rs.begin(), rs.end(), insert_path<MusicDir>(dirs) );
-	
+	result_set d_rs = this->children();
+	dirs_list_t dirs;
+	d_rs.copy_to<dirs_list_t>( dirs );
+
+	Song::result_set s_rs = this->songs();
+	songs_list_t songs;
+	s_rs.copy_to<songs_list_t>( songs );
 
  	boost::filesystem::directory_iterator end_itr; // default construction yields past-the-end
+
+
+	// loop through each filesystem entry
  	for ( boost::filesystem::directory_iterator itr( this->path() ); itr != end_itr; ++itr ){
+
+		// is directory?
  		if ( boost::filesystem::is_directory( *itr ) ) {
-			MusicDir::ptr child = this->add_child( itr->leaf() );
-			child->save();
- 			child->sync();
- 		} else if ( Song::is_interesting( *itr ) ){
-			try {
-				Song::create_from_file( *this, itr->leaf() );
+
+			// do we already know about the directory?
+			dirs_list_t::iterator iter = std::find_if( dirs.begin(), dirs.end(), name_eq<dirs_list_t>( itr->leaf() ) );
+			MusicDir::ptr child;
+			// No, so add it.
+			if ( dirs.end() == iter ){
+				MusicDir::ptr new_dir = this->add_child( itr->leaf() ); 
+				child.swap( new_dir );
+				child->save();
+			} else {
+				child.swap( *iter );
+				dirs.remove( *iter );
+
 			}
-			catch( Song::file_error & ){ }
+			// recursively sync the directory, passing the depth, so we
+			// don't somehow travel to INFINITY & BEYOND
+			child->sync( depth );
+ 		} else if ( Song::is_interesting( *itr ) ){
+			songs_list_t::iterator song = std::find_if( songs.begin(), songs.end(), name_eq<songs_list_t>( itr->leaf() ) );
+			if ( songs.end() == song ){
+				try {
+					Song::create_from_file( *this, itr->leaf() );
+				}
+				catch( Song::file_error &err ){	}
+			} else {
+				songs.remove( *song );
+			}
+
  		}
  	}
+
+
+	// now loop through, and delete unused entries
+	std::for_each( dirs.begin(), dirs.end(), Konan_The_Destroyer<MusicDir::ptr>() );
+	std::for_each( songs.begin(), songs.end(), Konan_The_Destroyer<Song::ptr>() );
+}
+
+
+void
+MusicDir::destroy(){
+
+	result_set d_rs = this->children();
+	dirs_list_t dirs;
+	d_rs.copy_to<dirs_list_t>( dirs );
+
+	std::for_each( dirs.begin(), dirs.end(), Konan_The_Destroyer<MusicDir::ptr>() );
+
+	Song::result_set s_rs = this->songs();
+	songs_list_t songs;
+	s_rs.copy_to<songs_list_t>( songs );
+	std::for_each( songs.begin(), songs.end(), Konan_The_Destroyer<Song::ptr>() );
+
+	sqlite::table::destroy();
 }
 

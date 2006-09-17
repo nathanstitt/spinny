@@ -52,7 +52,7 @@ public:
 
 	bool save() const;
 
- 	string name() const;
+ 	string filesystem_name() const;
 
 	MusicDir::ptr
   	parent() const;
@@ -67,7 +67,9 @@ public:
 	is_valid();
 
  	void
- 	sync();
+ 	sync( unsigned char depth = 0 );
+
+	virtual void destroy();
 };
 
 

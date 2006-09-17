@@ -116,7 +116,8 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 	boost::filesystem::path path = md.path() / name;
 
 	if ( ! boost::filesystem::exists( path ) || ! is_interesting( path ) ) {
-		throw file_error("can't create as doesn't exist, or just plain don't care..." );
+		BOOST_LOG(app) << "Can't load " << path.string() << " as it doesn't exist, or we can't handle that type of file." ;
+		throw file_error("doesn't exist, or not equipped to handle");
 	}
 
 	Song::ptr song = Song::ptr( new Song );
@@ -141,8 +142,7 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 
  	frame = tag.Find( ID3FID_ALBUM );
  	if ( artist && frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-		Album::ptr a = Album::find_or_create( field->GetRawText() );
-		a->add_artist( artist );
+		Album::ptr a = Album::find_or_create( artist, field->GetRawText() );
  		song->_album_id=a->db_id();
  	}
 
@@ -188,26 +188,26 @@ Song::path() const{
 
 MusicDir::ptr
 Song::directory() const {
-	return Spinny::db()->load<MusicDir>( _dir_id );
+	return sqlite::db()->load<MusicDir>( _dir_id );
 }
 
 
 Album::ptr
 Song::album() const {
-	Album::ptr al = Spinny::db()->load<Album>( _album_id );
+	Album::ptr al = sqlite::db()->load<Album>( _album_id );
 	BOOST_LOG(sql) << "LOADING: " << _album_id << " : " << al->name();
 	return al;
 }
 
 Artist::ptr
 Song::artist() const {
-	return Spinny::db()->load<Artist>( _artist_id );
+	return sqlite::db()->load<Artist>( _artist_id );
 }
 
 
 bool
 Song::save() const {
-	return Spinny::db()->save<Song>(*this);
+	return sqlite::db()->save<Song>(*this);
 }
 
 std::string
@@ -220,6 +220,12 @@ std::string
 Song::name() const {
 	return _title;
 }
+
+std::string
+Song::filesystem_name() const {
+	return _file_name;
+}
+
 
 int
 Song::track() const {
@@ -241,4 +247,3 @@ int
 Song::year() const {
 	return _year;
 }
-

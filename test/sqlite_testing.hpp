@@ -61,7 +61,7 @@ struct FooTable : public sqlite::table {
 	string name;	
 
 	bool save() const {
-		return Spinny::db()->save<FooTable>(*this);
+		return sqlite::db()->save<FooTable>(*this);
 	}
 
 	static const sqlite::table::description* table_description() {

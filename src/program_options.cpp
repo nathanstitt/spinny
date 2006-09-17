@@ -40,6 +40,9 @@ parse_program_options(int ac, char* av[])
 	po::options_description generic("Other options");
 	generic.add_options()
 		("db",po::value<std::string>(),"File to store music database in")
+		("web_listen_address",po::value<std::string>()->default_value("0.0.0.0"),"Network address to listen on.")
+		("web_listen_port",po::value<std::string>()->default_value("3000"),"Network port to listen on.")
+		("web_root", po::value<std::string>(),"Directory to serve files from.")
 		;
 
         // Declare a group of options that will be 

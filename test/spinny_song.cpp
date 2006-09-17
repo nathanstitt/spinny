@@ -34,8 +34,9 @@ TEST( Interesting ){
 
 TEST( Create ){
 	DummyApp da;
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+
 	md->save();
  	CHECK_THROW( Song::create_from_file( *md, "song.mp3" ), Song::file_error );
 
@@ -46,10 +47,9 @@ TEST( Create ){
 
 TEST( SetFromTag ){
 	DummyApp da;
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH );
-
-	MusicDir::ptr md = MusicDir::create_root( mpath / "music" );
 	md->save();
 	Song::ptr song = Song::create_from_file( *md,"sonny_stitt.mp3" );
 

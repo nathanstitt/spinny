@@ -18,28 +18,57 @@
 using namespace std;
 using namespace boost;
 
-#define SQLITE_TEST_DB_FILE "./test.db"
-#define STD_ARG_SIZE 3
-static  char *std_args[STD_ARG_SIZE] =
-{
-	"foo.exe",
-	"--db",
-	SQLITE_TEST_DB_FILE,
-};
-
 class DummyApp : boost::noncopyable {
+
 public:
-	DummyApp() {
-		boost::filesystem::create_directory(
-			boost::filesystem::path( TESTING_FIXTURES_PATH, boost::filesystem::native ) );
-		Spinny::run( STD_ARG_SIZE, std_args );
-  		con=Spinny::db();
-		con->exec<sqlite::none>("create table testing( col1 int, col2 string, col3 int )");
+	boost::filesystem::path fixtures_path;
+	boost::filesystem::path db_path;
+	boost::filesystem::path music_path;
+	boost::filesystem::path web_path;
+
+	DummyApp() :
+		fixtures_path( TESTING_FIXTURES_PATH ),
+		db_path( fixtures_path / "test.db" ),
+		music_path( fixtures_path / "music" ),
+		web_path( fixtures_path / "webroot" ) 
+		{
+			boost::filesystem::create_directory( fixtures_path );
+			boost::filesystem::create_directory( web_path );
+			boost::filesystem::create_directory( music_path );
+
+			char const *args[5];
+			args[0] = "program";
+			args[1] = "--db";
+			args[2] = db_path.string().c_str();
+			args[3] = "--web_root";
+			args[4] = web_path.string().c_str();
+
+			Spinny::run( 5, const_cast<char**>(args) );
+			con=sqlite::db();
+			con->exec<sqlite::none>("create table testing( col1 int, col2 string, col3 int )");
+		}
+
+	void
+	populate_web_root(){
+
+
+	}
+
+	void
+	populate_music_fixtures(){
+		filesystem::directory_iterator end_itr;
+		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH ) / "vendor" / "id3lib" / "test-files" );
+		
+		for (  file ;file != end_itr; ++file ){
+			if ( file->leaf() != ".svn" ){
+				boost::filesystem::copy_file( *file, music_path / file->leaf() );
+			}
+		}
 	}
 
 	~DummyApp() {
 		Spinny::stop();
-		filesystem::remove( SQLITE_TEST_DB_FILE );
+		filesystem::remove_all( fixtures_path );
 	}
 
 	template<typename T>

@@ -46,9 +46,10 @@ table::destroy(){
 	if ( ! _id ){
 		return;
 	}
-	connection *con = Spinny::db();
-	*con << "delete from " << m_table_description()->table_name() << " where rowid=" << _id;
-	con->exec<sqlite::none>();
+	connection *con = sqlite::db();
+	*con << "delete from " << this->m_table_description()->table_name() << " where rowid=" << this->db_id();
+	con->exec<none>();
+	_id=0;
 }
 
 table::description::~description(){
