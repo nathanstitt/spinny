@@ -10,4 +10,4 @@ MARK_AS_ADVANCED(BUILDNAME)
 
 CHECK_INCLUDE_FILES(pthread.h   HAVE_PTHREAD_H)
 
-SUBDIRS( vendor src test )
+SUBDIRS( libs src test )

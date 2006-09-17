@@ -1,5 +1,4 @@
 
-
 IF(WIN32)
   SET( WINDOWS 1 )
 ELSE(WIN32)
@@ -31,4 +30,3 @@ IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( spinny pthread )
 ENDIF( HAVE_PTHREAD_H )
 
-SUBDIRS( sqlite ews )
