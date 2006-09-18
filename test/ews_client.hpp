@@ -101,7 +101,6 @@ struct EWSTestClient {
 		if (response.size() > 0)
 			body << &response;
 
-
  		// Read until EOF, writing data to output as we go.
  		while (asio::read(socket, response,
  				  asio::transfer_at_least(1),

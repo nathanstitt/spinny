@@ -9,8 +9,8 @@ server::server(const std::string& address, const std::string& port,
   : io_service_(),
     acceptor_(io_service_),
     connection_manager_(),
-    new_connection_(new connection(io_service_,
-          connection_manager_, request_handler_)),
+    new_connection_( new connection(io_service_,
+          connection_manager_, request_handler_) ),
     request_handler_(doc_root)
 {
   // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).

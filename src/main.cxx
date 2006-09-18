@@ -2,6 +2,7 @@
 #include "spinny.hpp"
 #include "sqlite/sqlite.hpp"
 #include "id3lib/tag.h"
+
 #include "boost/thread/thread.hpp"
 #include "boost/thread/xtime.hpp"
 
@@ -73,6 +74,8 @@ void thread_proc()
 
 int main(int , char*)
 {
+
+	
     boost::thread_group threads;
     for (int i=0; i<5; ++i)
         threads.create_thread(&thread_proc);
