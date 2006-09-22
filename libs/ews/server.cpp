@@ -5,13 +5,14 @@
 namespace ews {
 
 server::server(const std::string& address, const std::string& port,
-    const std::string& doc_root)
-  : io_service_(),
-    acceptor_(io_service_),
-    connection_manager_(),
-    new_connection_( new connection(io_service_,
-          connection_manager_, request_handler_) ),
-    request_handler_(doc_root)
+	       const boost::filesystem::path & doc_root)
+	: io_service_(),
+	  acceptor_(io_service_),
+	  connection_manager_(),
+	  new_connection_( new connection(io_service_,
+					  connection_manager_, doc_root ) ),
+	  doc_root_(doc_root)
+
 {
   // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
   asio::ip::tcp::resolver resolver(io_service_);
@@ -48,7 +49,7 @@ void server::handle_accept(const asio::error& e)
   {
     connection_manager_.start(new_connection_);
     new_connection_.reset(new connection(io_service_,
-          connection_manager_, request_handler_));
+					 connection_manager_, doc_root_ ));
     acceptor_.async_accept(new_connection_->socket(),
         boost::bind(&server::handle_accept, this,
           asio::placeholders::error));

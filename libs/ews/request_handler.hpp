@@ -2,7 +2,8 @@
 #define HTTP_REQUEST_HANDLER_HPP
 
 #include <string>
-#include <boost/noncopyable.hpp>
+#include "boost/noncopyable.hpp"
+#include "boost/filesystem/path.hpp"
 
 
 namespace ews {
@@ -12,22 +13,20 @@ struct request;
 
 /// The common handler for all incoming requests.
 class request_handler
-  : private boost::noncopyable
+	: private boost::noncopyable
 {
 public:
-  /// Construct with a directory containing files to be served.
-  explicit request_handler(const std::string& doc_root);
+	static request_handler* find_handler( const request& req );
 
-  /// Handle a request and produce a reply.
-  void handle_request(const request& req, reply& rep);
+	/// Construct with a directory containing files to be served.
+	explicit request_handler( bool should_register=true );
 
-private:
-  /// The directory containing the files to be served.
-  std::string doc_root_;
+	/// Handle a request and produce a reply.
+	virtual bool handle_request(const request& req, reply& rep, const boost::filesystem::path &doc_root ) = 0;
 
-  /// Perform URL-decoding on a string. Returns false if the encoding was
-  /// invalid.
-  static bool url_decode(const std::string& in, std::string& out);
+	virtual bool can_handle( const request& req ) = 0;
+	
+	virtual ~request_handler();
 };
 
 
