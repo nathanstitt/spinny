@@ -1,7 +1,7 @@
 #include "reply.hpp"
 #include <string>
 #include <boost/lexical_cast.hpp>
-
+#include "ews/mime_types.hpp"
 
 namespace ews {
 
@@ -90,22 +90,6 @@ const char crlf[] = { '\r', '\n' };
 
 } // namespace misc_strings
 
-std::vector<asio::const_buffer> reply::to_buffers()
-{
-  std::vector<asio::const_buffer> buffers;
-  buffers.push_back(status_strings::to_buffer(status));
-  for (std::size_t i = 0; i < headers.size(); ++i)
-  {
-    header& h = headers[i];
-    buffers.push_back(asio::buffer(h.name));
-    buffers.push_back(asio::buffer(misc_strings::name_value_separator));
-    buffers.push_back(asio::buffer(h.value));
-    buffers.push_back(asio::buffer(misc_strings::crlf));
-  }
-  buffers.push_back(asio::buffer(misc_strings::crlf));
-  buffers.push_back(asio::buffer(content));
-  return buffers;
-}
 
 namespace stock_replies {
 
@@ -229,18 +213,64 @@ std::string to_string(reply::status_type status)
 
 } // namespace stock_replies
 
-reply reply::stock_reply(reply::status_type status)
+std::vector<asio::const_buffer>
+reply::to_buffers()
+{
+  std::vector<asio::const_buffer> buffers;
+  buffers.push_back(status_strings::to_buffer(status));
+  for (std::size_t i = 0; i < headers.size(); ++i)
+  {
+    header& h = headers[i];
+    buffers.push_back(asio::buffer(h.name));
+    buffers.push_back(asio::buffer(misc_strings::name_value_separator));
+    buffers.push_back(asio::buffer(h.value));
+    buffers.push_back(asio::buffer(misc_strings::crlf));
+  }
+  buffers.push_back(asio::buffer(misc_strings::crlf));
+  buffers.push_back(asio::buffer(content.str()));
+  return buffers;
+}
+
+reply
+reply::stock_reply(reply::status_type status)
 {
   reply rep;
   rep.status = status;
-  rep.content = stock_replies::to_string(status);
-  rep.headers.resize(2);
-  rep.headers[0].name = "Content-Length";
-  rep.headers[0].value = boost::lexical_cast<std::string>(rep.content.size());
-  rep.headers[1].name = "Content-Type";
-  rep.headers[1].value = "text/html";
+  std::string c = stock_replies::to_string(status);
+  rep.content << c;
+  rep.set_basic_headers( "html" );
   return rep;
 }
 
+reply::reply(){
+
+}
+
+
+reply&
+reply::operator=(const reply& r){
+	status=r.status;
+	headers=r.headers;
+	content.str( r.content.str() );
+	return *this;
+}
+
+reply::reply( const reply& r) :
+	content( r.content.str() ){ 
+}
+
+
+
+bool
+reply::set_basic_headers( const std::string &ext ) {
+	add_header("Content-Length", boost::lexical_cast<std::string>( content.str().size() ) );
+	add_header( "Content-Type", ews::mime_types::extension_to_type( ext ) );
+}
+
+bool
+reply::add_header( const std::string &name, const std::string &value ) {
+	header h( name, value );
+	headers.push_back( h );
+}
 
 } // namespace ews

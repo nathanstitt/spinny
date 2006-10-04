@@ -8,8 +8,10 @@ namespace ews {
 
 struct header
 {
-  std::string name;
-  std::string value;
+	header();
+	header( const std::string &name, const std::string& value );
+	std::string name;
+	std::string value;
 };
 
 } // namespace ews

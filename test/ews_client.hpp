@@ -10,6 +10,7 @@
 #include <string>
 #include <boost/asio.hpp>
 #include <boost/regex.hpp>
+#include <map>
 
 //using ;
 
@@ -30,7 +31,8 @@ struct EWSTestClient {
 	struct Page {
 		unsigned int status;
 		std::string body;
-		std::string headers;
+		typedef std::map<std::string,std::string> headers_t;
+		headers_t headers;
 	};
 
 	Page get( const std::string &url ){
@@ -65,7 +67,7 @@ struct EWSTestClient {
 		// Send the request.
 		asio::write(socket, request);
 
-		// Read the response status line.
+		// Read the response status line.67
 		asio::streambuf response;
 		asio::read_until(socket, response, boost::regex("\r\n"));
 
@@ -89,11 +91,15 @@ struct EWSTestClient {
 		// Read the response headers, which are terminated by a blank line.
 		asio::read_until(socket, response, boost::regex("\r\n\r\n"));
 
-
+		typedef vector< string > split_vector_type;
 		// Process the response headers.
 		std::string header;
-		while (std::getline(response_stream, header) && header != "\r")
-			ret.headers += header + "\n";
+		while (std::getline(response_stream, header) && header != "\r"){
+			split_vector_type record;
+			boost::split( record, header, boost::is_any_of(": \r\n"),token_compress_on );
+			ret.headers[ record[0] ] = record[1];
+
+		}
 
 		std::stringstream body;
 
@@ -104,8 +110,11 @@ struct EWSTestClient {
  		// Read until EOF, writing data to output as we go.
  		while (asio::read(socket, response,
  				  asio::transfer_at_least(1),
- 				  asio::assign_error(error)))
+ 				  asio::assign_error(error))){
+
 			body << &response;
+		}
+			
  		if (error != asio::error::eof)
  			throw EWSTestClient::error( error.what() );
 

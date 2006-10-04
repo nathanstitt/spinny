@@ -5,10 +5,10 @@
 #include "boost/lexical_cast.hpp"
 #include "boost/filesystem/path.hpp"
 #include "boost/filesystem/fstream.hpp"
-#include "mime_types.hpp"
+#include "ews/mime_types.hpp"
 #include "reply.hpp"
 #include "request.hpp"
-
+#include <iostream>
 
 namespace ews {
 
@@ -22,7 +22,6 @@ namespace ews {
 
 	bool
 	files_request_handler::handle_request(const request& req, reply& rep, const boost::filesystem::path &doc_root ){
-
 
 		std::string request_path=req.url;
 
@@ -61,10 +60,10 @@ namespace ews {
 		rep.status = reply::ok;
 		char buf[512];
 		while (is.read(buf, sizeof(buf)).gcount() > 0)
-			rep.content.append(buf, is.gcount());
+			rep.content.write(buf, is.gcount());
 		rep.headers.resize(2);
 		rep.headers[0].name = "Content-Length";
-		rep.headers[0].value = boost::lexical_cast<std::string>(rep.content.size());
+		rep.headers[0].value = boost::lexical_cast<std::string>(rep.content.str().size());
 		rep.headers[1].name = "Content-Type";
 		rep.headers[1].value = mime_types::extension_to_type(extension);
 

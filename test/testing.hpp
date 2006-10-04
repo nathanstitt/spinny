@@ -32,6 +32,7 @@ public:
 		music_path( fixtures_path / "music" ),
 		web_path( fixtures_path / "webroot" ) 
 		{
+			boost::filesystem::remove( db_path );
 			boost::filesystem::create_directory( fixtures_path );
 			boost::filesystem::create_directory( web_path );
 			boost::filesystem::create_directory( music_path );

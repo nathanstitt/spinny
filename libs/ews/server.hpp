@@ -6,6 +6,8 @@
 #include <boost/noncopyable.hpp>
 #include "connection.hpp"
 #include "connection_manager.hpp"
+#include "ews/request_handler.hpp"
+#include "ews/mime_types.hpp"
 
 
 namespace ews {

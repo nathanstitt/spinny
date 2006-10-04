@@ -42,6 +42,8 @@ request_handler::find_handler( const request& req ){
 	return &files_handler_;
 }
 
-	request_handler::~request_handler(){}
+
+request_handler::~request_handler(){}
+
 
 } // namespace ews
