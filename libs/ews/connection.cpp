@@ -1,9 +1,9 @@
-#include "connection.hpp"
+#include "ews/connection.hpp"
 #include <vector>
 #include <boost/bind.hpp>
-#include "connection_manager.hpp"
-#include "request_handler.hpp"
-
+#include "ews/connection_manager.hpp"
+#include "ews/request_handler.hpp"
+#include "ews/httprequest.hpp"
 
 namespace ews {
 
@@ -27,7 +27,7 @@ void connection::start()
   socket_.async_read_some(asio::buffer(buffer_),
       boost::bind(&connection::handle_read, shared_from_this(),
         asio::placeholders::error,
-        asio::placeholders::bytes_transferred));
+        asio::placeholders::bytes_transferred)); 
 }
 
 void connection::stop()
@@ -39,11 +39,20 @@ void connection::handle_read(const asio::error& e,
     std::size_t bytes_transferred)
 {
 	if (!e)	{
+		
+
 		boost::tribool result;
 		boost::tie(result, boost::tuples::ignore) = request_parser_.parse(
-			request_, buffer_.data(), buffer_.data() + bytes_transferred);
+			request_, buffer_.data(), buffer_.data() + bytes_transferred );
 
 		if (result) {
+
+			Request req(this);
+			std::string d=buffer_.data();
+			if ( req.parse_request( d ) ){
+
+			}
+
 			request_handler *handler = request_handler::find_handler( request_ );
 			handler->handle_request( request_, reply_, doc_root_ );
 			asio::async_write(socket_, reply_.to_buffers(),

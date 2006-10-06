@@ -1,8 +1,11 @@
 #include "ews/server.hpp"
 #include <boost/bind.hpp>
+#include <boost/log/log.hpp>
 
+BOOST_DEFINE_LOG( ewslog, "ewslog" )
 
 namespace ews {
+
 
 server::server(const std::string& address, const std::string& port,
 	       const boost::filesystem::path & doc_root)

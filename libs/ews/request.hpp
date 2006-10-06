@@ -12,6 +12,8 @@ namespace ews {
 struct request
 {
 
+// 	typedef std::list<std::string> varible_t;
+// 	typedef std::map< std::string, varible_t > varibles_t;
 
 	std::string method;
 	std::string uri;
@@ -19,6 +21,9 @@ struct request
 	int http_version_major;
 	int http_version_minor;
 	std::vector<header> headers;
+
+//	varibles_t varibles;
+
 };
 
 } // namespace server

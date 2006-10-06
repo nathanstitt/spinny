@@ -28,6 +28,7 @@ public:
 	boost::tuple<boost::tribool, InputIterator> parse(request& req,
 							  InputIterator begin, InputIterator end)
 		{
+			
 			while (begin != end) {
 				boost::tribool result = consume(req, *begin++);
 				if ( result ){

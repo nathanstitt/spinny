@@ -35,7 +35,15 @@ struct EWSTestClient {
 		headers_t headers;
 	};
 
-	Page get( const std::string &url ){
+	Page post( const std::string &url, const std::string &body ){
+		std::string req = "POST ";
+		req +=url;
+		req +=" HTTP/1.0\r\n";
+		return request( req, body );
+	}
+
+
+	Page request( const std::string req_line, const std::string &req_body ){
 		Page ret;
 		asio::ip::tcp::resolver::query query( "localhost", "3001" );
 		asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
@@ -59,10 +67,14 @@ struct EWSTestClient {
 		// allow us to treat all data up until the EOF as the content.
 		asio::streambuf request;
 		std::ostream request_stream(&request);
-		request_stream << "GET " << url << " HTTP/1.0\r\n";
-		request_stream << "Host: localhost\r\n";
-		request_stream << "Accept: */*\r\n";
-		request_stream << "Connection: close\r\n\r\n";
+		request_stream << req_line
+			       << "Host: localhost\r\n"
+			       << "Accept: */*\r\n"
+			       << "Connection: close\r\n"
+			       << "Content-Length: " << req_body.size() << "\r\n"
+			       << "\r\n"
+			       << req_body;
+
 
 		// Send the request.
 		asio::write(socket, request);
@@ -101,27 +113,33 @@ struct EWSTestClient {
 
 		}
 
-		std::stringstream body;
+		std::stringstream rep_body;
 
 		// Write whatever content we already have to output.
 		if (response.size() > 0)
-			body << &response;
+			rep_body << &response;
 
  		// Read until EOF, writing data to output as we go.
  		while (asio::read(socket, response,
  				  asio::transfer_at_least(1),
  				  asio::assign_error(error))){
 
-			body << &response;
+			rep_body << &response;
 		}
 			
  		if (error != asio::error::eof)
  			throw EWSTestClient::error( error.what() );
 
-		ret.body = body.str();
+		ret.body = rep_body.str();
 
 		return ret;
+	}
 
+	Page get( const std::string &url ){
+		std::string req = "GET ";
+		req += url;
+		req +=" HTTP/1.0\r\n";
+		return request( req, "" );
 	}
 };
 
