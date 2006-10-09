@@ -55,11 +55,11 @@ TEST( Status ){
 	CHECK_EQUAL( 200, ews.get( "/testurl/" ).status );
 }
 
-// TEST( Body ){
-//  	DummyApp da;
-//  	EWSTestClient ews;
-//  	CHECK_EQUAL( "gadzoo=baa", ews.get( "/testurl/?gadzoo=baa" ).body );
-// }
+TEST( Body ){
+ 	DummyApp da;
+ 	EWSTestClient ews;
+ 	CHECK_EQUAL( "gadzoo=baa", ews.get( "/testurl/?gadzoo=baa" ).body );
+}
 
 TEST( Headers ){
  	DummyApp da;
@@ -101,5 +101,4 @@ int
 ews_connection( int argc, char * argv[] ) 
 {
 	return UnitTest::RunAllTests("EwsConnection");
-
 }

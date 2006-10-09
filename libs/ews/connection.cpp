@@ -23,9 +23,6 @@ namespace ews {
 	}
 
 	void connection::start() {
-
-//		std::cout << "Server Begin read" << std::endl;
-
 		socket_.async_read_some(asio::buffer(buffer_),
 					boost::bind(&connection::handle_read, shared_from_this(),
 						    asio::placeholders::error,
@@ -37,8 +34,10 @@ namespace ews {
 	}
 
 	void connection::handle_read( const asio::error& e,
-				      std::size_t bytes_transferred) {
-//		std::cout << "Server Handle Read: " << (e) << std::endl;
+				      std::size_t bytes_transferred) 
+	{
+//		std::cout << "Server Handle Read: " << e << std::endl;
+		BOOST_LOGL(ewslog,info) << "Server Handle Read: " << e;
 		if (!e)	{
 
 			boost::tribool result;

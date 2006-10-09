@@ -55,6 +55,7 @@ namespace ews {
 				return boost::indeterminate;
 			}
 		case method:
+//			std::cout << "Parsing: " << __LINE__ << std::endl;
 			if (input == ' ') {
 				state_ = uri;
 				return boost::indeterminate;
@@ -65,6 +66,7 @@ namespace ews {
 				return boost::indeterminate;
 			}
 		case uri_start:
+//			std::cout << "Parsing: " << __LINE__ << std::endl;
 			if (is_ctl(input)) {
 				return false;
 			} else {
@@ -233,11 +235,15 @@ namespace ews {
 				return false;
 			}
 		case expecting_newline_3: // finished headers
+//			std::cout << "Parsing: " << __LINE__ << std::endl;
+
 			if ( input == '\n' ) {
 				req.headers[ boost::to_upper_copy( decode_str( req.current_header_name ) ) ] 
 					= decode_str( req.current_header_value );
 				if ( req.method == "POST" ){
 					req.content_length = req.get_header<unsigned int>( "CONTENT-LENGTH" );
+				} else {
+					req.content_length = 0;
 				}
 
 				BOOST_LOGL( ewslog, info ) << "Finished Header: "
@@ -326,6 +332,7 @@ namespace ews {
 		if ( std::string::npos != pos ){
 			req.url.erase( pos, req.url.size() );
 		}
+
 		//req.url=trim_right_if(phone,is_any_of("0"));
 
 		bool rv = ( parse_form_elements( req.varibles,  req.uri ) && 

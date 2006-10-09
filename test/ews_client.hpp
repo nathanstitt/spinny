@@ -74,13 +74,13 @@ struct EWSTestClient {
 			       << "Content-Length: " << req_body.size() << "\r\n"
 			       << "\r\n"
 			       << req_body;
-		cout  << "Sending: " << req_line
-		     << "Host: localhost\r\n"
-		     << "Accept: */*\r\n"
-		     << "Connection: close\r\n"
-		     << "Content-Length: " << req_body.size() << "\r\n"
-		     << "\r\n"
-		     << req_body << endl;
+// 		cout  << "Sending: " << req_line
+// 		     << "Host: localhost\r\n"
+// 		     << "Accept: */*\r\n"
+// 		     << "Connection: close\r\n"
+// 		     << "Content-Length: " << req_body.size() << "\r\n"
+// 		     << "\r\n"
+// 		     << req_body << endl;
 
 
 		// Send the request.
@@ -115,7 +115,7 @@ struct EWSTestClient {
 			split_vector_type record;
 			boost::split( record, header, boost::is_any_of(": \r\n"),token_compress_on );
 			ret.headers[ record[0] ] = record[1];
-			cout << "Recd Header: " << record[0] << " => " << record[1] << endl;
+//			cout << "Recd Header: " << record[0] << " => " << record[1] << endl;
 		}
 
 		std::stringstream rep_body;
@@ -124,13 +124,13 @@ struct EWSTestClient {
  		if ( response.size() > 0 )
  			rep_body << &response;
 
-		cout << "Got: " << rep_body.str() << endl;
+//		cout << "Got: " << rep_body.str() << endl;
 
  		// Read until EOF, writing data to output as we go.
  		while (asio::read(socket, response,
  				  asio::transfer_at_least(1),
  				  asio::assign_error(error))){
-			cout << "Reading more " << endl;
+//			cout << "Reading more " << endl;
 			rep_body << &response;
 		}
 
