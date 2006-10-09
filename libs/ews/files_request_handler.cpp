@@ -1,9 +1,11 @@
-#include "files_request_handler.hpp"
+#include "ews/files_request_handler.hpp"
+#include "ews/server.hpp"
 #include <fstream>
 #include <sstream>
 #include <string>
 #include "boost/lexical_cast.hpp"
 #include "boost/filesystem/path.hpp"
+#include "boost/filesystem/exception.hpp" 
 #include "boost/filesystem/fstream.hpp"
 #include "ews/mime_types.hpp"
 #include "reply.hpp"
@@ -29,7 +31,9 @@ namespace ews {
 		if (request_path.empty() || request_path[0] != '/'
 		    || request_path.find("..") != std::string::npos)
 		{
-			rep = reply::stock_reply(reply::bad_request);
+			BOOST_LOGL( ewslog, err ) << "Requested file had .. in the path: "
+						  << request_path;
+			rep.set_to( reply::bad_request );
 			return false;
 		}
 
@@ -49,10 +53,22 @@ namespace ews {
 		}
 
 		// Open the file to send back.
-		boost::filesystem::ifstream is( doc_root / request_path, std::ios::in | std::ios::binary);
-		if (!is)
-		{
-			rep = reply::stock_reply(reply::not_found);
+		boost::filesystem::ifstream is;
+		try {
+			is.open( doc_root / request_path, std::ios::in | std::ios::binary);
+		}
+		catch ( boost::filesystem::filesystem_error &e ){
+			BOOST_LOGL( ewslog, err ) << "Caught filesystem error: " 
+						  << e.what() 
+						  << " req file was: "
+						  << (doc_root / request_path).string();
+			rep.set_to( reply::not_found );
+			return false;
+		}
+		if (!is) {
+			rep.set_to( reply::not_found );
+			BOOST_LOGL( ewslog, err ) << "File not opened successfully: " 
+						  << (doc_root / request_path).string();
 			return false;
 		}
 
@@ -61,11 +77,14 @@ namespace ews {
 		char buf[512];
 		while (is.read(buf, sizeof(buf)).gcount() > 0)
 			rep.content.write(buf, is.gcount());
-		rep.headers.resize(2);
-		rep.headers[0].name = "Content-Length";
-		rep.headers[0].value = boost::lexical_cast<std::string>(rep.content.str().size());
-		rep.headers[1].name = "Content-Type";
-		rep.headers[1].value = mime_types::extension_to_type(extension);
+	
+// 		rep.headers.resize(2);
+// 		rep.headers[0].name = "Content-Length";
+// 		rep.headers[0].value = boost::lexical_cast<std::string>(rep.content.str().size());
+// 		rep.headers[1].name = "Content-Type";
+// 		rep.headers[1].value = mime_types::extension_to_type(extension);
+
+		rep.set_basic_headers( mime_types::extension_to_type(extension) );
 
 		return true;
 	}

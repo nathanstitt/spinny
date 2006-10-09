@@ -26,13 +26,13 @@ public:
   /// input has been consumed.
 	template <typename InputIterator>
 	boost::tuple<boost::tribool, InputIterator> parse(request& req,
-							  InputIterator begin, InputIterator end)
+							  InputIterator begin, InputIterator end) 
 		{
-			
 			while (begin != end) {
 				boost::tribool result = consume(req, *begin++);
 				if ( result ){
-					this->decode_url( req.uri, req.url );
+					this->perform_final_decode( req );
+
 				}
 				if ( result || ! result ){
 					return boost::make_tuple(result, begin);
@@ -43,6 +43,7 @@ public:
 		}
 
 private:
+
 	/// Handle the next character of input.
 	boost::tribool consume(request& req, char input);
 
@@ -81,11 +82,12 @@ private:
 		space_before_header_value,
 		header_value,
 		expecting_newline_2,
-		expecting_newline_3
+		expecting_newline_3,
+		reading_body,
 	} state_;
 
 	// decode the uri to a proper url
-	bool decode_url( const std::string& in, std::string& out );
+	bool perform_final_decode( request &req );
 };
 
 } // namespace ews

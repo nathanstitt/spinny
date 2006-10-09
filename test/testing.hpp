@@ -96,10 +96,6 @@ struct EnableLogging {
 			.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" )
 			.add_modifier(&boost::logging::append_enter,"enter");
 	}
-	
-
-
-
 };
 
 template<typename T> inline

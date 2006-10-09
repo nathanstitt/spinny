@@ -74,6 +74,13 @@ struct EWSTestClient {
 			       << "Content-Length: " << req_body.size() << "\r\n"
 			       << "\r\n"
 			       << req_body;
+		cout  << "Sending: " << req_line
+		     << "Host: localhost\r\n"
+		     << "Accept: */*\r\n"
+		     << "Connection: close\r\n"
+		     << "Content-Length: " << req_body.size() << "\r\n"
+		     << "\r\n"
+		     << req_body << endl;
 
 
 		// Send the request.
@@ -87,8 +94,8 @@ struct EWSTestClient {
 		std::istream response_stream(&response);
 		std::string http_version;
 		response_stream >> http_version;
-		unsigned int status_code;
-		response_stream >> status_code;
+
+		response_stream >> ret.status;
 		std::string status_message;
 		std::getline(response_stream, status_message);
 		if (!response_stream || http_version.substr(0, 5) != "HTTP/")
@@ -97,8 +104,6 @@ struct EWSTestClient {
 			err += http_version.substr(0, 5);
 			throw EWSTestClient::error( err );
 		}
-
-		ret.status=status_code;
 
 		// Read the response headers, which are terminated by a blank line.
 		asio::read_until(socket, response, boost::regex("\r\n\r\n"));
@@ -110,23 +115,25 @@ struct EWSTestClient {
 			split_vector_type record;
 			boost::split( record, header, boost::is_any_of(": \r\n"),token_compress_on );
 			ret.headers[ record[0] ] = record[1];
-
+			cout << "Recd Header: " << record[0] << " => " << record[1] << endl;
 		}
 
 		std::stringstream rep_body;
 
 		// Write whatever content we already have to output.
-		if (response.size() > 0)
-			rep_body << &response;
+ 		if ( response.size() > 0 )
+ 			rep_body << &response;
+
+		cout << "Got: " << rep_body.str() << endl;
 
  		// Read until EOF, writing data to output as we go.
  		while (asio::read(socket, response,
  				  asio::transfer_at_least(1),
  				  asio::assign_error(error))){
-
+			cout << "Reading more " << endl;
 			rep_body << &response;
 		}
-			
+
  		if (error != asio::error::eof)
  			throw EWSTestClient::error( error.what() );
 

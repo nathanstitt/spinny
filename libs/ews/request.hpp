@@ -3,28 +3,61 @@
 
 #include <string>
 #include <vector>
-#include "header.hpp"
-
+#include <map>
+#include "ews/request_parser.hpp"
+#include "ews/header.hpp"
+#include "boost/lexical_cast.hpp"
 
 namespace ews {
 
-/// A request received from a client.
-struct request
-{
+	/// A request received from a client.
+	class request {
+		friend class request_parser;
 
-// 	typedef std::list<std::string> varible_t;
-// 	typedef std::map< std::string, varible_t > varibles_t;
+		std::string current_header_name;
+		std::string current_header_value;
+		void clear_current_header();
+	public:
 
-	std::string method;
-	std::string uri;
-	std::string url;
-	int http_version_major;
-	int http_version_minor;
-	std::vector<header> headers;
+		typedef std::map< std::string, std::string > headers_t;
+		headers_t headers;
 
-//	varibles_t varibles;
+		typedef std::vector<std::string> varible_t;
+		typedef std::map< std::string, varible_t > varibles_t;
+		varibles_t varibles;
 
-};
+		int http_version_major;
+		int http_version_minor;
+		std::string method;
+		std::string uri;
+		std::string url;
+		std::string body;
+		unsigned int content_length;
+
+		template<typename T>
+		T
+		get_header( const std::string& name ) const {
+			headers_t::const_iterator hv=headers.find( name );
+			if ( headers.end() != hv ){
+				return boost::lexical_cast<T>( hv->second );
+			} else {
+				return T();
+			}
+		}
+
+		template<typename T>
+		T
+		single_value( const std::string &name ) const {
+			varibles_t::const_iterator var=varibles.find( name );
+			varible_t::iterator val;
+			if ( varibles.end() != var && ! var->second.empty() ){
+				return boost::lexical_cast<T>( var->second.front() );
+			} else {
+				return T();
+			}
+
+		}
+	};
 
 } // namespace server
 

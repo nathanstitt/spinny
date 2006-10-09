@@ -93,17 +93,18 @@ const char crlf[] = { '\r', '\n' };
 
 namespace stock_replies {
 
-const char ok[] = "";
-const char created[] =
-  "<html>"
-  "<head><title>Created</title></head>"
-  "<body><h1>201 Created</h1></body>"
-  "</html>";
-const char accepted[] =
-  "<html>"
-  "<head><title>Accepted</title></head>"
-  "<body><h1>202 Accepted</h1></body>"
-  "</html>";
+	static const char ok[] = "";
+	
+	const char created[] =
+ 	  "<html>"
+ 	  "<head><title>Created</title></head>"
+ 	  "<body><h1>201 Created</h1></body>"
+ 	  "</html>";
+	const char accepted[] =
+ 	  "<html>"
+ 	  "<head><title>Accepted</title></head>"
+ 	  "<body><h1>202 Accepted</h1></body>"
+ 	  "</html>";
 const char no_content[] =
   "<html>"
   "<head><title>No Content</title></head>"
@@ -170,7 +171,8 @@ const char service_unavailable[] =
   "<body><h1>503 Service Unavailable</h1></body>"
   "</html>";
 
-std::string to_string(reply::status_type status)
+const char*
+to_string(reply::status_type status)
 {
   switch (status)
   {
@@ -211,8 +213,9 @@ std::string to_string(reply::status_type status)
   }
 }
 
+static const char* bbba="fooosjkf askldfjasdlk fjklasdjfkl asdlk fjlkasd";
 } // namespace stock_replies
-
+#include <iostream>
 std::vector<asio::const_buffer>
 reply::to_buffers()
 {
@@ -226,37 +229,46 @@ reply::to_buffers()
     buffers.push_back(asio::buffer(h.value));
     buffers.push_back(asio::buffer(misc_strings::crlf));
   }
+
+  
   buffers.push_back(asio::buffer(misc_strings::crlf));
-  buffers.push_back(asio::buffer(content.str()));
+
+//   char *b=new char[ content.str().size() ];
+//   strncpy( b, content.str().c_str(), content.str().size() );
+//   buffers.push_back( asio::buffer( b, content.str().size() ) );
+
+  buffers.push_back( asio::buffer( content.str() ) );
   return buffers;
 }
 
-reply
-reply::stock_reply(reply::status_type status)
+// reply
+// reply::stock_reply(reply::status_type status)
+// {
+//   reply rep;
+//   rep.status = status;
+//   std::string c = stock_replies::to_string(status);
+//   rep.content << c;
+//   rep.set_basic_headers( "html" );
+//   return rep;
+// }
+
+reply::reply()
 {
-  reply rep;
-  rep.status = status;
-  std::string c = stock_replies::to_string(status);
-  rep.content << c;
-  rep.set_basic_headers( "html" );
-  return rep;
-}
-
-reply::reply(){
 
 }
 
 
-reply&
-reply::operator=(const reply& r){
-	status=r.status;
-	headers=r.headers;
-	content.str( r.content.str() );
-	return *this;
+reply::~reply(){
+
 }
 
-reply::reply( const reply& r) :
-	content( r.content.str() ){ 
+
+void
+reply::set_to( status_type stat ){
+	this->status=stat;
+	this->headers.clear();
+	content.str( stock_replies::to_string(stat) );
+	this->set_basic_headers( "html" );
 }
 
 
@@ -272,5 +284,28 @@ reply::add_header( const std::string &name, const std::string &value ) {
 	header h( name, value );
 	headers.push_back( h );
 }
+
+
+int
+reply::stream::buffer::overflow(int c) {
+	buffer_.push_back( static_cast<char>(c) );
+	return c;
+}
+
+const std::string&
+reply::stream::str() const {
+	return buf_.buffer_;
+
+}
+
+const std::string&
+reply::stream::str( const std::string &str ){
+	buf_.buffer_ = str;
+}
+
+reply::stream::stream() :
+	std::ostream( &buf_ ){ }
+
+
 
 } // namespace ews

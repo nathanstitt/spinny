@@ -19,50 +19,31 @@ namespace ews {
 	class FormValue {
 	
 	public:
-	
-		typedef std::map < std::string, FormValue > Map;
+		typedef std::map < std::string, FormValue > map;
+		typedef std::map < std::string, std::string > string_map_t;
 
-		/// for MIME attachments only, normal header information like content-type -- everything except content-disposition, which is in oContentDisposition
-		ews::string_map_t oFormHeaders;
+		/// for MIME attachments only, normal header information like content-type
+		// -- everything except content-disposition, which is in oContentDisposition
+		string_map_t headers;
 
 		/// everything in the content disposition line
-		ContentDisposition oContentDisposition; 
+		ContentDisposition content_disposition; 
 	
 		/// the body of the value.  For non-MIME-style attachments, this is the only part used.
-		std::string sBody; 
+		std::string body; 
 	
 		/// Default constructor
-		FormValue ( ) {
-#ifdef EHS_MEMORY
-			fprintf ( stderr, "[EHS_MEMORY] Allocated: FormValue\n" );
-#endif		
-		}
+		FormValue ( ) { }
 	
 		/// Constructor 
-		FormValue ( std::string & irsBody, ///< body for the form value
-			    ContentDisposition & ioContentDisposition ///< content disposition type string
-			) :
-			oContentDisposition ( ioContentDisposition ),
-			sBody ( irsBody ) {
-#ifdef EHS_MEMORY
-			fprintf ( stderr, "[EHS_MEMORY] Allocated: FormValue\n" );
-#endif		
-		}
+		FormValue ( std::string &b, ContentDisposition &cd ) :
+			content_disposition ( cd ),
+			body ( b ) 
+			{ }
 
-#ifdef EHS_MEMORY
-		/// This is only for watching memory allocation
-		FormValue ( const FormValue & iroFormValue ) {
-			*this = iroFormValue;
-			fprintf ( stderr, "[EHS_MEMORY] Allocated: FormValue (Copy Constructor)\n" );
-		}
-#endif		
 
 		/// destructor
-		virtual ~FormValue ( ) {
-#ifdef EHS_MEMORY
-			fprintf ( stderr, "[EHS_MEMORY] Deallocated: FormValue\n" );
-#endif		
-		}
+		virtual ~FormValue ( ) { }
    
 	};
 

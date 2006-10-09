@@ -94,4 +94,6 @@ Spinny::stop(){
 
 	delete _web_thread;
 	_web_thread=0;
+
+	BOOST_LOGL(app, warn) << "Spinny stopped";
 }

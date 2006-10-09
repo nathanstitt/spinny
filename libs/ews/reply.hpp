@@ -12,9 +12,29 @@ namespace ews {
 /// A reply to be sent to a client.
 	class reply
 	{
-	public:
-		reply(const reply& r);
 		reply& operator=(const reply& r);
+		reply(const reply& );
+		class stream :boost::noncopyable, public std::ostream {
+		public:
+			stream();
+			class buffer : public std::streambuf {
+			public:
+				int overflow(int c);
+				std::string buffer_;
+			};
+
+			buffer buf_;
+
+			const std::string& str() const;
+			const std::string& str( const std::string &s );
+			
+		};
+	public:
+
+		/// The content to be sent in the reply.
+		stream content;
+
+		~reply();
 		explicit reply();
 		/// The status of the reply.
 		enum status_type
@@ -37,19 +57,18 @@ namespace ews {
 			service_unavailable = 503
 		} status;
 
+		typedef std::vector<header> headers_t;
 		/// The headers to be included in the reply.
-		std::vector<header> headers;
+		headers_t headers;
 
-		/// The content to be sent in the reply.
-		std::stringstream content;
+		// set to a stock reply
+		void set_to( status_type stat );
+
 
 		/// Convert the reply into a vector of buffers. The buffers do not own the
 		/// underlying memory blocks, therefore the reply object must remain valid and
 		/// not be changed until the write operation has completed.
 		std::vector<asio::const_buffer> to_buffers();
-
-		/// Get a stock reply.
-		static reply stock_reply(status_type status);
 
 		bool set_basic_headers( const std::string &file_ext );
 

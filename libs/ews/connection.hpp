@@ -42,7 +42,7 @@ namespace ews {
 		void handle_read(const asio::error& e, std::size_t bytes_transferred);
 
 		/// Handle completion of a write operation.
-		void handle_write(const asio::error& e);
+		void handle_write(const asio::error& e, std::size_t bytes_transferred );
 
 		/// Socket for the connection.
 		asio::ip::tcp::socket socket_;

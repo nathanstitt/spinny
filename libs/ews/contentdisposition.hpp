@@ -3,8 +3,8 @@
 #define CONTENTDISPOSITION_H
 
 #include <string>
+#include <map>
 #include "ews/server.hpp"
-
 
 namespace ews {
 /// This stores the content disposition of a subbody
@@ -15,31 +15,17 @@ namespace ews {
 	class ContentDisposition {
 
 	public:
-	
+		typedef std::map<std::string, std::string> string_map_t;
+
 		/// constructor
-		ContentDisposition ( ) {
-#ifdef EHS_MEMORY
-			fprintf ( stderr, "[EHS_MEMORY] Allocated: ContentDisposition\n" );
-#endif		
-		}
+		ContentDisposition ( ) { }
 
 		/// destructor
-		~ContentDisposition ( ) {
-#ifdef EHS_MEMORY
-			fprintf ( stderr, "[EHS_MEMORY] Deallocated: ContentDisposition\n" );
-#endif		
-		}
+		~ContentDisposition ( ) { }
 
-#ifdef EHS_MEMORY
-		/// this is only for watching memory allocation
-		ContentDisposition ( const ContentDisposition & iroContentDisposition ) {
-			*this = iroContentDisposition;
-			fprintf ( stderr, "[EHS_MEMORY] Allocated: ContentDisposition (Copy Constructor)\n" );
-		}
-#endif		
 
-		ews::string_map_t oContentDispositionHeaders; ///< map of headers for this content disposition
-		std::string sContentDisposition; ///< content disposition string for this object
+		string_map_t headers;
+		std::string disposition;
 
 	};
 
