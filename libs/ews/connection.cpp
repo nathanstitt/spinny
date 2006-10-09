@@ -23,6 +23,7 @@ namespace ews {
 	}
 
 	void connection::start() {
+
 //		std::cout << "Server Begin read" << std::endl;
 
 		socket_.async_read_some(asio::buffer(buffer_),
