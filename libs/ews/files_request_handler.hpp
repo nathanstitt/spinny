@@ -15,14 +15,13 @@ class files_request_handler
 	: public request_handler
 {
 public:
-
 	/// Construct with a directory containing files to be served.
 	explicit files_request_handler();
 
 	/// Handle a request and produce a reply.
-	virtual bool handle_request(const request& req, reply& rep, const boost::filesystem::path &doc_root );
+	virtual request_handler::result handle(const request& req, reply& rep );
 
-	bool can_handle( const request &req );
+	virtual std::string name() const;
 
 	virtual ~files_request_handler();
 private:

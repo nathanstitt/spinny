@@ -4,7 +4,7 @@
 #include <string>
 #include "boost/noncopyable.hpp"
 #include "boost/filesystem/path.hpp"
-
+#include "boost/logic/tribool.hpp"
 
 namespace ews {
 
@@ -16,16 +16,23 @@ class request_handler
 	: private boost::noncopyable
 {
 public:
-	static request_handler* find_handler( const request& req );
+	static bool handle_request( const request& req, reply &rep );
 
 	/// Construct with a directory containing files to be served.
 	explicit request_handler( bool should_register=true );
 
-	/// Handle a request and produce a reply.
-	virtual bool handle_request( connection *conn ) = 0;
+	enum result {
+		cont,    // All ok, continue passing the request to other handlers
+		stop,    // All ok, but don't continue passing the request to other handlers
+		error,   // Error occured, stop processing & set status to 500
+		file,    // Handle request with the filesystem handler
+	};
 
-	virtual bool can_handle( const connection *conn ) = 0;
-	
+	/// Handle a request and produce a reply.
+	virtual result handle( const request &req, reply &rep ) = 0;
+
+	virtual std::string name() const = 0;
+
 	virtual ~request_handler();
 };
 

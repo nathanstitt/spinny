@@ -7,6 +7,7 @@
 #include "header.hpp"
 #include <sstream>
 #include "boost/filesystem/path.hpp"
+#include "cs/cs.h"
 
 namespace ews {
 
@@ -31,8 +32,8 @@ namespace ews {
 			
 		};
 
-		CSPARSE *p;
-		HDF *hdf;
+		CSPARSE *cs_parse_;
+		HDF *hdf_;
 	public:
 		/// The content to be sent in the reply.
 		stream content;

@@ -4,12 +4,14 @@
 #include <string>
 #include <vector>
 #include <map>
+
 #include "ews/request_parser.hpp"
 #include "ews/header.hpp"
 #include "boost/lexical_cast.hpp"
 #include "cs/cs.h"
 
 namespace ews {
+	class connection;
 
 	/// A request received from a client.
 	class request {
@@ -19,6 +21,9 @@ namespace ews {
 		std::string current_header_value;
 		void clear_current_header();
 	public:
+		request( const connection *conn );
+
+		const connection *conn;
 
 		typedef std::map< std::string, std::string > headers_t;
 		headers_t headers;

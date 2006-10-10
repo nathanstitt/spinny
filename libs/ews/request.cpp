@@ -14,4 +14,11 @@ namespace ews{
 		current_header_value.clear();
 	}
 
+	request::request( const connection *c ) :
+		conn( c ),
+		http_version_major(0),
+		http_version_minor(0),
+		content_length(0)
+	{ }
+
 }

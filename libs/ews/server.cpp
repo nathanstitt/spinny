@@ -15,7 +15,7 @@ namespace ews {
 		  acceptor_(io_service_),
 		  connection_manager_(),
 		  new_connection_( new connection( io_service_,
-						   connection_manager_, doc_root ) ),
+						   connection_manager_, doc_root, tmpl_root ) ),
 		  doc_root_(doc_root),
 		  tmpl_root_(tmpl_root)
 

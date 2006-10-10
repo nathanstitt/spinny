@@ -18,7 +18,11 @@ class CustomHandler
 {
 
 	/// Handle a request and produce a reply.
-	virtual bool handle_request(const ews::request& req, ews::reply& rep, const boost::filesystem::path &doc_root ){
+	virtual request_handler::result
+	handle( const ews::request& req, ews::reply& rep ){
+		if ( ! boost::starts_with( req.url,"/test" ) ){
+			return cont;
+		}
 		rep.status=ews::reply::ok;
 		for ( ews::request::varibles_t::const_iterator vars = req.varibles.begin(); req.varibles.end() != vars; ++vars ){
 			for ( ews::request::varible_t::const_iterator val = vars->second.begin(); vars->second.end() != val; ++ val ){
@@ -28,20 +32,14 @@ class CustomHandler
 				rep.content << vars->first << "=" << *val;
 			}
 		}
-//		rep.content << "\nfjasdfj klasdf jkladshfkjsdaghjksdfakj lghfdsjkg hdfsgk jsdfjksdf ghjksdf hgfkasdfh jkasdjkfhasdjk fhkjasdfsadfh dash";
 		rep.add_header( "X-HANDLED-BY", "CustomHandler" );
 		rep.set_basic_headers( "txt" );
 
-		return true;
+		return stop;
 	}
+	std::string name() const { "CustomHandler"; }
 
-	bool can_handle( const ews::request &req ){
-		if ( boost::starts_with( req.url,"/test" ) ){
-			return true;
-		} else {
-			return false;
-		}
-	}
+
 };
 
 
@@ -51,6 +49,9 @@ static CustomHandler ca;
 TEST( Status ){
 	DummyApp da;
 	EWSTestClient ews;
+//  	EnableLogging el;
+//  	boost::logging::manipulate_logs("sql")
+//  		.disable();
 	CHECK_EQUAL( 404, ews.get( "/non/existant/url" ).status );
 	CHECK_EQUAL( 200, ews.get( "/testurl/" ).status );
 }

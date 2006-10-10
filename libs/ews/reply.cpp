@@ -1,7 +1,8 @@
 #include "reply.hpp"
 #include <string>
-#include <boost/lexical_cast.hpp>
+#include "boost/lexical_cast.hpp"
 #include "ews/mime_types.hpp"
+#include "ews/server.hpp"
 
 namespace ews {
 
@@ -229,36 +230,19 @@ reply::to_buffers()
     buffers.push_back(asio::buffer(h.value));
     buffers.push_back(asio::buffer(misc_strings::crlf));
   }
-
-  
   buffers.push_back(asio::buffer(misc_strings::crlf));
-
-//   char *b=new char[ content.str().size() ];
-//   strncpy( b, content.str().c_str(), content.str().size() );
-//   buffers.push_back( asio::buffer( b, content.str().size() ) );
-
   buffers.push_back( asio::buffer( content.str() ) );
   return buffers;
 }
 
-// reply
-// reply::stock_reply(reply::status_type status)
-// {
-//   reply rep;
-//   rep.status = status;
-//   std::string c = stock_replies::to_string(status);
-//   rep.content << c;
-//   rep.set_basic_headers( "html" );
-//   return rep;
-// }
 
 reply::reply() {
 	NEOERR* err;
 	if ( STATUS_OK != ( err=hdf_init ( &hdf_ ) ) ){
-		BOOST_LOGL( ewslog, err ) << "hdf_init returned error: " << err.error << " : " << err.desc;
+		BOOST_LOGL( ewslog, err ) << "hdf_init returned error: " << err->error << " : " << err->desc;
 	}
-	if ( STATUS_OK != ( err=cs_init ( &p, hdf ) ) ){
-		BOOST_LOGL( ewslog, err ) << "hdf_init returned error: " << err.error << " : " << err.desc;
+	if ( STATUS_OK != ( err=cs_init ( &cs_parse_, hdf_ ) ) ){
+		BOOST_LOGL( ewslog, err ) << "hdf_init returned error: " << err->error << " : " << err->desc;
 	}
 }
 

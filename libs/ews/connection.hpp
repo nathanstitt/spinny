@@ -39,12 +39,6 @@ namespace ews {
 		/// Stop all asynchronous operations associated with the connection.
 		void stop();
 
-		/// The incoming request.
-		request request;
-
-		/// The reply to be sent back to the client.
-		reply reply;
-
 		boost::filesystem::path doc_root;
 
 		boost::filesystem::path tmpl_root;
@@ -64,6 +58,12 @@ namespace ews {
 
 		/// Buffer for incoming data.
 		boost::array<char, 8192> buffer_;
+
+		/// The incoming request.
+		request request_;
+
+		/// The reply to be sent back to the client.
+		reply reply_;
 
 
 		/// The parser for the incoming request.
