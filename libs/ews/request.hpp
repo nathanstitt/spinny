@@ -7,6 +7,7 @@
 #include "ews/request_parser.hpp"
 #include "ews/header.hpp"
 #include "boost/lexical_cast.hpp"
+#include "cs/cs.h"
 
 namespace ews {
 

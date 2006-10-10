@@ -25,7 +25,9 @@ namespace ews {
 		/// Construct the server to listen on the specified TCP address and port, and
 		/// serve up files from the given directory.
 		explicit server(const std::string& address, const std::string& port,
-				const boost::filesystem::path& doc_root);
+				const boost::filesystem::path& doc_root,
+				const boost::filesystem::path& tmpl_root,
+			);
 
 		/// Run the server's io_service loop.
 		void run();
@@ -53,6 +55,7 @@ namespace ews {
 		connection_ptr new_connection_;
 
 		boost::filesystem::path doc_root_;
+		boost::filesystem::path tmpl_root_;
 	};
 
 

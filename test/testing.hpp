@@ -18,6 +18,7 @@
 using namespace std;
 using namespace boost;
 
+#define ARGS_SIZE 11
 class DummyApp : boost::noncopyable {
 
 public:
@@ -25,19 +26,22 @@ public:
 	boost::filesystem::path db_path;
 	boost::filesystem::path music_path;
 	boost::filesystem::path web_path;
+	boost::filesystem::path template_path;
 
 	DummyApp() :
 		fixtures_path( TESTING_FIXTURES_PATH ),
 		db_path( fixtures_path / "test.db" ),
 		music_path( fixtures_path / "music" ),
-		web_path( fixtures_path / "webroot" ) 
+		web_path( fixtures_path / "webroot" ),
+		template_path( fixtures_path / "webtmpl" )
 		{
 			boost::filesystem::remove( db_path );
 			boost::filesystem::create_directory( fixtures_path );
 			boost::filesystem::create_directory( web_path );
+			boost::filesystem::create_directory( template_path );
 			boost::filesystem::create_directory( music_path );
 
-			char const *args[9];
+			char const *args[ARGS_SIZE];
 			args[0] = "program";
 			args[1] = "--db";
 			args[2] = db_path.string().c_str();
@@ -47,23 +51,29 @@ public:
 			args[6] = "127.0.0.1";
 			args[7] = "--web_listen_port";
 			args[8] = "3001";
+			args[9] = "--template_root";
+			args[10]= template_path.string().c_str();
 
-			Spinny::run( 9, const_cast<char**>(args) );
+			Spinny::run( ARGS_SIZE, const_cast<char**>(args) );
 			con=sqlite::db();
 			con->exec<sqlite::none>("create table testing( col1 int, col2 string, col3 int )");
 		}
 
 	void
-	populate_web_root(){
-
-
+	populate_web(){
+		filesystem::directory_iterator end_itr;
+		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH ) / "libs" / "cs" / "test-files" );
+		for (  file ;file != end_itr; ++file ){
+			if ( file->leaf() != ".svn" ){
+				boost::filesystem::copy_file( *file, template_path / file->leaf() );
+			}
+		}
 	}
 
 	void
 	populate_music_fixtures(){
 		filesystem::directory_iterator end_itr;
-		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH ) / "libs" / "id3lib" / "test-files" );
-		
+		boost::filesystem::directory_iterator file( filesystem::path( SRC_PATH ) / "libs" / "id3lib" / "test-files" );
 		for (  file ;file != end_itr; ++file ){
 			if ( file->leaf() != ".svn" ){
 				boost::filesystem::copy_file( *file, music_path / file->leaf() );

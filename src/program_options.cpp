@@ -43,6 +43,7 @@ parse_program_options(int ac, char* av[])
 		("web_listen_address",po::value<std::string>()->default_value("0.0.0.0"),"Network address to listen on.")
 		("web_listen_port",po::value<std::string>()->default_value("3000"),"Network port to listen on.")
 		("web_root", po::value<std::string>(),"Directory to serve files from.")
+		("template_root",po::value<std::string>(),"Directory to find templates in.")
 		;
 
         // Declare a group of options that will be 

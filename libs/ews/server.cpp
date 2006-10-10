@@ -8,13 +8,16 @@ namespace ews {
 
 
 	server::server(const std::string& address, const std::string& port,
-		       const boost::filesystem::path & doc_root)
+		       const boost::filesystem::path & doc_root,
+		       const boost::filesystem::path & tmpl_root
+		)
 		: io_service_(),
 		  acceptor_(io_service_),
 		  connection_manager_(),
 		  new_connection_( new connection( io_service_,
 						   connection_manager_, doc_root ) ),
-		  doc_root_(doc_root)
+		  doc_root_(doc_root),
+		  tmpl_root_(tmpl_root)
 
 	{
 		// Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
@@ -52,7 +55,7 @@ namespace ews {
 		{
 			connection_manager_.start(new_connection_);
 			new_connection_.reset( new connection(io_service_,
-							     connection_manager_, doc_root_ ));
+							      connection_manager_, doc_root_, tmpl_root_ ));
 			acceptor_.async_accept(new_connection_->socket(),
 					       boost::bind(&server::handle_accept, this,
 							   asio::placeholders::error));

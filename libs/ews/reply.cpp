@@ -252,9 +252,14 @@ reply::to_buffers()
 //   return rep;
 // }
 
-reply::reply()
-{
-
+reply::reply() {
+	NEOERR* err;
+	if ( STATUS_OK != ( err=hdf_init ( &hdf_ ) ) ){
+		BOOST_LOGL( ewslog, err ) << "hdf_init returned error: " << err.error << " : " << err.desc;
+	}
+	if ( STATUS_OK != ( err=cs_init ( &p, hdf ) ) ){
+		BOOST_LOGL( ewslog, err ) << "hdf_init returned error: " << err.error << " : " << err.desc;
+	}
 }
 
 

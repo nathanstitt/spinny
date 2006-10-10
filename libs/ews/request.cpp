@@ -13,4 +13,5 @@ namespace ews{
 		current_header_name.clear();
 		current_header_value.clear();
 	}
+
 }

@@ -26,7 +26,9 @@ namespace ews {
 		/// Construct a connection with the given io_service.
 		explicit connection(asio::io_service& io_service,
 				    connection_manager& manager,
-				    const boost::filesystem::path &doc_root );
+				    const boost::filesystem::path &doc_root,
+				    const boost::filesystem::path& tmpl_root
+			);
 
 		/// Get the socket associated with the connection.
 		asio::ip::tcp::socket& socket();
@@ -36,6 +38,16 @@ namespace ews {
 
 		/// Stop all asynchronous operations associated with the connection.
 		void stop();
+
+		/// The incoming request.
+		request request;
+
+		/// The reply to be sent back to the client.
+		reply reply;
+
+		boost::filesystem::path doc_root;
+
+		boost::filesystem::path tmpl_root;
 
 	private:
 		/// Handle completion of a read operation.
@@ -53,16 +65,10 @@ namespace ews {
 		/// Buffer for incoming data.
 		boost::array<char, 8192> buffer_;
 
-		/// The incoming request.
-		request request_;
 
 		/// The parser for the incoming request.
 		request_parser request_parser_;
 
-		/// The reply to be sent back to the client.
-		reply reply_;
-
-		boost::filesystem::path doc_root_;
 	};
 
 	typedef boost::shared_ptr<connection> connection_ptr;

@@ -6,6 +6,7 @@
 #include "boost/asio.hpp"
 #include "header.hpp"
 #include <sstream>
+#include "boost/filesystem/path.hpp"
 
 namespace ews {
 
@@ -29,10 +30,16 @@ namespace ews {
 			const std::string& str( const std::string &s );
 			
 		};
-	public:
 
+		CSPARSE *p;
+		HDF *hdf;
+	public:
 		/// The content to be sent in the reply.
 		stream content;
+
+		bool set_template( const boost::filesystem::path &path );
+		bool set_hdf_value( const std::string &hdf_pos, const std::string &value );
+		bool set_hdf_value( const std::string &hdf_pos, int value );
 
 		~reply();
 		explicit reply();

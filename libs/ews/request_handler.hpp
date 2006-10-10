@@ -22,9 +22,9 @@ public:
 	explicit request_handler( bool should_register=true );
 
 	/// Handle a request and produce a reply.
-	virtual bool handle_request(const request& req, reply& rep, const boost::filesystem::path &doc_root ) = 0;
+	virtual bool handle_request( connection *conn ) = 0;
 
-	virtual bool can_handle( const request& req ) = 0;
+	virtual bool can_handle( const connection *conn ) = 0;
 	
 	virtual ~request_handler();
 };

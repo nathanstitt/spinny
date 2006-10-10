@@ -10,10 +10,12 @@ namespace ews {
 
 	connection::connection(asio::io_service& io_service,
 			       connection_manager& manager,
-			       const boost::filesystem::path &doc_root )
+			       const boost::filesystem::path &doc_root,
+			       const boost::filesystem::path &tmpl_root )
 		: socket_(io_service),
 		  connection_manager_(manager),
-		  doc_root_( doc_root )
+		  doc_root_( doc_root ),
+		  tmpl_root_( tmpl_root )
 	{
 		BOOST_LOGL(ewslog,info) << "NEW CONNECTION: " << (int)this << " : " << (int)&reply_ << std::endl;
 	}
@@ -47,8 +49,11 @@ namespace ews {
 			if (result) {
 //				std::cout << "Begin Write: " <<  (int)this << " : "  << (int)&reply_ << std::endl;
 				BOOST_LOGL(ewslog,info) << "Begin Write: " <<  (int)this << " : "  << (int)&reply_ << std::endl;
+
 				request_handler *handler = request_handler::find_handler( request_ );
-				handler->handle_request( request_, reply_, doc_root_ );
+
+				handler->handle_request( this );
+
 				BOOST_LOGL( ewslog, info ) << request_.uri;
 				for( reply::headers_t::const_iterator header=reply_.headers.begin();
 				     reply_.headers.end() != header;

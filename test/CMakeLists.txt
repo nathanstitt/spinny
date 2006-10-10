@@ -15,7 +15,7 @@ CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx ${TESTS_SRC} )
 
 ADD_EXECUTABLE(${KIT}CxxTests ${Tests})
 
-TARGET_LINK_LIBRARIES(${KIT}CxxTests libspinny id3lib zlib sqlite boost unit_test ews )
+TARGET_LINK_LIBRARIES(${KIT}CxxTests libspinny id3lib zlib sqlite boost unit_test ews cs )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( ${KIT}CxxTests pthread )
