@@ -96,8 +96,8 @@ public:
 
 struct EnableLogging {
 
-	EnableLogging(){
-		boost::logging::manipulate_logs("*")
+	EnableLogging( const std::string logs="*" ){
+		boost::logging::manipulate_logs(logs)
  			.del_modifier("time")
  			.del_modifier("prefix")
  			.del_modifier("enter")

@@ -16,7 +16,6 @@ SUITE(EwsConnection) {
 class CustomHandler
 	: public ews::request_handler
 {
-
 	/// Handle a request and produce a reply.
 	virtual request_handler::result
 	handle( const ews::request& req, ews::reply& rep ){
@@ -32,6 +31,7 @@ class CustomHandler
 				rep.content << vars->first << "=" << *val;
 			}
 		}
+
 		rep.add_header( "X-HANDLED-BY", "CustomHandler" );
 		rep.set_basic_headers( "txt" );
 
@@ -43,15 +43,11 @@ class CustomHandler
 };
 
 
-
 static CustomHandler ca;
 
 TEST( Status ){
 	DummyApp da;
 	EWSTestClient ews;
-//  	EnableLogging el;
-//  	boost::logging::manipulate_logs("sql")
-//  		.disable();
 	CHECK_EQUAL( 404, ews.get( "/non/existant/url" ).status );
 	CHECK_EQUAL( 200, ews.get( "/testurl/" ).status );
 }
