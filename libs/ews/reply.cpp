@@ -219,7 +219,7 @@ namespace ews {
 	static NEOERR *
 	cs_renderer ( void *r, char *contents ){
 		reply *rep = reinterpret_cast<reply*>( r );
-//		BOOST_LOGL( ewslog, info ) << "Rendered TMPL to:\n" << contents;
+		BOOST_LOGL( ewslog, info ) << "Rendered TMPL to:\n" << contents;
 		rep->content << contents;
 		return STATUS_OK;
 	}
@@ -232,7 +232,6 @@ namespace ews {
 		BOOST_LOGL( ewslog, info ) << "Parsing TMPL File: " << template_.string();
 		if ( STATUS_OK != ( cs_res =
 				    hdf_read_string ( hdf_, const_cast<char*>( content.str().c_str() ) ) ) ){
-			
 			BOOST_LOGL( ewslog, err ) << "Error: " 
 						  << cs_res->error << " : " << cs_res->desc
 						  << " was encountered while parsing hdf: "
@@ -244,8 +243,12 @@ namespace ews {
 						  << " was encountered while parsing tmpl file: "
 						  << cs_res->file << ":" << cs_res->lineno;
 			nerr_log_error(cs_res);
-		} else if (  STATUS_OK != ( cs_res
-					    = cs_render( cs_parse_, this, cs_renderer ) ) ){
+		}
+		if ( STATUS_OK == cs_res ){
+			content.str("");
+			cs_res = cs_render( cs_parse_, this, cs_renderer );
+		}
+		if ( STATUS_OK != cs_res ){
 			BOOST_LOGL( ewslog, err ) << "Error: " 
 						  << cs_res->error << " : " << cs_res->desc
 						  << " failed to render hdf to template";
@@ -356,7 +359,6 @@ namespace ews {
 		buffer_.push_back( static_cast<char>(c) );
 		return c;
 	}
-
 	unsigned int
 	reply::stream::size() const {
 		return buf_.buffer_.size();

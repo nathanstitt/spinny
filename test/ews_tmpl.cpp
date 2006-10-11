@@ -57,7 +57,7 @@ TEST( Start ){
 	for ( file ;file != end_itr; ++file ){
 		if ( boost::ends_with( file->leaf(), ".cs") ){
 			EWSTestClient::Page p = ews.get( req+file->leaf() );
-			cout << p.body << endl;
+//			cerr << p.body << endl;
 			break;
 		}
 	}
