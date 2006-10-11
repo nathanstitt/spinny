@@ -12,11 +12,12 @@ namespace ews {
 			       connection_manager& manager,
 			       const boost::filesystem::path &d_root,
 			       const boost::filesystem::path &t_root )
-		: socket_(io_service),
-		  connection_manager_(manager),
-		  doc_root( d_root ),
+		: doc_root( d_root ),
 		  tmpl_root( t_root ),
-		  request_(this)
+		  socket_(io_service),
+		  connection_manager_(manager),
+		  request_(this),
+		  reply_(this)
 	{
 		BOOST_LOGL(ewslog,info) << "NEW CONNECTION: " << (int)this << std::endl;
 	}

@@ -19,14 +19,15 @@ TEST( Start ){
 	NEOERR* err;
 
 	err = hdf_init ( &hdf );
+
 	err = hdf_set_value ( hdf, "Foo", "bar" );
 
 	err = cs_init ( &p, hdf );
 
-	char *s=new char[1000];
+// 	char *s=new char[1000];
+// 	strcpy(s,"Blas <?cs var:Foo ?>");
 
-	strcpy(s,"Blas <?cs var:Foo ?>");
-	err=cs_parse_string ( p, s, strlen(s) );
+	//err=cs_parse_string ( p, s, strlen(s) );
 
 
 	err = cs_render(p, NULL, output);

@@ -6,11 +6,9 @@
 #include <boost/algorithm/string/find.hpp>
 #include <boost/algorithm/string/detail/predicate.hpp>
 #include "ews/server.hpp"
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/bind.hpp>
 #include <algorithm>
 
-SUITE(EwsConnection) {
+SUITE(EwsHandlers) {
 	
 
 class CustomHandler
@@ -92,10 +90,10 @@ TEST( Post ){
 // 		);
 }
 
-} // SUITE(SqliteTables)
+} // SUITE(EwsHandlers)
 
 int
-ews_connection( int argc, char * argv[] ) 
+ews_handlers( int argc, char * argv[] ) 
 {
-	return UnitTest::RunAllTests("EwsConnection");
+	return UnitTest::RunAllTests("EwsHandlers");
 }

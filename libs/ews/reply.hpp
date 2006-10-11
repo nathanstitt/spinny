@@ -2,7 +2,7 @@
 #define HTTP_REPLY_HPP
 
 #include <string>
-#include <vector>
+#include <map>
 #include "boost/asio.hpp"
 #include "header.hpp"
 #include <sstream>
@@ -11,7 +11,9 @@
 
 namespace ews {
 
-/// A reply to be sent to a client.
+	class connection;
+
+	/// A reply to be sent to a client.
 	class reply
 	{
 		reply& operator=(const reply& r);
@@ -26,15 +28,21 @@ namespace ews {
 			};
 
 			buffer buf_;
-
+			unsigned int size() const;
 			const std::string& str() const;
 			const std::string& str( const std::string &s );
 			
 		};
-
+		const connection *conn_;
+		
+		boost::filesystem::path template_;
 		CSPARSE *cs_parse_;
 		HDF *hdf_;
+
+		bool parse_template();
 	public:
+		const char *tmpl_results_;
+
 		/// The content to be sent in the reply.
 		stream content;
 
@@ -43,7 +51,7 @@ namespace ews {
 		bool set_hdf_value( const std::string &hdf_pos, int value );
 
 		~reply();
-		explicit reply();
+		explicit reply( const connection *conn );
 		/// The status of the reply.
 		enum status_type
 		{
@@ -65,13 +73,13 @@ namespace ews {
 			service_unavailable = 503
 		} status;
 
-		typedef std::vector<header> headers_t;
+
 		/// The headers to be included in the reply.
+		typedef std::map< std::string, std::string > headers_t;
 		headers_t headers;
 
 		// set to a stock reply
 		void set_to( status_type stat );
-
 
 		/// Convert the reply into a vector of buffers. The buffers do not own the
 		/// underlying memory blocks, therefore the reply object must remain valid and

@@ -65,7 +65,10 @@ public:
 		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH ) / "libs" / "cs" / "test-files" );
 		for (  file ;file != end_itr; ++file ){
 			if ( file->leaf() != ".svn" ){
-				boost::filesystem::copy_file( *file, template_path / file->leaf() );
+				try {
+					boost::filesystem::copy_file( *file, template_path / file->leaf() );
+				}
+				catch ( std::exception &c ){}
 			}
 		}
 	}
@@ -83,7 +86,7 @@ public:
 
 	~DummyApp() {
 		Spinny::stop();
-		filesystem::remove_all( fixtures_path );
+//		filesystem::remove_all( fixtures_path );
 	}
 
 	template<typename T>

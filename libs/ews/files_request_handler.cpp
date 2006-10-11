@@ -26,9 +26,9 @@ namespace ews {
 	files_request_handler::handle( const request& req, reply& rep ){
 		std::string request_path=req.url;
 
-		std::cout << "Attempting to serve file: " 
-			  << ( req.conn->doc_root / request_path).string()
-			  << std::endl;
+// 		std::cout << "Attempting to serve file: " 
+// 			  << ( req.conn->doc_root / request_path).string()
+// 			  << std::endl;
 
 		BOOST_LOGL( ewslog, info ) << "Attempting to serve file: " 
 					   << ( req.conn->doc_root / request_path).string();

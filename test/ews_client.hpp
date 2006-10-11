@@ -11,6 +11,7 @@
 #include <boost/asio.hpp>
 #include <boost/regex.hpp>
 #include <map>
+#include "ews/server.hpp"
 
 //using ;
 
