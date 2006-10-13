@@ -4,7 +4,7 @@
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
-  SET(CMAKE_CXX_FLAGS "-Wall -Wextra")
+  SET(CMAKE_CXX_FLAGS "-Wall -Wextra -g")
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 INCLUDE_DIRECTORIES( 
@@ -22,7 +22,7 @@ ADD_EXECUTABLE( spinny main.cxx )
 
 ADD_LIBRARY( libspinny ${SPINNY_CPP_SRC} )
 
-TARGET_LINK_LIBRARIES( spinny sqlite boost id3lib zlib libspinny ews )
+TARGET_LINK_LIBRARIES( spinny  libspinny id3lib zlib sqlite  ews boost unit_test cs  )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( spinny pthread )

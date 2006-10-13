@@ -31,6 +31,14 @@ namespace ews {
 		acceptor_.async_accept(new_connection_->socket(),
 				       boost::bind(&server::handle_accept, this,
 						   asio::placeholders::error));
+
+		BOOST_LOGL( ewslog,info) << "EWS running on: " 
+					 << address
+					 << ":" << port
+					 << " root: " << doc_root_.string()
+					 << " tmpl: " << tmpl_root_.string();
+
+
 	}
 
 	void server::run()

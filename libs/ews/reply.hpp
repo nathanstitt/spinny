@@ -50,6 +50,7 @@ namespace ews {
 		bool set_hdf_value( const std::string &hdf_pos, const std::string &value );
 		bool set_hdf_value( const std::string &hdf_pos, int value );
 
+		
 		~reply();
 		explicit reply( const connection *conn );
 		/// The status of the reply.

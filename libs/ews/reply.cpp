@@ -219,7 +219,7 @@ namespace ews {
 	static NEOERR *
 	cs_renderer ( void *r, char *contents ){
 		reply *rep = reinterpret_cast<reply*>( r );
-		BOOST_LOGL( ewslog, info ) << "Rendered TMPL to:\n" << contents;
+//		BOOST_LOGL( ewslog, info ) << "Rendered TMPL to:\n" << contents;
 		rep->content << contents;
 		return STATUS_OK;
 	}

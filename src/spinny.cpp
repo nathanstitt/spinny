@@ -67,14 +67,15 @@ Spinny::run(int argc, char **argv)
 
 	sqlite::startup( _instance->config<string>("db") );
 
-
 	_ews = new ews::server( _instance->config<string>( "web_listen_address" ),
 				_instance->config<string>( "web_listen_port" ),
 				_instance->config<string>( "web_root" ),
 				_instance->config<string>( "template_root" )
 		);
 
+
   	_web_thread = new asio::thread( boost::bind( &ews::server::run, _ews ) );
+
 
 
 	return 0;

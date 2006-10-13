@@ -2,82 +2,74 @@
 #include "spinny.hpp"
 #include "sqlite/sqlite.hpp"
 #include "id3lib/tag.h"
-
+#include "boost/log/functions.hpp"
 #include "boost/thread/thread.hpp"
 #include "boost/thread/xtime.hpp"
-
-using namespace std;
-using namespace sqlite;
-
-void tss_cleanup_implemented(void)
-    {
-}
-
-
-struct thread_alarm
-{
-   thread_alarm(int secs) : m_secs(secs) { }
-   void operator()()
-   {
-       boost::xtime xt;
-       boost::xtime_get(&xt, boost::TIME_UTC);
-       xt.sec += m_secs;
-
-       boost::thread::sleep(xt);
-
-       std::cout << "alarm sounded..." << std::endl;
-   }
-   int m_secs;
-};
-
-// int
-// main(int argc, char **argv) {
-// 	ID3_Tag myTag;
-// 	int secs = 1;
-// 	connection *conn = new connection();
-// 	cout << "Hello World" << endl;
-// 	std::cout << "setting alarm for 5 seconds..." << std::endl;
-// 	thread_alarm alarm(secs);
-// 	boost::thread thrd(alarm);
-// 	thrd.join();
-
-// 	return Spinny::run( argc, argv );
-// }
-
-
-
-
-#include <boost/thread/thread.hpp>
 #include <boost/thread/tss.hpp>
 #include <cassert>
 
-boost::thread_specific_ptr<int> value;
 
-boost::thread_specific_ptr<std::string> s_value;
-
-void increment()
-{
-    int* p = value.get();
-    ++*p;
-}
-
-void thread_proc()
-{
-    value.reset(new int(0)); // initialize the thread's storage
-    for (int i=0; i<10; ++i)
-    {
-        increment();
-        int* p = value.get();
-        assert(*p == i+1);
+class thread_adapter {
+public:
+	thread_adapter( int argv, char **argc )
+		: argv_(argv), argc_(argc )
+    { }
+    void operator()() const {
+	    Spinny::run( argv_, argc_ );
     }
-}
+private:
+	int argv_;
+	char **argc_;
+};
 
-int main(int , char*)
-{
 
+#if !defined(_WIN32)
+
+#include <pthread.h>
+#include <signal.h>
+
+
+#endif
+
+
+
+int main(int argv , char** argc ) {
+	boost::logging::manipulate_logs("*")
+		.del_modifier("time")
+		.del_modifier("prefix")
+		.del_modifier("enter")
+		.add_appender(&boost::logging::write_to_cout)    // all messages are written to cout
+		.add_modifier(&boost::logging::prepend_prefix,"prefix" )
+		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" )
+		.add_modifier(&boost::logging::append_enter,"enter");
+
+	boost::logging::flush_log_cache();
+
+	// Block all signals for background thread.
+	sigset_t new_mask;
+	sigfillset(&new_mask);
+	sigset_t old_mask;
+	pthread_sigmask(SIG_BLOCK, &new_mask, &old_mask);
+
+	boost::thread thread(thread_adapter(argv,argc));
+
+	// Restore previous signals.
+
+	pthread_sigmask(SIG_SETMASK, &old_mask, 0);
+
+
+	// Wait for signal indicating time to shut down.
+	sigset_t wait_mask;
+	sigemptyset(&wait_mask);
+	sigaddset(&wait_mask, SIGINT);
+	sigaddset(&wait_mask, SIGQUIT);
+	sigaddset(&wait_mask, SIGTERM);
+	pthread_sigmask(SIG_BLOCK, &wait_mask, 0);
+	int sig = 0;
+	sigwait(&wait_mask, &sig);
+
+
+	Spinny::stop();
 	
-    boost::thread_group threads;
-    for (int i=0; i<5; ++i)
-        threads.create_thread(&thread_proc);
-    threads.join_all();
+	thread.join();
 }

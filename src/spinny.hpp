@@ -17,6 +17,8 @@ class Spinny {
 	char **_argv;
 	boost::program_options::variables_map _vm;
 	Spinny( int argc, char **argv );
+	void startup_threads();
+	void stop_threads();
 public:
 	class CmdLineEx {};
 
