@@ -19,17 +19,19 @@
 #include "neo_err.h"
 #include "neo_rand.h"
 #include "ulist.h"
-
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4996 )
+#endif
 static int RandomInit = 0;
 
-void neo_seed_rand (long int seed)
+void neo_seed_rand (time_t seed)
 {
 #ifdef HAVE_DRAND48
   srand48(seed);
 #elif HAVE_RANDOM
   srandom(seed);
 #else
-  srand(seed);
+  srand((unsigned int)seed);
 #endif
   RandomInit = 1;
 }

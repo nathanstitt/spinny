@@ -3,7 +3,7 @@
 #include "boost/asio.hpp"
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include "server.hpp"
+#include "ews/server.hpp"
 
 #if defined(_WIN32)
 
@@ -39,15 +39,15 @@ int main(int argc, char* argv[])
       return 1;
     }
 
-    // Initialise server.
-    http::server::server s(argv[1], argv[2], argv[3]);
+    //// Initialise server.
+    //ews::server::server s(argv[1], argv[2], argv[3], argv[4]);
 
-    // Set console control handler to allow server to be stopped.
-    console_ctrl_function = boost::bind(&http::server::server::stop, &s);
-    SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
+    //// Set console control handler to allow server to be stopped.
+    //console_ctrl_function = boost::bind(&http::server::server::stop, &s);
+    //SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
 
-    // Run the server until stopped.
-    s.run();
+    //// Run the server until stopped.
+    //s.run();
   }
   catch (asio::error& e)
   {

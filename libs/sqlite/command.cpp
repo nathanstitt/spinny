@@ -1,7 +1,9 @@
 #include "sqlite.hpp"
 
 namespace sqlite {
-
+#if defined(_MSC_VER)
+   #pragma warning ( disable : 4355 ) /* unreferenced variable */
+#endif
 	command::command(connection *c) : _con(*c), _reader(this) {
 		BOOST_LOG(sql) << " : " <<  _con._cmd.curval();
 		if( sqlite3_prepare( _con.db,_con._cmd.curval().c_str(),_con._cmd.curval().length() , &this->_stmt, 0)!=SQLITE_OK )

@@ -13,6 +13,10 @@
 
 #include "cs_config.h"
 
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4996 )
+#endif
+
 #ifndef HAVE_STRTOK_R
 #include <string.h>
 
@@ -81,11 +85,11 @@ struct tm *gmtime_r(const time_t *timep, struct tm *ttm)
 
 #endif
 
-#ifndef HAVE_MKSTEMP
-#include <fcntl.h>
-
-int mkstemp(char *path) 
-{
-  return open(mktemp(path),O_RDWR);
-}
-#endif
+//#ifndef HAVE_MKSTEMP
+//#include <fcntl.h>
+//#include <stdio.h>
+//int mkstemp(char *path) 
+//{
+//  return open(mktemp(path),O_RDWR);
+//}
+//#endif

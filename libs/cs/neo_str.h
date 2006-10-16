@@ -72,7 +72,7 @@ void string_clear (STRING *str);
 NEOERR *string_array_split (ULIST **list, char *s, const char *sep, 
                             int max);
 
-BOOL reg_search (const char *re, const char *str);
+//BOOL reg_search (const char *re, const char *str);
 
 
 NEOERR* neos_escape(UINT8 *buf, int buflen, char esc_char, const char *escape, 

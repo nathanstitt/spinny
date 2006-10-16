@@ -11,6 +11,10 @@
 #ifndef ASIO_DETAIL_SOCKET_OPS_HPP
 #define ASIO_DETAIL_SOCKET_OPS_HPP
 
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4996 ) /* deprecated */
+#endif
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1200)
 # pragma once
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)

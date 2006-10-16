@@ -11,17 +11,21 @@
 
 #include "cs_config.h"
 
-#include <unistd.h>
+//#include <unistd.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <regex.h>
+//#include <regex.h>
 #include "neo_misc.h"
 #include "neo_err.h"
 #include "neo_str.h"
 #include "ulist.h"
+
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4996 )
+#endif
 
 #ifndef va_copy
 #ifdef __va_copy
@@ -113,6 +117,7 @@ NEOERR *string_set (STRING *str, const char *buf)
   str->len = 0;
   return nerr_pass (string_append (str, buf));
 }
+
 
 NEOERR *string_append (STRING *str, const char *buf)
 {
@@ -381,24 +386,24 @@ char *nsprintf_alloc (int start_size, const char *fmt, ...)
   return r;
 }
 
-BOOL reg_search (const char *re, const char *str)
-{
-  regex_t search_re;
-  int errcode;
-  char buf[256];
-
-  if ((errcode = regcomp(&search_re, re, REG_ICASE | REG_EXTENDED | REG_NOSUB)))
-  {
-    regerror (errcode, &search_re, buf, sizeof(buf));
-    ne_warn ("Unable to compile regex %s: %s", re, buf);
-    return FALSE;
-  }
-  errcode = regexec (&search_re, str, 0, NULL, 0);
-  regfree (&search_re);
-  if (errcode == 0)
-    return TRUE;
-  return FALSE;
-}
+//BOOL reg_search (const char *re, const char *str)
+//{
+//  regex_t search_re;
+//  int errcode;
+//  char buf[256];
+//
+//  if ((errcode = regcomp(&search_re, re, REG_ICASE | REG_EXTENDED | REG_NOSUB)))
+//  {
+//    regerror (errcode, &search_re, buf, sizeof(buf));
+//    ne_warn ("Unable to compile regex %s: %s", re, buf);
+//    return FALSE;
+//  }
+//  errcode = regexec (&search_re, str, 0, NULL, 0);
+//  regfree (&search_re);
+//  if (errcode == 0)
+//    return TRUE;
+//  return FALSE;
+//}
 
 NEOERR *string_readline (STRING *str, FILE *fp)
 {

@@ -15,12 +15,17 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys/time.h>
+//#include <sys/time.h>
 #include <sys/types.h>
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "neo_misc.h"
 #include "neo_err.h"
+
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4996 )
+#pragma warning ( disable : 4244 )
+#endif
 
 void ne_vwarn (const char *fmt, va_list ap)
 {

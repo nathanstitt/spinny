@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,6 +31,15 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdarg.h>
+
+#if defined(_MSC_VER)
+#include <string.h>
+#define strcasecmp stricmp
+#define BOOL char
+#pragma warning ( disable : 4996 )
+#pragma warning ( disable : 4018 )
+#pragma warning ( disable : 4013 )
+#endif
 
 #ifdef ENABLE_GETTEXT
 #include <libintl.h>
@@ -261,7 +270,7 @@ static int find_open_delim (CSPARSE *parse, char *buf, int x, int len)
   {
     p = strchr (&(buf[x]), '<');
     if (p == NULL) return -1;
-    if (p[1] == '?' && !strncasecmp(&p[2], parse->tag, parse->taglen) &&
+    if (p[1] == '?' && !strcasecmp(&p[2], parse->tag) &&
 	(p[ws_index] == ' ' || p[ws_index] == '\n' || p[ws_index] == '\t' || p[ws_index] == '\r'))
       /*
     if (p[1] && p[1] == '?' &&
@@ -462,7 +471,7 @@ NEOERR *cs_parse_string (CSPARSE *parse, char *ibuf, size_t ibuf_len)
 	for (i = 1; Commands[i].cmd; i++)
 	{
 	  n = Commands[i].cmdlen;
-	  if (!strncasecmp(token, Commands[i].cmd, n))
+	  if (!strcasecmp(token, Commands[i].cmd ))
 	  {
 	    if ((Commands[i].has_arg && ((token[n] == ':') || (token[n] == '!')))
 		|| (token[n] == ' ' || token[n] == '\0' || token[n] == '\r' || token[n] == '\n'))

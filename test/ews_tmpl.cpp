@@ -7,9 +7,7 @@
 
 SUITE(EwsTmpl) {
 
-	boost::filesystem::path template_path;
-
-
+	static boost::filesystem::path template_path("",boost::filesystem::no_check);
 
 class TmplTestHandler
 	: public ews::request_handler {
@@ -40,7 +38,7 @@ class TmplTestHandler
 		rep.set_basic_headers( "txt" );
 		return stop;
 	}
-	std::string name() const { "CustomHandler"; }
+	std::string name() const { return "CustomHandler"; }
 
 
 };

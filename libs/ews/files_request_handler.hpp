@@ -7,8 +7,8 @@
 
 namespace ews {
 
-struct reply;
-struct request;
+class reply;
+class request;
 
 /// The common handler for all incoming requests.
 class files_request_handler 

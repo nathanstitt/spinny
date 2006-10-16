@@ -67,6 +67,9 @@
 
 #define HAVE_VARARGS_H
 
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4244 )
+#endif
 
 /* varargs declarations: */
 

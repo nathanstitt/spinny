@@ -29,14 +29,18 @@ public:
 	boost::filesystem::path template_path;
 
 	DummyApp() :
-		fixtures_path( TESTING_FIXTURES_PATH ),
-		db_path( fixtures_path / "test.db" ),
-		music_path( fixtures_path / "music" ),
-		web_path( fixtures_path / "webroot" ),
-		template_path( fixtures_path / "webtmpl" )
+	fixtures_path( TESTING_FIXTURES_PATH, boost::filesystem::no_check ),
+		db_path( (fixtures_path / "test.db").string(), boost::filesystem::no_check ),
+		music_path( (fixtures_path / "music").string(), boost::filesystem::no_check ),
+		web_path( (fixtures_path / "webroot").string(), boost::filesystem::no_check ),
+		template_path( (fixtures_path / "webtmpl").string(), boost::filesystem::no_check )
 		{
+				if ( boost::filesystem::path::default_name_check_writable() ) {
+					boost::filesystem::path::default_name_check( boost::filesystem::no_check );
+				}
+
 			boost::filesystem::remove( db_path );
-			boost::filesystem::create_directory( fixtures_path );
+			boost::filesystem::create_directory( fixtures_path.string() );
 			boost::filesystem::create_directory( web_path );
 			boost::filesystem::create_directory( template_path );
 			boost::filesystem::create_directory( music_path );
@@ -68,7 +72,7 @@ public:
 				try {
 					boost::filesystem::copy_file( *file, template_path / file->leaf() );
 				}
-				catch ( std::exception &c ){}
+				catch ( std::exception & ){}
 			}
 		}
 	}

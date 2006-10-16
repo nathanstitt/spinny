@@ -8,7 +8,7 @@
 
 namespace ews {
 
-struct request;
+class request;
 
 /// Parser for incoming requests.
 class request_parser

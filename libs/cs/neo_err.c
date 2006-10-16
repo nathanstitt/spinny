@@ -20,7 +20,7 @@
 #include "neo_misc.h"
 #include "neo_err.h"
 #include "ulist.h"
-#include "ulocks.h"
+//#include "ulocks.h"
 
 int NERR_PASS = -1;
 int NERR_ASSERT = 0;
@@ -38,6 +38,11 @@ int NERR_EXISTS = 0;
 static NEOERR *FreeList = NULL;
 static ULIST *Errors = NULL;
 static int Inited = 0;
+
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4996 )
+#endif
+
 #ifdef HAVE_PTHREADS
 /* In multi-threaded environments, we have to init thread safely */
 static pthread_mutex_t InitLock = PTHREAD_MUTEX_INITIALIZER;

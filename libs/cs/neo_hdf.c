@@ -12,7 +12,7 @@
 #include "cs_config.h"
 
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -26,6 +26,14 @@
 #include "neo_hdf.h"
 #include "neo_str.h"
 #include "ulist.h"
+
+#if defined(_MSC_VER)
+#include <string.h>
+#define strcasecmp stricmp
+#pragma warning ( disable : 4996 )
+#pragma warning ( disable : 4018 )
+#endif
+
 
 /* Ok, in order to use the hash, we have to support n-len strings
  * instead of null terminated strings (since in set_value and walk_hdf
@@ -511,7 +519,7 @@ void _merge_attr (HDF_ATTR *dest, HDF_ATTR *src)
 {
   HDF_ATTR *da, *ld;
   HDF_ATTR *sa, *ls;
-  BOOL found;
+  char found;
 
   sa = src;
   ls = src;

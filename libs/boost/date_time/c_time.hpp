@@ -14,6 +14,10 @@
   Provide workarounds related to the ctime header
 */
 
+#if defined(_MSC_VER)
+   #pragma warning ( disable : 4996 ) /* deprecated warning */
+#endif
+
 #include "boost/date_time/compiler_config.hpp"
 #include <ctime>
 //Work around libraries that don't put time_t and time in namespace std

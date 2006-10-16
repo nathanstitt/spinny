@@ -19,6 +19,12 @@
 #include "neo_misc.h"
 #include "neo_date.h"
 
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4996 )
+#pragma warning ( disable : 4018 )
+#pragma warning ( disable : 4244 )
+#endif
+
 /* This is pretty much a HACK.  Eventually, we might bring the parsing
  * and stuff into this library (we can use the public domain source code
  * from ftp://elsie.nci.nih.gov/pub/ as a base)

@@ -5,7 +5,7 @@
 #define _SPINNY_H 1
 
 #include "sqlite/sqlite.hpp"
-#include "config.h"
+#include "spinny/config.h"
 #include <boost/program_options.hpp>
 #include <boost/log/log.hpp>
 

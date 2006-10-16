@@ -5,7 +5,7 @@
 #include "boost/filesystem/path.hpp"
 #include "boost/filesystem/operations.hpp"
 
-#include "config.h"
+#include "spinny/config.h"
 
 SUITE(SpinnyMusicDir) {
 

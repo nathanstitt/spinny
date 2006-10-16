@@ -18,6 +18,10 @@
 #include "neo_err.h"
 #include "neo_hash.h"
 
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4018 )
+#endif
+
 static NEOERR *_hash_resize(NE_HASH *hash);
 static NE_HASHNODE **_hash_lookup_node (NE_HASH *hash, void *key, UINT32 *hashv);
 
@@ -50,7 +54,7 @@ void ne_hash_destroy (NE_HASH **hash)
 {
   NE_HASH *my_hash;
   NE_HASHNODE *node, *next;
-  int x;
+  unsigned int x;
 
   if (hash == NULL || *hash == NULL)
     return;
@@ -216,7 +220,8 @@ static NEOERR *_hash_resize(NE_HASH *hash)
 {
   NE_HASHNODE **new_nodes;
   NE_HASHNODE *entry, *prev;
-  int x, next_bucket;
+  unsigned int x;
+   int next_bucket;
   int orig_size = hash->size;
   UINT32 hash_mask;
 

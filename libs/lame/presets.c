@@ -54,8 +54,6 @@ int apply_abr_preset(lame_global_flags*  gfp, int preset, int enforce)
         int sfscale;
     } abr_presets_t;
 
-
-
     /* Switch mappings for ABR mode */
     const abr_presets_t abr_switch_map [] = {
         /* kbps  quant q_s safejoint nsmsfix st_lrm  st_s  ns-bass scale   msk ath_lwr ath_curve  interch , sfscale */

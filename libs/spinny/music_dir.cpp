@@ -186,7 +186,7 @@ MusicDir::sync( unsigned char depth ){
 	boost::filesystem::path path = this->path();
 	this->save_if_needed();
 
-	if ( depth++ == numeric_limits<unsigned char>::max() ){
+	if ( depth++ >= 1024 ){ // a completely arbitrary limit
 		return;
 	}
 
@@ -232,7 +232,7 @@ MusicDir::sync( unsigned char depth ){
 				try {
 					Song::create_from_file( *this, itr->leaf() );
 				}
-				catch( Song::file_error &err ){	}
+				catch( Song::file_error & ){	}
 			} else {
 				songs.remove( *song );
 			}
