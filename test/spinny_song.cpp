@@ -1,10 +1,10 @@
 #include "testing.hpp"
 
-#include "song.hpp"
+#include "spinny/song.hpp"
 #include "boost/filesystem/path.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/fstream.hpp" 
-#include "config.h"
+//#include "config.h"
 #include <iostream>
 
 

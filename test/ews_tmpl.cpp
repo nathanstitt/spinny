@@ -12,8 +12,7 @@ SUITE(EwsTmpl) {
 
 
 class TmplTestHandler
-	: public ews::request_handler
-{
+	: public ews::request_handler {
 	/// Handle a request and produce a reply.
 	virtual request_handler::result
 	handle( const ews::request& req, ews::reply& rep ){

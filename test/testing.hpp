@@ -11,7 +11,7 @@
 #include "boost/filesystem/operations.hpp"
 #include "boost/noncopyable.hpp"
 #include "sqlite/sqlite.hpp"
-#include "spinny.hpp"
+#include "spinny/spinny.hpp"
 #include "boost/log/functions.hpp"
 
 // evil I know... just couldn't help myself

@@ -1,6 +1,6 @@
 #include "testing.hpp"
-#include "album.hpp"
-#include "artist.hpp"
+#include "spinny/album.hpp"
+#include "spinny/artist.hpp"
 
 SUITE(SpinnyAlbum) {
 

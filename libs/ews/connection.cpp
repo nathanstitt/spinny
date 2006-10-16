@@ -1,10 +1,10 @@
 #include "ews/connection.hpp"
-#include <vector>
-#include <boost/bind.hpp>
 #include "ews/connection_manager.hpp"
 #include "ews/request_handler.hpp"
 #include "ews/request_parser.hpp"
 #include "ews/server.hpp"
+#include <vector>
+#include <boost/bind.hpp>
 
 namespace ews {
 
@@ -49,11 +49,17 @@ namespace ews {
 				request_, buffer_.data(), buffer_.data() + bytes_transferred );
 			
 			if (result) {
-//				std::cout << "Begin Write: " <<  (int)this << " : "  << (int)&reply_ << std::endl;
 				BOOST_LOGL(ewslog,info) << "Begin Write: " <<  (int)this
 							<< " : " << request_.uri << std::endl;
+ 	
 				if ( ! request_handler::handle_request( request_, reply_ ) ){
 					reply_.set_to( reply::internal_server_error );
+				}
+				for( reply::headers_t::const_iterator header=reply_.headers.begin();
+				     reply_.headers.end() != header;
+				     ++header ) {
+					BOOST_LOGL( ewslog, info ) << "Outgoing Header: "
+								   << header->first << " => " << header->second;
 				}
 
 				asio::async_write( socket_, reply_.to_buffers(),

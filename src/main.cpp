@@ -1,5 +1,5 @@
 #include <iostream>
-#include "spinny.hpp"
+#include "spinny/spinny.hpp"
 #include "sqlite/sqlite.hpp"
 #include "id3lib/tag.h"
 #include "boost/log/functions.hpp"
@@ -30,8 +30,6 @@ private:
 
 
 #endif
-
-
 
 int main(int argv , char** argc ) {
 	boost::logging::manipulate_logs("*")

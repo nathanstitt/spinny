@@ -82,7 +82,8 @@ namespace ews {
 		while (is.read(buf, sizeof(buf)).gcount() > 0){
 			rep.content.write(buf, is.gcount());
 		}
-		rep.set_basic_headers( mime_types::extension_to_type(extension) );
+		BOOST_LOGL( ewslog, info ) << "Serving file: " << (req.conn->doc_root / request_path).string();
+		rep.set_basic_headers( extension );
 
 		return stop;
 	}

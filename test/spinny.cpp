@@ -1,7 +1,7 @@
 #include "testing.hpp"
 #include  <boost/thread/thread.hpp>
 #include "boost/filesystem/operations.hpp"
-#include "spinny.hpp"
+#include "spinny/spinny.hpp"
 
 
 #include <cstdlib>

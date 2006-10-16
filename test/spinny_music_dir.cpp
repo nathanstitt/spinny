@@ -1,7 +1,7 @@
 #include "testing.hpp"
 
-#include "music_dir.hpp"
-#include "song.hpp"
+#include "spinny/music_dir.hpp"
+#include "spinny/song.hpp"
 #include "boost/filesystem/path.hpp"
 #include "boost/filesystem/operations.hpp"
 

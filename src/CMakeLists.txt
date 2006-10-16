@@ -1,28 +1,18 @@
 
-
-
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-
 IF(CMAKE_COMPILER_IS_GNUCXX)
   SET(CMAKE_CXX_FLAGS "-Wall -Wextra -g")
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
-INCLUDE_DIRECTORIES( 
+INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../libs/
   ${CMAKE_CURRENT_BINARY_DIR}/../libs/
 )
 
-FILE(GLOB SPINNY_CPP_SRC "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+ADD_EXECUTABLE( spinny main.cpp )
 
-REMOVE( SQLITE_C_SRC shell.c main.c )
-
-ADD_EXECUTABLE( spinny main.cxx )
-
-ADD_LIBRARY( libspinny ${SPINNY_CPP_SRC} )
-
-TARGET_LINK_LIBRARIES( spinny  libspinny id3lib zlib sqlite  ews boost unit_test cs  )
+TARGET_LINK_LIBRARIES( spinny  libspinny id3lib zlib sqlite  ews boost unit_test cs handlers )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( spinny pthread )

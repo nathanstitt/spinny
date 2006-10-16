@@ -1,5 +1,5 @@
 #include "testing.hpp"
-#include "artist.hpp"
+#include "spinny/artist.hpp"
 
 
 
