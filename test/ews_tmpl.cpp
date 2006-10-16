@@ -50,7 +50,9 @@ bool is_tmpl( string& filename ) {
 		iends_with(filename, ".com");
     }
 TEST( All ){
+
 	DummyApp da;
+
 	da.populate_web();
 	template_path=da.template_path;
 	EWSTestClient ews;
