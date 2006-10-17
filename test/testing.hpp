@@ -29,7 +29,7 @@ public:
 	boost::filesystem::path template_path;
 
 	DummyApp() :
-	fixtures_path( "/build/test/fixtures", boost::filesystem::native ),
+		fixtures_path( TESTING_FIXTURES_PATH, boost::filesystem::native ),
 		db_path( (fixtures_path / "test.db").string(), boost::filesystem::native ),
 		music_path( (fixtures_path / "music").string(), boost::filesystem::native ),
 		web_path( (fixtures_path / "webroot").string(), boost::filesystem::native ),

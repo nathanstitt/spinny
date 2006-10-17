@@ -12,7 +12,7 @@ INCLUDE_DIRECTORIES(
 
 ADD_EXECUTABLE( spinny main.cpp )
 
-TARGET_LINK_LIBRARIES( spinny  libspinny id3lib zlib sqlite  ews boost unit_test cs handlers )
+TARGET_LINK_LIBRARIES( spinny  libspinny id3lib zlib sqlite  ews boost unit_test cs )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( spinny pthread )
