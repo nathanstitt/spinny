@@ -6,6 +6,10 @@ namespace {
 class Index
 	: public ews::request_handler
 {
+	Index(){
+		BOOST_LOGL( ewslog, info ) << "New Index H: " << (int)this;
+	}
+
 	/// Handle a request and produce a reply.
 	virtual request_handler::result
 	handle( const ews::request& req, ews::reply& rep ){

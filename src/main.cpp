@@ -41,6 +41,7 @@ int main(int argv , char** argc ) {
 		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" )
 		.add_modifier(&boost::logging::append_enter,"enter");
 
+	
 	boost::logging::flush_log_cache();
 
 	// Block all signals for background thread.
