@@ -1,33 +1,30 @@
 #include "ews/server.hpp"
+#include "ews/handlers/index.hpp"
 
+using namespace ews::handlers;
 
-namespace {
-
-class Index
-	: public ews::request_handler
-{
-	Index(){
-		BOOST_LOGL( ewslog, info ) << "New Index H: " << (int)this;
-	}
-
-	/// Handle a request and produce a reply.
-	virtual request_handler::result
-	handle( const ews::request& req, ews::reply& rep ){
-		BOOST_LOGL( ewslog, info ) << "Index H: " << req.url;
-		if ( req.url != "/" ){
-			return cont;
-		}
-
-		rep.set_template( "index.html" );
-
-		rep.add_header( "X-HANDLED-BY", "IndexHandler" );
-		rep.set_basic_headers( "html" );
-
-		return stop;
-	}
-	std::string name() const { return "CustomHandler"; }
-	
-};
-
-	static Index handler_;
+Index::Index() : ews::request_handler( true ){
+	std::cout << "New Index H" << std::endl;
 }
+
+
+
+ews::request_handler::result
+Index::handle( const ews::request& req, ews::reply& rep ){
+	BOOST_LOGL( ewslog, info ) << "Index H: " << req.url;
+	std::cout << "Index H: " << req.url << std::endl;
+	if ( req.url != "/" ){
+		return cont;
+	}
+
+	rep.set_template( "index.html" );
+	
+	rep.add_header( "X-HANDLED-BY", "IndexHandler" );
+	rep.set_basic_headers( "html" );
+	
+	return stop;
+}
+std::string
+Index::name() const { return "CustomHandler"; }
+
+
