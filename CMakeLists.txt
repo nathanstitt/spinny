@@ -20,4 +20,4 @@ MARK_AS_ADVANCED(BUILDNAME)
 
 CHECK_INCLUDE_FILES(pthread.h   HAVE_PTHREAD_H)
 
-SUBDIRS( libs src test handlers )
+SUBDIRS( libs src test )
