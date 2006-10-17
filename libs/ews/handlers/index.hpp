@@ -14,7 +14,7 @@ namespace ews {
 		class Index
 			: public ews::request_handler {
 		public:
-			Index();
+
 			virtual request_handler::result
 			handle( const ews::request& req, ews::reply& rep );
 			std::string name() const;

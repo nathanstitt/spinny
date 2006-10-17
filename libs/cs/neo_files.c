@@ -66,10 +66,11 @@
 #if defined(_MSC_VER)
 #pragma warning ( disable : 4996 )
 #endif
+
 NEOERR *ne_load_file_len (const char *path, char **str, int *out_len)
 {
   struct stat s;
-  FILE *fd;
+  int fd;
   int len;
   int bytes_read;
 
@@ -83,8 +84,8 @@ NEOERR *ne_load_file_len (const char *path, char **str, int *out_len)
     return nerr_raise_errno (NERR_SYSTEM, "Unable to stat file %s", path);
   }
 
-  fd = fopen (path, O_RDONLY);
-  if (!fd)
+  fd = open (path, O_RDONLY);
+  if (fd == -1)
   {
     return nerr_raise_errno (NERR_SYSTEM, "Unable to open file %s", path);
   }
@@ -93,19 +94,19 @@ NEOERR *ne_load_file_len (const char *path, char **str, int *out_len)
 
   if (*str == NULL)
   {
-    fclose(fd);
+    close(fd);
     return nerr_raise (NERR_NOMEM, 
 	"Unable to allocate memory (%d) to load file %s", s.st_size, path);
   }
-  if ((bytes_read = fread ( str, len, 1, fd)) == -1)
+  if ((bytes_read = read (fd, *str, len)) == -1)
   {
-    fclose(fd);
+    close(fd);
     free(*str);
     return nerr_raise_errno (NERR_SYSTEM, "Unable to read file %s", path);
   }
 
   (*str)[bytes_read] = '\0';
-  fclose(fd);
+  close(fd);
   if (out_len) *out_len = bytes_read;
 
   return STATUS_OK;

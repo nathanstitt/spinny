@@ -90,7 +90,7 @@ public:
 
 	~DummyApp() {
 		Spinny::stop();
-//		filesystem::remove_all( fixtures_path );
+		filesystem::remove_all( fixtures_path );
 	}
 
 	template<typename T>

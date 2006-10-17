@@ -49,7 +49,7 @@
 #cmakedefine HAVE_REGEX
 
 /* Does your system have pthreads? */
-#cmakedefine HAVE_PTHREADS
+#undef HAVE_PTHREADS
 
 /* Does your system have lockf ? */
 #cmakedefine HAVE_LOCKF

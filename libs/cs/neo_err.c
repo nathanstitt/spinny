@@ -45,7 +45,7 @@ static int Inited = 0;
 
 #ifdef HAVE_PTHREADS
 /* In multi-threaded environments, we have to init thread safely */
-static pthread_mutex_t InitLock = PTHREAD_MUTEX_INITIALIZER;
+//static pthread_mutex_t InitLock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 /* Set this to 1 to enable non-thread safe re-use of NEOERR data

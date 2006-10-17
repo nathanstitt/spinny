@@ -186,7 +186,7 @@ MusicDir::sync( unsigned char depth ){
 	boost::filesystem::path path = this->path();
 	this->save_if_needed();
 
-	if ( depth++ >= 1024 ){ // a completely arbitrary limit
+	if ( depth++ >= 255 ){ // a completely arbitrary limit
 		return;
 	}
 

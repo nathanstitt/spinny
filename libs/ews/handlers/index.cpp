@@ -3,16 +3,13 @@
 
 using namespace ews::handlers;
 
-Index::Index() : ews::request_handler( true ){
-	std::cout << "New Index H" << std::endl;
-}
 
 
 
 ews::request_handler::result
 Index::handle( const ews::request& req, ews::reply& rep ){
 	BOOST_LOGL( ewslog, info ) << "Index H: " << req.url;
-	std::cout << "Index H: " << req.url << std::endl;
+
 	if ( req.url != "/" ){
 		return cont;
 	}
