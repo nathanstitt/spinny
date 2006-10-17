@@ -29,11 +29,11 @@ public:
 	boost::filesystem::path template_path;
 
 	DummyApp() :
-	fixtures_path( TESTING_FIXTURES_PATH, boost::filesystem::no_check ),
-		db_path( (fixtures_path / "test.db").string(), boost::filesystem::no_check ),
-		music_path( (fixtures_path / "music").string(), boost::filesystem::no_check ),
-		web_path( (fixtures_path / "webroot").string(), boost::filesystem::no_check ),
-		template_path( (fixtures_path / "webtmpl").string(), boost::filesystem::no_check )
+	fixtures_path( "/build/test/fixtures", boost::filesystem::native ),
+		db_path( (fixtures_path / "test.db").string(), boost::filesystem::native ),
+		music_path( (fixtures_path / "music").string(), boost::filesystem::native ),
+		web_path( (fixtures_path / "webroot").string(), boost::filesystem::native ),
+		template_path( (fixtures_path / "webtmpl").string(), boost::filesystem::native )
 		{
 				if ( boost::filesystem::path::default_name_check_writable() ) {
 					boost::filesystem::path::default_name_check( boost::filesystem::no_check );
@@ -66,7 +66,7 @@ public:
 	void
 	populate_web(){
 		filesystem::directory_iterator end_itr;
-		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH ) / "libs" / "cs" / "test-files" );
+		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH,boost::filesystem::native ) / "libs" / "cs" / "test-files" );
 		for (  file ;file != end_itr; ++file ){
 			if ( file->leaf() != ".svn" ){
 				try {

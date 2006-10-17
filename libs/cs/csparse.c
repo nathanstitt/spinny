@@ -19,14 +19,14 @@
  */
 
 #include "cs_config.h"
-
+#include <stddef.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
@@ -46,6 +46,11 @@
 /* turn on some debug output for expressions */
 #define DEBUG_EXPR_PARSE 0
 #define DEBUG_EXPR_EVAL 0
+
+#if defined(_MSC_VER)
+#pragma warning ( disable : 4996 )
+#define strncasecmp _stricmp
+#endif
 
 typedef enum
 {
@@ -251,6 +256,7 @@ static void dealloc_function (CS_FUNCTION **csf)
   free (my_csf);
   *csf = NULL;
 }
+
 
 static int find_open_delim (CSPARSE *parse, char *buf, int x, int len)
 {
