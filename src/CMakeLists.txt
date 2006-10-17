@@ -10,7 +10,11 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_BINARY_DIR}/../libs/
 )
 
-ADD_EXECUTABLE( spinny main.cpp )
+IF(CMAKE_COMPILER_IS_GNUCXX)
+   ADD_EXECUTABLE( spinny posix_main.cpp )
+ELSE(CMAKE_COMPILER_IS_GNUCXX)
+   ADD_EXECUTABLE( spinny win_main.cpp )
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 TARGET_LINK_LIBRARIES( spinny  libspinny id3lib zlib sqlite  ews boost unit_test cs )
 

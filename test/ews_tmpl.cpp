@@ -87,7 +87,7 @@ TEST( All ){
 
 // 			std::ofstream r( "req.txt");
 // 			r << body;
-break;
+
 			CHECK_EQUAL( out, body );
 		}
 	}

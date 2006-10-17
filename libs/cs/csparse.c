@@ -49,7 +49,7 @@
 
 #if defined(_MSC_VER)
 #pragma warning ( disable : 4996 )
-#define strncasecmp _stricmp
+#define strncasecmp _strnicmp
 #endif
 
 typedef enum
@@ -459,98 +459,100 @@ NEOERR *cs_parse_string (CSPARSE *parse, char *ibuf, size_t ibuf_len)
       *p = '\0';
       if (strstr (token, "<?") != NULL)
       {
-	return nerr_raise (NERR_PARSE, "%s Missing end ?> at %s", 
+	return nerr_raise (NERR_PARSE, "%s Missing end <? at %s", 
 	    find_context(parse, i, tmp, sizeof(tmp)), 
 	    token);
       }
       parse->offset = p - ibuf + 2;
       if (token[0] != '#') /* handle comments */
       {
-	for (i = 1; Commands[i].cmd; i++)
-	{
-	  n = Commands[i].cmdlen;
-	  if (!strncasecmp(token, Commands[i].cmd, n))
-	  {
-	    if ((Commands[i].has_arg && ((token[n] == ':') || (token[n] == '!')))
-		|| (token[n] == ' ' || token[n] == '\0' || token[n] == '\r' || token[n] == '\n'))
-	    {
-	      err = uListGet (parse->stack, -1, (void *)&entry);
-	      if (err != STATUS_OK) goto cs_parse_done;
-	      if (!(Commands[i].allowed_state & entry->state))
-	      {
-		return nerr_raise (NERR_PARSE, 
-		    "%s Command %s not allowed in %s", Commands[i].cmd, 
-		    find_context(parse, -1, tmp, sizeof(tmp)), 
-		    expand_state(entry->state));
-	      }
-	      if (Commands[i].has_arg)
-	      {
-		/* Need to parse out arg */
-		arg = &token[n];
-		err = (*(Commands[i].parse_handler))(parse, i, arg);
-	      }
-	      else
-	      {
-		err = (*(Commands[i].parse_handler))(parse, i, NULL);
-	      }
-	      if (err != STATUS_OK) goto cs_parse_done;
-	      if (Commands[i].next_state & ST_POP)
-	      {
-                void *ptr;
-		err = uListPop(parse->stack, &ptr);
-		if (err != STATUS_OK) goto cs_parse_done;
-                entry = (STACK_ENTRY *)ptr;
-		if (entry->next_tree)
-		  parse->current = entry->next_tree;
-		else
-		  parse->current = entry->tree;
-		free(entry);
-	      }
-	      if ((Commands[i].next_state & ~ST_POP) != ST_SAME)
-	      {
-		entry = (STACK_ENTRY *) calloc (1, sizeof (STACK_ENTRY));
-		if (entry == NULL)
-		  return nerr_raise (NERR_NOMEM, 
-		      "%s Unable to allocate memory for stack entry",
-		      find_context(parse, -1, tmp, sizeof(tmp)));
-		entry->state = Commands[i].next_state;
-		entry->tree = parse->current;
-		entry->location = parse->offset;
-		err = uListAppend(parse->stack, entry);
-		if (err != STATUS_OK) {
-		  free (entry);
-		  goto cs_parse_done;
-		}
-	      }
-	      break;
-	    }
+		  
+		  for (i = 1; Commands[i].cmd; i++)
+		  {
+			  n = Commands[i].cmdlen;
+			  //printf("%s =:= %s\n",token,Commands[i].cmd );
+			  if (!strncasecmp(token, Commands[i].cmd, n))
+			  {
+				  if ((Commands[i].has_arg && ((token[n] == ':') || (token[n] == '!')))
+					  || (token[n] == ' ' || token[n] == '\0' || token[n] == '\r' || token[n] == '\n'))
+				  {
+					  err = uListGet (parse->stack, -1, (void *)&entry);
+					  if (err != STATUS_OK) goto cs_parse_done;
+					  if (!(Commands[i].allowed_state & entry->state))
+					  {
+						  return nerr_raise (NERR_PARSE, 
+							  "%s Command %s not allowed in %s", Commands[i].cmd, 
+							  find_context(parse, -1, tmp, sizeof(tmp)), 
+							  expand_state(entry->state));
+					  }
+					  if (Commands[i].has_arg)
+					  {
+						  /* Need to parse out arg */
+						  arg = &token[n];
+						  err = (*(Commands[i].parse_handler))(parse, i, arg);
+					  }
+					  else
+					  {
+						  err = (*(Commands[i].parse_handler))(parse, i, NULL);
+					  }
+					  if (err != STATUS_OK) goto cs_parse_done;
+					  if (Commands[i].next_state & ST_POP)
+					  {
+						  void *ptr;
+						  err = uListPop(parse->stack, &ptr);
+						  if (err != STATUS_OK) goto cs_parse_done;
+						  entry = (STACK_ENTRY *)ptr;
+						  if (entry->next_tree)
+							  parse->current = entry->next_tree;
+						  else
+							  parse->current = entry->tree;
+						  free(entry);
+					  }
+					  if ((Commands[i].next_state & ~ST_POP) != ST_SAME)
+					  {
+						  entry = (STACK_ENTRY *) calloc (1, sizeof (STACK_ENTRY));
+						  if (entry == NULL)
+							  return nerr_raise (NERR_NOMEM, 
+							  "%s Unable to allocate memory for stack entry",
+							  find_context(parse, -1, tmp, sizeof(tmp)));
+						  entry->state = Commands[i].next_state;
+						  entry->tree = parse->current;
+						  entry->location = parse->offset;
+						  err = uListAppend(parse->stack, entry);
+						  if (err != STATUS_OK) {
+							  free (entry);
+							  goto cs_parse_done;
+						  }
+					  }
+					  break;
+				  }
+			  }
+		  }
+		  if (Commands[i].cmd == NULL)
+		  {
+			  return nerr_raise (NERR_PARSE, "%s Unknown command %s",
+				  find_context(parse, -1, tmp, sizeof(tmp)), token);
+		  }
 	  }
 	}
-	if (Commands[i].cmd == NULL)
+	else
 	{
-	  return nerr_raise (NERR_PARSE, "%s Unknown command %s",
-	      find_context(parse, -1, tmp, sizeof(tmp)), token);
+		/* Create literal with all remaining data */
+		err = (*(Commands[0].parse_handler))(parse, 0, &(ibuf[parse->offset]));
+		done = 1;
 	}
-      }
-    }
-    else
-    {
-      /* Create literal with all remaining data */
-      err = (*(Commands[0].parse_handler))(parse, 0, &(ibuf[parse->offset]));
-      done = 1;
-    }
   }
   /* Should we check the parse stack here? */
   while (uListLength(parse->stack) > initial_stack_depth)
   {
-    err = uListPop(parse->stack, (void *)&entry);
-    if (err != STATUS_OK) goto cs_parse_done;
-    if (entry->state & (ST_IF | ST_ELSE))
-      return nerr_raise (NERR_PARSE, "%s Non-terminted if clause",
-	  find_context(parse, entry->location, tmp, sizeof(tmp)));
-    if (entry->state & ST_EACH)
-      return nerr_raise (NERR_PARSE, "%s Non-terminted each clause",
-	  find_context(parse, entry->location, tmp, sizeof(tmp)));
+	  err = uListPop(parse->stack, (void *)&entry);
+	  if (err != STATUS_OK) goto cs_parse_done;
+	  if (entry->state & (ST_IF | ST_ELSE))
+		  return nerr_raise (NERR_PARSE, "%s Non-terminted if clause",
+		  find_context(parse, entry->location, tmp, sizeof(tmp)));
+	  if (entry->state & ST_EACH)
+		  return nerr_raise (NERR_PARSE, "%s Non-terminted each clause",
+		  find_context(parse, entry->location, tmp, sizeof(tmp)));
   }
 
 cs_parse_done:

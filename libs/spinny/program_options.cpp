@@ -35,8 +35,7 @@ ostream& operator<<(ostream& os, const vector<T>& v)
 boost::program_options::variables_map
 parse_program_options(int ac, char* av[])
 {
-       
-        po::variables_map vm;
+    po::variables_map vm;
 	po::options_description generic("Other options");
 	generic.add_options()
 		("db",po::value<std::string>(),"File to store music database in")
