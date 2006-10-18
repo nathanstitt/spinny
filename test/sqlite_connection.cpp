@@ -87,5 +87,4 @@ int
 sqlite_connection( int argc, char * argv[] ) 
 {
 	return UnitTest::RunAllTests("SqliteConnection");
-
 }
