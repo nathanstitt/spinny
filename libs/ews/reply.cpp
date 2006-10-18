@@ -288,6 +288,7 @@ namespace ews {
 	}
 
 
+
 	reply::reply( const connection *conn ) :
 		conn_(conn),
 		cs_parse_(0),
@@ -330,6 +331,25 @@ namespace ews {
 
 		return ret;
 	}
+
+	bool
+	reply::set_hdf_value( const std::string &hdf_key, const std::string &value ){
+		if ( template_.empty() ){
+			throw std::runtime_error( "Unable to set hdf value unless template is set first");
+		}
+		hdf_set_value( hdf_, hdf_key.c_str(), value.c_str() );
+		return true;
+	}
+
+	bool
+	reply::set_hdf_value( const std::string &hdf_key, int value ){
+		if ( template_.empty() ){
+			throw std::runtime_error( "Unable to set hdf value unless template is set first");
+		}
+		hdf_set_int_value( hdf_, hdf_key.c_str(), value );
+		return true;
+	}
+
 
 	void
 	reply::set_to( status_type stat ){
