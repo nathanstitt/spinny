@@ -44,6 +44,10 @@ public:
 	result_set
 	roots();
 
+	static
+	result_set
+	children_of( sqlite::id_t db_id );
+
 	sqlite::result_set<Song>
 	songs();
 
@@ -59,6 +63,7 @@ public:
 
 	result_set
 	children() const;
+
 
   	boost::filesystem::path
   	path() const;

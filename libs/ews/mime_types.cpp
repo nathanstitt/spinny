@@ -1,4 +1,4 @@
-#include "ews/mime_types.hpp"
+	#include "ews/mime_types.hpp"
 #include "ews/server.hpp"
 
 namespace ews {
@@ -10,13 +10,13 @@ namespace ews {
 			const char* mime_type;
 		} mappings[] =
 		{
-			{ "css", "text/css" },
-			{ "html", "text/html" },
-			{ "png", "image/png" },
-			{ "gif", "image/gif" },
-			{ "htm", "text/html" },
-			{ "jpg", "image/jpeg" },
-			{ 0, 0 } // Marks end of list.
+			 { "css",  "text/css" },
+			 { "html", "text/html" },
+			 { "png",  "image/png" },
+			 { "gif",  "image/gif" },
+			 { "json", "application/json" },
+			 { "jpg",  "image/jpeg" },
+			 { 0, 0 }	// Marks end of list.
 		};
 
 		std::string extension_to_type(const std::string& extension) {

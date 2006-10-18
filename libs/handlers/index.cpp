@@ -34,6 +34,6 @@ Index::handle( const ews::request& req, ews::reply& rep ){
 	return stop;
 }
 std::string
-Index::name() const { return "CustomHandler"; }
+Index::name() const { return "Index"; }
 
 

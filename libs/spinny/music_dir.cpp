@@ -136,10 +136,13 @@ MusicDir::songs(){
 
 MusicDir::result_set
 MusicDir::children() const {
-	return sqlite::db()->load_many<MusicDir>( "parent_id", db_id() );
+	return MusicDir::children_of( db_id() );
 }
 
-
+MusicDir::result_set
+MusicDir::children_of( sqlite::id_t db_id ) {
+	return sqlite::db()->load_many<MusicDir>( "parent_id", db_id );
+}
 
 
 
