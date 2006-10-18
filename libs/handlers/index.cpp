@@ -1,12 +1,12 @@
 #include "ews/server.hpp"
-#include "ews/handlers/index.hpp"
+#include "handlers/index.hpp"
 #include "spinny/music_dir.hpp"
 #include "boost/lambda/lambda.hpp"
 #include "boost/lambda/bind.hpp"
 #include <algorithm>
-using namespace ews::handlers;
 
 
+using namespace handlers;
 
 
 ews::request_handler::result
@@ -23,13 +23,11 @@ Index::handle( const ews::request& req, ews::reply& rep ){
 //      using namespace boost::lambda;
 	rep.content << "MusicDirRoots {\n";
 	using namespace boost::lambda;
- 	std::for_each( rs.begin(), rs.end(),
-		       rep.content << bind(&MusicDir::filesystem_name, _1 )
- 		);
+	for ( MusicDir::result_set::iterator md = rs.begin(); rs.end() != md; ++md ){
+		rep.content << "    " << md->db_id() << "=" << md->path().leaf() << "\n";
+	}
 	rep.content << "}\n";
 
-
-	
 	rep.add_header( "X-HANDLED-BY", "IndexHandler" );
 	rep.set_basic_headers( "html" );
 	

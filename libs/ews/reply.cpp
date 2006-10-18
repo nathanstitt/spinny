@@ -264,6 +264,7 @@ namespace ews {
 		buffers.push_back(status_strings::to_buffer(status));
 
 		if ( ! template_.empty() ){
+			BOOST_LOGL(ewslog,info) << "Using Template: " << template_.string() << "\nHDF:\n" << content.str();
 			if ( parse_template() ){
 				headers[ "Content-Length" ] = boost::lexical_cast<std::string>( content.size() );
 			} else {

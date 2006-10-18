@@ -120,7 +120,7 @@ Artist::with_album( const Album *alb ){
 	table_desc.insert_fields( *con );
 	*con << ",artists.rowid from artists, albums_artists where artists.rowid=albums_artists.artist_id"
 	     << " and albums_artists.album_id = " << alb->db_id();
-	return con->load_many<Artist>();
+	return con->load_stored<Artist>();
 }
 
 Album::result_set
@@ -131,7 +131,7 @@ Artist::albums() const {
 	td->insert_fields( *con );
 	*con << ",albums.rowid from albums, albums_artists where albums.rowid=albums_artists.album_id"
 	     << " and albums_artists.artist_id = " << this->db_id();
-	return con->load_many<Album>();
+	return con->load_stored<Album>();
 }
 
 

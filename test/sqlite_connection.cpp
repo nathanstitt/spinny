@@ -5,7 +5,7 @@ using namespace sqlite;
 SUITE(SqliteConnection) {
 
 TEST( Open ) {
-	boost::filesystem::path db("./test.db");
+	boost::filesystem::path db("./test2.db");
 	connection con;
 	CHECK( ! filesystem::exists( db.string() ) );
 	con.open( db.string() );
@@ -39,7 +39,7 @@ TEST( Close ){
 
 TEST( InsertID ){
 	DummyApp c;
-	CHECK_EQUAL( c.con->insertid(), 0 );
+	CHECK_EQUAL( c.con->insertid(), 1 );
 	*c.con << "insert into testing (col1,col2) values (34,'billy goat')";
 	c.con->exec<none>();
 	CHECK( c.con->insertid() > 0 );

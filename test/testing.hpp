@@ -18,7 +18,7 @@
 using namespace std;
 using namespace boost;
 
-#define ARGS_SIZE 11
+#define ARGS_SIZE 13
 class DummyApp : boost::noncopyable {
 	struct DF{
 		DF(){
@@ -61,6 +61,8 @@ public:
 			args[8] = "3001";
 			args[9] = "--template_root";
 			args[10]= template_path.string().c_str();
+			args[11]= "--music_dir";
+			args[12]= music_path.string().c_str();
 
 			Spinny::run( ARGS_SIZE, const_cast<char**>(args) );
 			con=sqlite::db();

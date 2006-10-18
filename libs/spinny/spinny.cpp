@@ -4,15 +4,17 @@
 
 #include "spinny.hpp"
 #include <vector>
-
+#include <algorithm>
+#include "boost/bind.hpp"
 #include "boost/log/functions.hpp"
 #include "boost/filesystem/path.hpp"
 #include "boost/asio.hpp"
 #include "boost/bind.hpp"
 #include "ews/server.hpp"
+#include "spinny/music_dir.hpp"
 
-using namespace boost;
 using namespace std;
+using namespace boost;
 
 BOOST_DEFINE_LOG(app, "app")
 
@@ -39,6 +41,11 @@ Spinny::instance(){
 }
 
 
+void
+init_music_dir( const std::string &dir ){
+	MusicDir::ptr md=MusicDir::create_root(dir);
+	md->sync();
+}
 
 
 int
@@ -66,6 +73,9 @@ Spinny::run(int argc, char **argv)
 	}
 
 	sqlite::startup( _instance->config<string>("db") );
+
+	vector<string> mds = _instance->config<vector<string> >( "music_dir" );
+ 	for_each( mds.begin(), mds.end(), boost::bind( init_music_dir, _1 ) );
 
 	_ews = new ews::server( _instance->config<string>( "web_listen_address" ),
 				_instance->config<string>( "web_listen_port" ),

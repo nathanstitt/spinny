@@ -13,7 +13,20 @@
     </style>
     <script type="text/javascript" src="/js/yahoo.js" ></script>
     <script type="text/javascript" src="/js/treeview.js" ></script>
-
+    <script type="text/javascript" src="/js/connection.js" ></script>
+    <script type="text/javascript" src="/js/tree.js"></script>
+    <script type="text/javascript">
+      var tree;
+      function treeInit() {
+        tree=new YAHOO.widget.TreeView(document.getElementById("treeDiv"));
+        tree.setDynamicLoad(loadDataForNode); 
+        var root = tree.getRoot();
+        var dirs    = new YAHOO.widget.TextNode( { id:0, label:"Directories", type: "dirs" }, root, false);
+        var artists = new YAHOO.widget.TextNode( { id:0, label:"Artists", type: "artists" }, root, false);
+        var albums  = new YAHOO.widget.TextNode( { id:0, label:"Albums", type: "albums"}, root, false);
+        tree.draw(); 
+      }
+    </script>
   </head> 
   <body onload="treeInit()"> 
     <div id="doc"> 
@@ -25,109 +38,17 @@
 	    <div class="yui-gd">
 	      <div class="yui-u first">
 		<!-- start: your content here -->
-		<div class="mod">
+		<div class="mod" style="padding-left: 1em;">
 		  <div class="hd">
-		    <h2>Unit A</h2>
+		    <h2>Songs</h2>
 		  </div>
 		  <div class="hd">
-		    <p>GRID UNIT: A</p>
-<?cs each:md=MusicDirRoots ?>
-  <p>Root <?cs name:md ?></p>
-<?cs /each ?>
+		    <div id="expandcontractdiv">
+		      <a href="javascript:tree.expandAll()">Expand all</a>
+		      <a href="javascript:tree.collapseAll()">Collapse all</a>
+		    </div>
 
-	  <div id="expandcontractdiv">
-		<a href="javascript:tree.expandAll()">Expand all</a>
-		<a href="javascript:tree.collapseAll()">Collapse all</a>
-	  </div>
-
-<div id="treeDiv1"></div>
-<script type="text/javascript">
-
-	var tree;
-	var nodes = new Array();
-	var nodeIndex = 0;
-	
-	function treeInit() {
-		buildRandomTextNodeTree();
-	}
-
-	function buildRandomTextNodeTree() {
-		tree = new YAHOO.widget.TreeView("treeDiv1");
-		tree.onExpand = function(node) {
-			// alert(node.index + " was expanded"); 
-		}
-
-		tree.onCollapse = function(node) {
-			// alert(node.index + " was collapsed"); 
-		}
-
-		for (var i = 0; i < Math.floor((Math.random()*4) + 3); i++) {
-			var thisId = nodeIndex++;
-			var thisLabel = "menu" + i;
-			// nodes[thisId] = new YAHOO.widget.TextNode({ label: thisLabel }, tree.getRoot(), false);
-			// nodes[thisId] = new YAHOO.widget.MenuNode({label:thisLabel, href:"http://asdf"}, tree.getRoot(), false);
-			nodes[thisId] = new YAHOO.widget.MenuNode(thisLabel, tree.getRoot(), false);
-
-			var p1 = nodes[thisId];
-			var l1 = thisLabel;
-
-			for (var j = 0; j < Math.floor(Math.random()*6) + 1; j++) { 
-				thisId = nodeIndex++;
-				thisLabel = l1 + "-" + j;
-				// nodes[thisId] = new YAHOO.widget.TextNode({ label: thisLabel }, p1, true);
-				nodes[thisId] = new YAHOO.widget.MenuNode(thisLabel, p1, false);
-
-				var p2 = nodes[thisId];
-				var l2 = thisLabel;
-
-				for (var k =0; k < Math.floor(Math.random()*6) + 1; k++) { 
-					thisId = nodeIndex++;
-					thisLabel = l2 + "-" + k;
-
-					var data = {
-							id: thisId,
-							label: thisLabel, 
-							href: "javascript:onLabelClick(" + thisId + ")" 
-						}
-
-					//var data = { label: thisLabel, href: "javascript:void(window.open('http://www.yahoo.com'))" }
-					nodes[thisId] = new YAHOO.widget.TextNode(data, p2, false);
-                    nodes[thisId].labelStyle = "emLabel";
-
-					// nodes[thisId] = new YAHOO.widget.MenuNode(thisLabel, p2, false);
-				}
-
-			}
-
-		}
-
-		// nodes[0] = new YAHOO.widget.TextNode(tree.getRoot(), false, "label-0");
-		tree.draw();
-	}
-
-	var selectedId = null;
-	function onLabelClick(id) {
-
-		var node = tree.getNodeByProperty("id", id);
-		// alert(node.label);
-
-		var el = node.getLabelEl()
-
-        YAHOO.log("pos: " + YAHOO.util.Dom.getXY(el));
-
-        el.style.backgroundColor = "#c5dbfc";
-		
-
-		if (selectedId != null) {
-			node = tree.getNodeByProperty("id", selectedId);
-			node.getLabelEl().style.backgroundColor = "white";
-		}
-
-		selectedId = id;
-	}
-
-</script>
-
+		    <div id="treeDiv"></div>
 		  </div>
 		</div>
 		<!-- end: your content here -->

@@ -75,6 +75,12 @@ MusicDir::MusicDir() : sqlite::table(), _parent_id(0), _name("") {
 
 MusicDir::ptr
 MusicDir::create_root( const boost::filesystem::path &path ){
+	std::string where("parent_id=0 and name=");
+	where += sqlite::q( path.string() );
+	MusicDir::result_set mds = sqlite::db()->load_where<MusicDir>( where );
+	if ( mds.begin() != mds.end() ){
+		return mds.begin().shared_ptr();
+	}
 	MusicDir::ptr md( new MusicDir );
  	md->_name=path.string();
  	md->_parent_id = 0;

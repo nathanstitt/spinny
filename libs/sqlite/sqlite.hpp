@@ -358,10 +358,10 @@ namespace sqlite {
 		
 		template<class T>
 		result_set<T>
-		load_many(){
+		load_stored(){
 			command *cmd = new command( *this,  _cmd.curval() );
 			result_set<T> ret( cmd );
-			BOOST_LOG(sql) << "load_many of " << typeid(T).name();
+			BOOST_LOGL(sql,info) << "load_stored of " << typeid(T).name();
 			this->clear_cmd();
 			return ret;
 		}
@@ -380,10 +380,21 @@ namespace sqlite {
 			if ( limit ){
 				*this << " limit " << limit;
 			}
-			return this->load_many<T1>();
+			return this->load_stored<T1>();
 		}
 
 
+		// load many sqlite::table objects
+		template<class T1>
+		result_set<T1>
+		load_where(  const std::string &where ) {
+			*this << "select ";
+			const ::sqlite::table::description *td=T1::table_description();
+			td->insert_fields( *this );
+			*this << ",rowid from " << td->table_name()
+			      << " where " << where;
+			return this->load_stored<T1>();
+		}
 
 		// load one sqlite::table object
 		template<class T,class T2>
@@ -414,17 +425,17 @@ namespace sqlite {
 				*this << ") values (";
 				obj.table_insert_values( *this );
 				*this << ")";
-				BOOST_LOG(sql) << "save (insert) of " << typeid(T).name();
+				BOOST_LOGL(sql,info) << "save (insert) of " << typeid(T).name();
 				this->exec<none>();
 				obj.set_db_id( this->insertid() );
 			} else {
 				*this << "update " << td->table_name() << " set ";
 				obj.table_update_values( *this );
 				* this << " where rowid=" << obj.db_id();
-				BOOST_LOG(sql) << "save (update) of " << typeid(T).name();
+				BOOST_LOGL(sql,info) << "save (update) of " << typeid(T).name();
 				this->exec<none>();
 			}
-			BOOST_LOG(sql) << "ID: " << obj.db_id();
+			BOOST_LOGL(sql,info) << "ID: " << obj.db_id();
 			return true;
 		}
 

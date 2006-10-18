@@ -1,7 +1,6 @@
 #include "ews/server.hpp"
 #include <boost/bind.hpp>
 #include <boost/log/log.hpp>
-#include "ews/handlers/instantiate.hpp"
 
 BOOST_DEFINE_LOG( ewslog, "ewslog" )
 
@@ -34,20 +33,18 @@ namespace ews {
 				       boost::bind(&server::handle_accept, this,
 						   asio::placeholders::error));
 
-		handlers::link_up();
-
 		BOOST_LOGL( ewslog,info) << "EWS running on: " 
 					 << address
 					 << ":" << port
 					 << " root: " << doc_root_.string()
 					 << " tmpl: " << tmpl_root_.string();
 
-		std::cout << "EWS running on: " 
-					 << address
-					 << ":" << port
-					 << " root: " << doc_root_.string()
-					 << " tmpl: " << tmpl_root_.string()
-			  << std::endl;
+// 		std::cout << "EWS running on: " 
+// 					 << address
+// 					 << ":" << port
+// 					 << " root: " << doc_root_.string()
+// 					 << " tmpl: " << tmpl_root_.string()
+// 			  << std::endl;
 	}
 
 	void server::run()

@@ -6,6 +6,8 @@
 #include "boost/thread/thread.hpp"
 #include "boost/thread/xtime.hpp"
 #include <boost/thread/tss.hpp>
+#include "handlers/instantiate.hpp"
+
 #include <cassert>
 
 
@@ -32,6 +34,7 @@ private:
 #endif
 
 int main(int argv , char** argc ) {
+	handlers::link_up();
 	boost::logging::manipulate_logs("*")
 		.del_modifier("time")
 		.del_modifier("prefix")

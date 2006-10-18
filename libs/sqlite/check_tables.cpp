@@ -53,6 +53,7 @@ sqlite::check_and_create_tables(){
 
 			con->exec<none>();
 		}
+		BOOST_LOGL(sql,info) << "Checking for table " << (*table)->table_name() << ( ( res ) ? " exists" : " doesn't exist, created" ); 
 	}
 }
 

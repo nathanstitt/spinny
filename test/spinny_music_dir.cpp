@@ -119,7 +119,7 @@ TEST( Sync ){
 
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
-	CHECK_EQUAL( 0, da.con->exec<int>( "select count(*) from music_dirs") );
+	CHECK_EQUAL( 1, da.con->exec<int>( "select count(*) from music_dirs") );
 	CHECK_EQUAL( 0, da.con->exec<int>( "select count(*) from songs") );
 	CHECK_EQUAL( 0, da.con->exec<int>( "select count(*) from artists") );
 	CHECK_EQUAL( 0, da.con->exec<int>( "select count(*) from albums") );

@@ -9,15 +9,15 @@
 
 #include "ews/request_handler.hpp"
 
-namespace ews {
 
-	namespace handlers {
 
-		void link_up();
+namespace handlers {
+	
+	void link_up();
 
-	} // handlers
+} // handlers
 
-} // ews
+
 
 
 
