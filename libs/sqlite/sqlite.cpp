@@ -18,7 +18,7 @@ close_n_delete_db( sqlite::connection *s ){
 
 boost::thread_specific_ptr<sqlite::connection> _db( &close_n_delete_db );
 
-
+static std::list<connection*> connections_;
 
 namespace sqlite {
 
@@ -35,10 +35,10 @@ namespace sqlite {
 		if ( ! conn ){
 			conn=new sqlite::connection( _default_db );
 			_db.reset( conn );
+			connections_.push_back( conn );
 		}
 		return conn;
 	}
-
 
 	int
 	q( const int arg ){
@@ -63,8 +63,10 @@ namespace sqlite {
 
 	void
 	stop_db(){
+		
 		sqlite::connection *con = _db.get();
 		if ( con ){
+			
 			con->close();
 			delete con;
 			_db.release();
