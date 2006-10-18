@@ -4,23 +4,38 @@
 
 #include "sqlite.hpp"
 #include "boost/thread/tss.hpp"
+#include <algorithm>
+#include <list>
+#include "boost/bind.hpp"
 
 BOOST_DEFINE_LOG(sql, "sql")
 
 static std::string _default_db;
 
+static std::list<sqlite::connection*> connections_;
+
+static
 void
 close_n_delete_db( sqlite::connection *s ){
 	s->close();
 	delete s;
 }
 
+static
+void
+close_delete_n_remove_db( sqlite::connection *s ){
+	std::list<sqlite::connection*>::iterator con = std::find( connections_.begin(), connections_.end(), s );
+	if ( connections_.end() != con ){
+		connections_.erase( con );
+	}
+	close_n_delete_db( s );
+}
 
-boost::thread_specific_ptr<sqlite::connection> _db( &close_n_delete_db );
+static boost::thread_specific_ptr<sqlite::connection> _db( &close_delete_n_remove_db );
 
-static std::list<connection*> connections_;
 
 namespace sqlite {
+
 
 	void startup( const std::string &location ){
 		_default_db=location;
@@ -63,14 +78,11 @@ namespace sqlite {
 
 	void
 	stop_db(){
-		
-		sqlite::connection *con = _db.get();
-		if ( con ){
-			
-			con->close();
-			delete con;
-			_db.release();
-		}
+
+		std::for_each( connections_.begin(), connections_.end(),
+			boost::bind( close_n_delete_db, _1 ) );
+
+			connections_.clear();
 	}
 
 }
