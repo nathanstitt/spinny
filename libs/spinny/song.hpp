@@ -43,6 +43,7 @@ public:
 
 	static bool is_interesting( const boost::filesystem::path &path );
 	static ptr create_from_file( const MusicDir &md, const std::string name );
+	static sqlite::id_t count();
 
 	bool save() const;
 

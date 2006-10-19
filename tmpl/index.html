@@ -19,9 +19,10 @@
       var tree;
       function treeInit() {
         tree=new YAHOO.widget.TreeView(document.getElementById("treeDiv"));
-        tree.setDynamicLoad(loadDataForNode); 
+
         var root = tree.getRoot();
         var dirs    = new YAHOO.widget.TextNode( { id:0, label:"Directories", type: "dirs" }, root, false);
+        dirs.setDynamicLoad(loadDataForNode,1); 
         var artists = new YAHOO.widget.TextNode( { id:0, label:"Artists", type: "artists" }, root, false);
         var albums  = new YAHOO.widget.TextNode( { id:0, label:"Albums", type: "albums"}, root, false);
         tree.draw(); 

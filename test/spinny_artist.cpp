@@ -33,6 +33,19 @@ TEST( Songs ){
 	CHECK( std::find_if( rs.begin(), rs.end(), name_eq("Ozzy Osbourne") ) != rs.end() );
 }
 
+TEST( NameStartsWith ){
+	DummyApp da;
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+	md->sync();
+
+ 	Artist::result_set rs = Artist::name_starts_with( "O" );
+
+ 	CHECK( rs.begin() != rs.end() );
+ 	
+	CHECK( std::find_if( rs.begin(), rs.end(), name_eq("Ozzy Osbourne") ) != rs.end() );
+}
+
 TEST( FromSong ){
 	DummyApp da;
 	da.populate_music_fixtures();

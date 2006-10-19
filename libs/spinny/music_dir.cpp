@@ -256,6 +256,13 @@ MusicDir::sync( unsigned char depth ){
 }
 
 
+sqlite::id_t
+MusicDir::num_children(){
+	std::string sql( "select count(*) from music_dirs where parent_id = " );
+	sql+=boost::lexical_cast<std::string>( db_id() );
+	return sqlite::db()->exec<sqlite::id_t>( sql );
+}
+
 void
 MusicDir::destroy(){
 

@@ -363,6 +363,7 @@ namespace ews {
 
 	bool
 	reply::set_basic_headers( const std::string &ext ) {
+		this->status=ok;
 		add_header( "Content-Type", ews::mime_types::extension_to_type( ext ) );
 		add_header("Content-Length", boost::lexical_cast<std::string>( content.str().size() ) );
 		return true;

@@ -77,6 +77,10 @@ Song::table_update_values( std::ostream &str ) const {
 	    << ",year=" << _year;
 }
 
+sqlite::id_t
+Song::count(){
+	return sqlite::db()->count<Song>();
+}
 
 void
 Song::initialize_from_db( const sqlite::reader *reader ) {

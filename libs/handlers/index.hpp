@@ -1,12 +1,11 @@
 /* @(#)index.hpp
  */
 
-#ifndef _INDEX_H
-#define _INDEX_H 1
+#ifndef _HANDLERS_INDEX_H
+#define _HANDLERS_INDEX_H 1
 
 #include "ews/server.hpp"
 #include "ews/request_handler.hpp"
-
 
 
 namespace handlers {
@@ -25,5 +24,5 @@ namespace handlers {
 
 
 
-#endif /* _INDEX_H */
+#endif /* _HANDLERS_INDEX_H */
 

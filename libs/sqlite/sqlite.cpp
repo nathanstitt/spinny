@@ -56,23 +56,27 @@ namespace sqlite {
 	}
 
 	int
-	q( const int arg ){
+	q( const int arg, bool ){
 		return arg;
 	}
 	
-	const long long&
-	q( const long long &arg ){
-		return arg; 
-	}
+ 	const long long&
+ 	q( const long long &arg, bool ){
+ 		return arg; 
+ 	}
 
-	//id_t&
-	//q( id_t &arg ){
-	//	return arg; 
-	//}
+// 	id_t&
+// 	q( id_t &arg ){
+// 		return arg; 
+// 	}
 
 	std::string
-	q( const std::string &val ){
-		return std::string("'") + boost::replace_all_copy(val, "'","''" ) + std::string("'");
+	q( const std::string &val, bool enclose ){
+		if ( enclose ){
+			return std::string("'") + boost::replace_all_copy(val, "'","''" ) + std::string("'");
+		} else {
+			return boost::replace_all_copy(val, "'","''" );
+		}
 	}
 
 

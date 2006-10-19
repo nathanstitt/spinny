@@ -1,8 +1,9 @@
-/* @(#)table.cpp
+/* @(#)table_obj.cpp
  */
 
 
-#include "sqlite.hpp"
+#include "sqlite/sqlite.hpp"
+#include "sqlite/comma.hpp"
 
 using namespace sqlite;
 
@@ -62,10 +63,10 @@ table::description::description(){
 
 void
 table::description::insert_fields( std::ostream &str ) const {
+	sqlite::commas comma;
 	for( int i=0; i < this->num_fields(); ++i ){
-		if ( i != 0 ) {
-			str << ',';
-		}
-		str << this->fields()[i];
+		str << comma << this->fields()[i];
 	}
 }
+
+

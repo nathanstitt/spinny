@@ -40,10 +40,10 @@ namespace sqlite {
 	typedef long long id_t;
 
 	// quoteing functions
-	const id_t&	q( const id_t &arg );
-	const long long&	q( const long long &arg );
-	int		q( const int arg );
-	std::string	q( const std::string &val );
+	//const id_t&	  q( const id_t &arg, bool enclose=true );
+	const long long&  q( const long long &arg, bool enclose=true );
+	int		  q( const int arg, bool enclose=true );
+	std::string	  q( const std::string &val, bool enclose=true );
 	
 
 
@@ -110,7 +110,6 @@ namespace sqlite {
 		virtual id_t db_id() const;
 		virtual void set_db_id( id_t ) const;
 		virtual void destroy();
-		
 		// the below are pure virtual
 		virtual bool save() const = 0;
 		virtual void initialize_from_db( const reader* ) = 0;
@@ -366,6 +365,14 @@ namespace sqlite {
 			return ret;
 		}
 
+		// count of items in table
+		template<class T1>
+		id_t
+		count() {
+			*this << "select count(*) from " << T1::table_description()->table_name();
+			return this->exec<id_t>();
+		}
+		
 		// load many sqlite::table objects
 		template<class T1,class T2>
 		result_set<T1>

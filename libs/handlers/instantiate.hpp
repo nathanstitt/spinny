@@ -3,8 +3,8 @@
 /* @(#)instantiate.hpp
  */
 
-#ifndef _INSTANTIATE_H
-#define _INSTANTIATE_H 1
+#ifndef _HANDLERS_INSTANTIATE_H
+#define _HANDLERS_INSTANTIATE_H 1
 
 
 #include "ews/request_handler.hpp"
@@ -21,5 +21,5 @@ namespace handlers {
 
 
 
-#endif /* _INSTANTIATE_H */
+#endif /* _HANDLERS_INSTANTIATE_H */
 

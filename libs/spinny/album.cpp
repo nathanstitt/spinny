@@ -71,6 +71,18 @@ Album::all(){
 	return sqlite::db()->load_many<Album>( "", 0 );
 }
 
+Album::result_set
+Album::name_starts_with( const std::string &name ){
+	std::string where("upper(name) like '");
+	where += sqlite::q( name, false );
+	where += "%'";
+	return sqlite::db()->load_where<Album>( where );
+}
+
+sqlite::id_t
+Album::count(){
+	return sqlite::db()->count<Album>();
+}
 
 void
 Album::add_artist( const Artist::ptr &artist ){

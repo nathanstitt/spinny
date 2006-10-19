@@ -5,9 +5,10 @@
 #include <vector>
 #include <map>
 
+#include "boost/lexical_cast.hpp"
+#include "boost/algorithm/string/find.hpp"
 #include "ews/request_parser.hpp"
 #include "ews/header.hpp"
-#include "boost/lexical_cast.hpp"
 #include "cs/cs.h"
 
 namespace ews {

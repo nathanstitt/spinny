@@ -55,6 +55,7 @@ namespace ews {
 				if ( ! request_handler::handle_request( request_, reply_ ) ){
 					reply_.set_to( reply::internal_server_error );
 				}
+				BOOST_LOGL( ewslog, info ) << "Status: " << (int)reply_.status;
 				for( reply::headers_t::const_iterator header=reply_.headers.begin();
 				     reply_.headers.end() != header;
 				     ++header ) {

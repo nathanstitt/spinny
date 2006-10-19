@@ -71,6 +71,9 @@ public:
 	bool
 	is_valid();
 
+	sqlite::id_t
+	num_children();
+
  	void
  	sync( unsigned char depth = 0 );
 

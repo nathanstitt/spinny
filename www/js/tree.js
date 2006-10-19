@@ -11,13 +11,19 @@ function loadDataForNode( node, onCompleteCallback) {
 function handleSuccess(o) {
 	var node = o.argument.node;
 	var treecallback = o.argument.callback;
-	var artists = new YAHOO.widget.TextNode( node, false);
-	for ( obj in JSON.parse(o.responseText) ){
-		var node=new YAHOO.widget.TextNode( obj, node, false );
+	var ary=eval('('+o.responseText+')');
+	for ( var indx in ary ){
+		var obj=ary[indx];
+		obj.iconMode = 0;
+		var newnode=new YAHOO.widget.TextNode( obj, node, false );
+		if ( obj.ch ){
+			newnode.setDynamicLoad(loadDataForNode,1);
+		}
 	}
-	treecallback();
+	o.argument.callback()
 };
 
 function handleFailure(o) {
-	alert("Failed AJAX");
+	alert("Tree Failed AJAX Req");
+	o.argument.callback()
 };

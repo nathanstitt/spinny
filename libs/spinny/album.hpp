@@ -40,6 +40,13 @@ public:
 	Album::ptr
 	find_or_create( const Artist::ptr &a, const std::string &name );
 
+	static
+	result_set
+	name_starts_with( const std::string &name );
+
+	static
+	sqlite::id_t count();
+
 	void
 	add_artist( const Artist::ptr &artist );
 

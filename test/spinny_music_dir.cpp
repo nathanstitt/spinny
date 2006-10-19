@@ -79,6 +79,26 @@ TEST( Parent ){
 	CHECK( *loaded_parent ==  *parent );
 }
 
+TEST( ChildrenOf ){
+	DummyApp da;
+
+	da.con->exec<sqlite::none>( "insert into music_dirs ( parent_id,name ) values ( 0, 'parent' )" );
+	sqlite::id_t parent_id = da.con->insertid();
+	CHECK( parent_id );
+	*da.con << "insert into music_dirs ( parent_id,name ) values ( " << parent_id << ", 'child' )";
+	da.con->exec<sqlite::none>();
+	sqlite::id_t child_id = da.con->insertid();
+
+	MusicDir::ptr parent = da.con->load<MusicDir>( parent_id );
+	CHECK_EQUAL( parent_id, parent->db_id() );
+	MusicDir::ptr child  = da.con->load<MusicDir>( child_id );
+
+ 	MusicDir::result_set children=MusicDir::children_of( parent->db_id() );
+ 	CHECK( children.end() != children.begin() );
+
+ 	CHECK( std::find_if( children.begin(), children.end(), sqlite::dref_eq<MusicDir>(child) ) != children.end() );
+}
+
 TEST( Table ){
 	DummyApp da;
 	CHECK( da.test_table_obj<MusicDir>() );
@@ -102,6 +122,8 @@ TEST( Children ){
  	CHECK( children.end() != children.begin() );
 
  	CHECK( std::find_if( children.begin(), children.end(), sqlite::dref_eq<MusicDir>(child) ) != children.end() );
+
+	CHECK_EQUAL( 1, parent->num_children() );
 }
 
 

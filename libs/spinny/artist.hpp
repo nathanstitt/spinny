@@ -41,7 +41,14 @@ public:
 
 	static
 	result_set
+	name_starts_with( const std::string &name );
+
+	static
+	result_set
 	with_album( const Album *alb );
+
+	static
+	sqlite::id_t count();
 
 	sqlite::result_set<Album>
 	albums() const;

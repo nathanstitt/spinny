@@ -123,6 +123,19 @@ Artist::with_album( const Album *alb ){
 	return con->load_stored<Artist>();
 }
 
+Artist::result_set
+Artist::name_starts_with( const std::string &name ){
+	std::string where("upper(name) like '");
+	where += sqlite::q( name, false );
+	where += "%'";
+	return sqlite::db()->load_where<Artist>( where );
+}
+
+sqlite::id_t
+Artist::count(){
+	return sqlite::db()->count<Artist>();
+}
+
 Album::result_set
 Artist::albums() const {
 	sqlite::connection *con = sqlite::db();

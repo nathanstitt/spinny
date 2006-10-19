@@ -55,6 +55,25 @@ TEST( All ){
 	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
 
 }
+
+TEST( NameStartsWith ){
+	DummyApp da;
+	da.populate_music_fixtures();
+	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+
+	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
+
+	Album::result_set albums = Album::name_starts_with("THE");
+
+   	CHECK( albums.begin() != albums.end() );
+
+	Album::ptr alb=albums.begin().shared_ptr();
+
+	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
+
+}
+
+
 struct name_eq{
 	name_eq( const string &s ) : an(s){}
 	string an;
