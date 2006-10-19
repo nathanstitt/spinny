@@ -39,10 +39,10 @@ int main(int argc, char* argv[])
 	{
 		std::cerr << "asio error: " << e << "\n";
 	}
-	catch (std::exception& e)
-	{
-		std::cerr << "exception: " << e.what() << "\n";
-	}
+	//catch (std::exception& e)
+	//{
+	//	std::cerr << "exception: " << e.what() << "\n";
+	//}
 
 	return 0;
 }
