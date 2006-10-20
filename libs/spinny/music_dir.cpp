@@ -103,7 +103,7 @@ MusicDir::load( sqlite::id_t db_id ){
 
 MusicDir::result_set
 MusicDir::roots(){
-	return sqlite::db()->load_many<MusicDir>( "parent_id", 0 );
+	return sqlite::db()->load_many<MusicDir>( "parent_id", 0, "upper(name)" );
 }
 
 bool
@@ -131,7 +131,7 @@ MusicDir::parent() const {
 
 Song::result_set
 MusicDir::songs(){
- 	return sqlite::db()->load_many<Song>( "dir_id", db_id() );
+ 	return sqlite::db()->load_many<Song>( "dir_id", db_id(), "upper(title)" );
 }
 
 MusicDir::result_set
@@ -141,7 +141,7 @@ MusicDir::children() const {
 
 MusicDir::result_set
 MusicDir::children_of( sqlite::id_t db_id ) {
-	return sqlite::db()->load_many<MusicDir>( "parent_id", db_id );
+	return sqlite::db()->load_many<MusicDir>( "parent_id", db_id,"upper(name)" );
 }
 
 

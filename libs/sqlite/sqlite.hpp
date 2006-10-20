@@ -64,7 +64,7 @@ namespace sqlite {
 			static stored_type create(){
 				return T();
 			};
-			static void initialize( const stored_type obj, const reader *r ) {}
+			static void initialize( const stored_type , const reader * ) {}
 		};
 
 		template <typename T>
@@ -281,6 +281,8 @@ namespace sqlite {
 				return obj;
 			}
 
+
+
 			iterator() : _r(0) {}
 		};
 
@@ -376,13 +378,16 @@ namespace sqlite {
 		// load many sqlite::table objects
 		template<class T1,class T2>
 		result_set<T1>
-		load_many(  const std::string &field, const T2 &value, int limit=0,const std::string op="=" ){
+		load_many(  const std::string &field, const T2 &value, const std::string sort_by="", int limit=0 ){
 			*this << "select ";
 			const ::sqlite::table::description *td=T1::table_description();
 			td->insert_fields( *this );
 			*this << ",rowid from " << td->table_name();
 			if ( ! field.empty() ){
-				*this << " where " << field << op << q(value);
+				*this << " where " << field << "=" << q(value);
+			}
+			if ( ! sort_by.empty() ){
+				*this << " order by " << sort_by;
 			}
 			if ( limit ){
 				*this << " limit " << limit;
@@ -394,20 +399,39 @@ namespace sqlite {
 		// load many sqlite::table objects
 		template<class T1>
 		result_set<T1>
-		load_where(  const std::string &where ) {
+		load_where(  const std::string &where, std::string sort_by="" ) {
 			*this << "select ";
 			const ::sqlite::table::description *td=T1::table_description();
 			td->insert_fields( *this );
 			*this << ",rowid from " << td->table_name()
 			      << " where " << where;
+			if ( ! sort_by.empty() ){
+				*this << " order by " << sort_by;
+			}
 			return this->load_stored<T1>();
 		}
+
+		// load many sqlite::table objects
+		template<class T1>
+		result_set<T1>
+		load_all( std::string sort_by="" ) {
+			*this << "select ";
+			const ::sqlite::table::description *td=T1::table_description();
+			td->insert_fields( *this );
+			*this << ",rowid from " << td->table_name();
+			if ( ! sort_by.empty() ){
+				*this << " order by " << sort_by;
+			}
+				
+			return this->load_stored<T1>();
+		}
+		
 
 		// load one sqlite::table object
 		template<class T,class T2>
 		typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::stored_type
 		load_one( const std::string &field, const T2 &value ){
-			result_set<T> rs=this->load_many<T,T2>( field, value, 1 );
+			result_set<T> rs=this->load_many<T,T2>( field, value, "", 1 );
 			return rs.begin().shared_ptr();
 		}
 

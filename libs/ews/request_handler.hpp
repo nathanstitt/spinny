@@ -29,7 +29,7 @@ public:
 	};
 
 	/// Handle a request and produce a reply.
-	virtual result handle( const request &req, reply &rep ) = 0;
+	virtual result handle( const request &req, reply &rep ) const = 0;
 
 	virtual std::string name() const = 0;
 

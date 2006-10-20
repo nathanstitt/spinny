@@ -354,10 +354,10 @@ namespace ews {
 
 	void
 	reply::set_to( status_type stat ){
-		this->status=stat;
 		this->headers.clear();
-		content.str( stock_replies::to_string(stat) );
 		this->set_basic_headers( "html" );
+		this->status=stat;
+		content.str( stock_replies::to_string(stat) );
 	}
 
 

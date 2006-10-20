@@ -23,7 +23,7 @@ namespace ews {
 
 
 	request_handler::result
-	files_request_handler::handle( const request& req, reply& rep ){
+	files_request_handler::handle( const request& req, reply& rep ) const {
 		std::string request_path=req.url;
 
 // 		std::cout << "Attempting to serve file: " 

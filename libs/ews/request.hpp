@@ -39,6 +39,8 @@ namespace ews {
 		std::string uri;
 		std::string url;
 		std::string body;
+		std::string u1,u2,u3,u4,u5;
+		char num_url_elements;
 		unsigned int content_length;
 
 		template<typename T>

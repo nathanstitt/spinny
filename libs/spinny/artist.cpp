@@ -102,13 +102,13 @@ Artist::save() const {
 
 Artist::result_set
 Artist::all(){
-	return sqlite::db()->load_many<Artist>( "", 0 );
+	return sqlite::db()->load_all<Artist>( "upper(name)" );
 }
 
 
 Song::result_set
 Artist::songs() const {
-	return sqlite::db()->load_many<Song>( "artist_id", db_id() );
+	return sqlite::db()->load_many<Song>( "artist_id", db_id(),"upper(title)" );
 }
 
 
@@ -119,7 +119,7 @@ Artist::with_album( const Album *alb ){
 	*con << "select ";
 	table_desc.insert_fields( *con );
 	*con << ",artists.rowid from artists, albums_artists where artists.rowid=albums_artists.artist_id"
-	     << " and albums_artists.album_id = " << alb->db_id();
+	     << " and albums_artists.album_id = " << alb->db_id() << " order by upper(name)";
 	return con->load_stored<Artist>();
 }
 
@@ -128,7 +128,18 @@ Artist::name_starts_with( const std::string &name ){
 	std::string where("upper(name) like '");
 	where += sqlite::q( name, false );
 	where += "%'";
-	return sqlite::db()->load_where<Artist>( where );
+	return sqlite::db()->load_where<Artist>( where, "upper(name)" );
+}
+
+
+Artist::starting_char_t
+Artist::starting_chars() {
+	starting_char_t ret;
+	sqlite::command cmd( sqlite::db(), "select upper( substr(name,1,1) ),count(rowid) from artists group by upper( substr(name,1,1) ) order by upper( substr(name,1,1) );");
+	for ( sqlite::command::reader_iterator it=cmd.reader_begin(); cmd.reader_end() != it; ++it ){
+		ret.push_back( starting_char_t::value_type( it->get<char>(0), it->get<unsigned int>(1) ) );
+	}
+	return ret;
 }
 
 sqlite::id_t
@@ -143,7 +154,7 @@ Artist::albums() const {
 	*con << "select ";
 	td->insert_fields( *con );
 	*con << ",albums.rowid from albums, albums_artists where albums.rowid=albums_artists.album_id"
-	     << " and albums_artists.artist_id = " << this->db_id();
+	     << " and albums_artists.artist_id = " << this->db_id() << "order by upper(name)";
 	return con->load_stored<Album>();
 }
 

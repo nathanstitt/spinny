@@ -19,12 +19,23 @@
       var tree;
       function treeInit() {
         tree=new YAHOO.widget.TreeView(document.getElementById("treeDiv"));
-
         var root = tree.getRoot();
         var dirs    = new YAHOO.widget.TextNode( { id:0, label:"Directories", type: "dirs" }, root, false);
-        dirs.setDynamicLoad(loadDataForNode,1); 
-        var artists = new YAHOO.widget.TextNode( { id:0, label:"Artists", type: "artists" }, root, false);
-        var albums  = new YAHOO.widget.TextNode( { id:0, label:"Albums", type: "albums"}, root, false);
+        dirs.setDynamicLoad(loadDataForNode,1);
+        artist_label="Artists <sup>("+String(<?cs var:NumArtists?>)+")</sup>";
+        albums_label="Albums <sup>("+String(<?cs var:NumAlbums?>)+")</sup>";
+        <?cs if:NumArtists<1 ?>
+            var artists = new YAHOO.widget.TextNode( { "id":"ALL", label:artist_label, type: "artists" }, root, false);
+	<?cs else ?>
+            var artists = new YAHOO.widget.TextNode( { id:0, label:artist_label, type: "artists" }, root, false);
+	<?cs /if ?>
+        artists.setDynamicLoad(loadDataForNode,1);
+        <?cs if:NumArtists<1 ?>
+            var albums = new YAHOO.widget.TextNode( { "id":"ALL", label:albums_label, type: "albums" }, root, false);
+	<?cs else ?>
+            var albums = new YAHOO.widget.TextNode( { id:0, label:albums_label, type: "albums" }, root, false);
+	<?cs /if ?>
+        albums.setDynamicLoad(loadDataForNode,1);
         tree.draw(); 
       }
     </script>
@@ -41,16 +52,9 @@
 		<!-- start: your content here -->
 		<div class="mod" style="padding-left: 1em;">
 		  <div class="hd">
-		    <h2>Songs</h2>
+		    <h2><?cs var:NumSongs ?> Songs
 		  </div>
-		  <div class="hd">
-		    <div id="expandcontractdiv">
-		      <a href="javascript:tree.expandAll()">Expand all</a>
-		      <a href="javascript:tree.collapseAll()">Collapse all</a>
-		    </div>
-
-		    <div id="treeDiv"></div>
-		  </div>
+		  <div id="treeDiv" style="overflow: auto; height: 1024px;"></div>
 		</div>
 		<!-- end: your content here -->
 	      </div>

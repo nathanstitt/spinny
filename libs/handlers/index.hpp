@@ -15,7 +15,7 @@ namespace handlers {
 	public:
 
 		virtual request_handler::result
-		handle( const ews::request& req, ews::reply& rep );
+		handle( const ews::request& req, ews::reply& rep ) const;
 		std::string name() const;
 	
 	};

@@ -19,7 +19,8 @@ public:
 	explicit files_request_handler();
 
 	/// Handle a request and produce a reply.
-	virtual request_handler::result handle(const request& req, reply& rep );
+	virtual request_handler::result
+	handle(const request& req, reply& rep ) const;
 
 	virtual std::string name() const;
 

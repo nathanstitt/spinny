@@ -74,9 +74,6 @@ Spinny::run(int argc, char **argv)
 
 	sqlite::startup( _instance->config<string>("db") );
 
-	vector<string> mds = _instance->config<vector<string> >( "music_dir" );
- 	for_each( mds.begin(), mds.end(), boost::bind( init_music_dir, _1 ) );
-
 	_ews = new ews::server( _instance->config<string>( "web_listen_address" ),
 				_instance->config<string>( "web_listen_port" ),
 				_instance->config<string>( "web_root" ),
@@ -86,7 +83,8 @@ Spinny::run(int argc, char **argv)
 
   	_web_thread = new asio::thread( boost::bind( &ews::server::run, _ews ) );
 
-
+	vector<string> mds = _instance->config<vector<string> >( "music_dir" );
+ 	for_each( mds.begin(), mds.end(), boost::bind( init_music_dir, _1 ) );
 
 	return 0;
 }

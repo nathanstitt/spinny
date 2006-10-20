@@ -12,10 +12,10 @@ using namespace handlers;
 
 
 ews::request_handler::result
-Index::handle( const ews::request& req, ews::reply& rep ){
+Index::handle( const ews::request& req, ews::reply& rep ) const {
 	BOOST_LOGL( ewslog, info ) << "Index H: " << req.url;
 
-	if ( req.url != "/" ){
+	if ( req.u1 != "" ){
 		return cont;
 	}
 

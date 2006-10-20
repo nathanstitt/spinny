@@ -44,6 +44,11 @@ public:
 	result_set
 	name_starts_with( const std::string &name );
 
+	typedef std::list<std::pair<char, unsigned int> > starting_char_t;
+	static
+	starting_char_t
+	starting_chars();
+
 	static
 	sqlite::id_t count();
 

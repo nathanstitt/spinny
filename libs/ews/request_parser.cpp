@@ -3,8 +3,12 @@
 #include "ews/server.hpp"
 #include <sstream>
 #include "boost/algorithm/string/case_conv.hpp"
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
+
 #include "boost/regex.hpp"
 #include <algorithm>
+#include <vector>
 
 std::string
 decode_str(  const std::string& in ){
@@ -159,7 +163,9 @@ namespace ews {
 			}
 		case expecting_newline_1:
 			if (input == '\n') {
-				BOOST_LOGL( ewslog, info ) << "Got Request: " << req.method << " " << req.uri;
+				BOOST_LOGL( ewslog, info ) << "---------------------------------------------------";
+				BOOST_LOGL( ewslog, info ) << req.method << " " << req.uri;
+				BOOST_LOGL( ewslog, info ) << "---------------------------------------------------";
 				state_ = header_line_start;
 				return boost::indeterminate;
 			} else {
@@ -338,7 +344,29 @@ namespace ews {
 		bool rv = ( parse_form_elements( req.varibles,  req.uri ) && 
 			    parse_form_elements( req.varibles,  req.body ) );
 
+		std::vector< std::string > elements;
+		boost::split( elements, req.url, boost::is_any_of("/"), boost::token_compress_on );
+		req.num_url_elements=(char)elements.size()-1;
+		switch ( req.num_url_elements ){
+		case 5:
+			req.u5=elements[5];
+		case 4:
+			req.u4=elements[4];
+		case 3:
+			req.u3=elements[3];
+		case 2:
+			req.u2=elements[2];
+		case 1:
+			req.u1=elements[1];
+		}
+
 		if ( BOOST_IS_LOG_ENABLED( ewslog, info ) ) {
+			BOOST_LOGL( ewslog, info ) << "url elements: "
+						   << req.u1 << "," 
+						   << req.u2 << ","
+						   << req.u3 << ","
+						   << req.u4 << ","
+						   << req.u5;
 			BOOST_LOGL( ewslog, info ) << "Parsing out varibles " << ( rv ? "succeeded" : "failed" );
 			for ( request::varibles_t::const_iterator rv=req.varibles.begin();
 			      req.varibles.end() != rv;
@@ -353,6 +381,7 @@ namespace ews {
 				}
 			}
 		}
+
 		return rv;
 	}
 

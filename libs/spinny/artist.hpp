@@ -43,12 +43,17 @@ public:
 	result_set
 	name_starts_with( const std::string &name );
 
+	typedef std::list<std::pair<char, unsigned int> > starting_char_t;
 	static
-	result_set
-	with_album( const Album *alb );
+	starting_char_t
+	starting_chars();
 
 	static
 	sqlite::id_t count();
+
+	static
+	result_set
+	with_album( const Album *alb );
 
 	sqlite::result_set<Album>
 	albums() const;
