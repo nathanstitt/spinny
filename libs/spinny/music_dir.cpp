@@ -49,22 +49,22 @@ MusicDir::m_table_description() const {
 
 void
 MusicDir::table_insert_values( std::ostream &str ) const {
-	str << _parent_id << "," << sqlite::q(_name);
+	str << parent_id_ << "," << sqlite::q(name_);
 }
 
 void
 MusicDir::table_update_values( std::ostream &str ) const {
-	str << "parent_id=" << _parent_id << ",name=" << sqlite::q(_name);
+	str << "parent_id=" << parent_id_ << ",name=" << sqlite::q(name_);
 }
 
 
 void
 MusicDir::initialize_from_db( const sqlite::reader *reader ) {
-	_parent_id = reader->get<int>(0);
-	_name	   = reader->get<std::string>(1);
+	parent_id_ = reader->get<int>(0);
+	name_	   = reader->get<std::string>(1);
 }
 
-MusicDir::MusicDir() : sqlite::table(), _parent_id(0), _name("") {
+MusicDir::MusicDir() : sqlite::table(), parent_id_(0), name_("") {
 
 }
 
@@ -82,16 +82,16 @@ MusicDir::create_root( const boost::filesystem::path &path ){
 		return mds.begin().shared_ptr();
 	}
 	MusicDir::ptr md( new MusicDir );
- 	md->_name=path.string();
- 	md->_parent_id = 0;
+ 	md->name_=path.string();
+ 	md->parent_id_ = 0;
 	return md;
 }
 
 MusicDir::ptr
 MusicDir::add_child( const std::string &name ){
 	MusicDir::ptr md( new MusicDir );
-	md->_name=name;
-	md->_parent_id = this->db_id();
+	md->name_=name;
+	md->parent_id_ = this->db_id();
 	return md;
 }
 
@@ -114,19 +114,19 @@ MusicDir::save() const {
 
 bool
 MusicDir::is_root() const {
- 	return ( _parent_id == 0 );
+ 	return ( parent_id_ == 0 );
 }
 
 
 std::string
 MusicDir::filesystem_name() const {
-	return _name;
+	return name_;
 }
 
 
 MusicDir::ptr
 MusicDir::parent() const {
-	return sqlite::db()->load<MusicDir>( _parent_id );
+	return sqlite::db()->load<MusicDir>( parent_id_ );
 }
 
 Song::result_set
@@ -149,12 +149,12 @@ MusicDir::children_of( sqlite::id_t db_id ) {
 boost::filesystem::path
 MusicDir::path() const {
 	vector<string> dirs;
-	dirs.push_back( _name );
+	dirs.push_back( name_ );
 	const MusicDir *md = this;
 	while ( ! md->is_root() ) {
 		ptr p = md->parent();
 		md=&(*p);
-		dirs.push_back( md->_name );
+		dirs.push_back( md->name_ );
 	}
 	boost::filesystem::path p( "", boost::filesystem::native );
 	for ( vector<string>::reverse_iterator ri = dirs.rbegin(); ri != dirs.rend(); ++ri ){

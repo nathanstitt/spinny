@@ -20,8 +20,8 @@ private:
 	GRANT_NEEDED_FRIENDSHIP(MusicDir);
 	friend class Song;
 
-	sqlite::id_t _parent_id;
-	string _name;	
+	sqlite::id_t parent_id_;
+	string name_;
 	MusicDir();
 
 	virtual void table_insert_values( std::ostream &str ) const;

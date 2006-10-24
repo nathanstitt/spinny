@@ -14,10 +14,11 @@
 class MusicDir;
 class Album;
 class Artist;
+class PlayList;
 
 class Song : public sqlite::table {
 	GRANT_NEEDED_FRIENDSHIP(Song);
-
+	friend class PlayList;
 
 	sqlite::id_t _dir_id;
 	sqlite::id_t _artist_id;
