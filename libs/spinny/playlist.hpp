@@ -54,7 +54,14 @@ public:
 	bool
 	save() const;
 
-	
+	unsigned int
+	size() const;
+
+	void
+	clear();
+
+	void
+	remove( const Song &s );
 };
 
 #endif /* _PLAYLIST_H */

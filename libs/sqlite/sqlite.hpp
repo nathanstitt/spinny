@@ -197,8 +197,6 @@ namespace sqlite {
 		command(connection &con, const std::string &sql );
 		~command();
 
-		int num_rows();
-
 		int num_columns();
 
 		template<typename T>
@@ -328,6 +326,15 @@ namespace sqlite {
 		}
 		
 		boost::shared_ptr<command> cmd;
+
+		unsigned int size(){
+			unsigned int nrows=0;
+			for ( iterator i=begin(); i!=end(); ++i ){
+				++nrows;
+			}
+
+			return nrows;
+		}
 	};
 
 

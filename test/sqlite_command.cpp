@@ -142,7 +142,7 @@ TEST( RowColumnCounts ){
 	c.con->exec<none>("insert into testing (col1,col2,col3) values( 23,'BowWow', 42 )");
 	c.con->exec<none>("insert into testing (col1,col2,col3) values( 23,'BowWow', 42 )");
 	sqlite::command cmd( *c.con, "select col1,col3 from testing" );
-	CHECK_EQUAL( 0, cmd.num_rows() );
+
 	CHECK_EQUAL( 2, cmd.num_columns() );
 }
 

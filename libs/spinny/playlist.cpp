@@ -171,3 +171,26 @@ bool
 PlayList::save() const {
 	return sqlite::db()->save<PlayList>(*this);
 }
+
+
+unsigned int
+PlayList::size() const {
+	sqlite::connection *con = sqlite::db();
+	*con << "select count(*) from playlist_songs where playlist_id = " << this->db_id();
+	return con->exec<unsigned int>();
+}
+
+void
+PlayList::clear(){
+	sqlite::connection *con = sqlite::db();
+	*con << "delete from playlist_songs where playlist_id = " << this->db_id();
+	con->exec<sqlite::none>();
+}
+
+void
+PlayList::remove( const Song &s ){
+	sqlite::connection *con = sqlite::db();
+	*con <<	"delete from playlist_songs where playlist_id = " << this->db_id() 
+	     << " and song_id = " << s.db_id();
+	con->exec<sqlite::none>();
+}

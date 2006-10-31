@@ -37,10 +37,6 @@ namespace sqlite {
 			sqlite3_finalize(this->_stmt);
 	}
 
- 	int
- 	command::num_rows(){
- 		return sqlite3_data_count(this->_stmt);
- 	}
 
 	int
 	command::num_columns(){

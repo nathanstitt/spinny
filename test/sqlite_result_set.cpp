@@ -42,14 +42,14 @@ TEST( Sort ){
 	sqlite::result_set<FooTable>::iterator it = rs.begin();
 
 	FooTable &ft = *it;
-	CHECK_EQUAL( "root", ft.name );
+	CHECK_EQUAL( "child2", ft.name );
 	CHECK( it != rs.end() );
-	CHECK_EQUAL( "root", it->name );
+	CHECK_EQUAL( "child2", it->name );
 	it++;
 
 	CHECK_EQUAL( "child1", it->name );
 	++it;
-	CHECK_EQUAL( "child2", it->name );
+	CHECK_EQUAL( "root", it->name );
 	++it;
 	CHECK( it == rs.end() );
 }
