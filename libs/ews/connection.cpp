@@ -19,7 +19,7 @@ namespace ews {
 		  request_(this),
 		  reply_(this)
 	{
-		BOOST_LOGL(ewslog,info) << "NEW CONNECTION: " << (int)this << std::endl;
+		BOOST_LOGL(www,info) << "NEW CONNECTION: " << (int)this << std::endl;
 	}
 
 	asio::ip::tcp::socket& connection::socket() {
@@ -41,7 +41,7 @@ namespace ews {
 				      std::size_t bytes_transferred) 
 	{
 //		std::cout << "Server Handle Read: " << e << std::endl;
-		BOOST_LOGL(ewslog,info) << "Server Handle Read: " << e;
+		BOOST_LOGL(www,info) << "Server Handle Read: " << e;
 		if (!e)	{
 
 			boost::tribool result;
@@ -49,17 +49,17 @@ namespace ews {
 				request_, buffer_.data(), buffer_.data() + bytes_transferred );
 			
 			if (result) {
-				BOOST_LOGL(ewslog,info) << "Begin Write: " <<  (int)this
+				BOOST_LOGL(www,info) << "Begin Write: " <<  (int)this
 							<< " : " << request_.uri << std::endl;
  	
 				if ( ! request_handler::handle_request( request_, reply_ ) ){
 					reply_.set_to( reply::internal_server_error );
 				}
-				BOOST_LOGL( ewslog, info ) << "Status: " << (int)reply_.status;
+				BOOST_LOGL( www, info ) << "Status: " << (int)reply_.status;
 				for( reply::headers_t::const_iterator header=reply_.headers.begin();
 				     reply_.headers.end() != header;
 				     ++header ) {
-					BOOST_LOGL( ewslog, info ) << "Outgoing Header: "
+					BOOST_LOGL( www, info ) << "Outgoing Header: "
 								   << header->first << " => " << header->second;
 				}
 
@@ -89,7 +89,7 @@ namespace ews {
 		if (e != asio::error::operation_aborted) {
 			connection_manager_.stop(shared_from_this());
 		}
-		BOOST_LOGL(ewslog,info)
+		BOOST_LOGL(www,info)
 			<< "Wrote " << bytes_transferred << " bytes on connection "
 			<< (int)this << " result: " << e.what();
 	}

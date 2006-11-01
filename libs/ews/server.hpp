@@ -11,7 +11,7 @@
 #include <boost/log/log.hpp>
 #include "ews/mime_types.hpp"
 
-BOOST_DECLARE_LOG(ewslog);
+BOOST_DECLARE_LOG(www);
 
 namespace ews {
 

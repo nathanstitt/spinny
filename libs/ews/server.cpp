@@ -2,7 +2,7 @@
 #include <boost/bind.hpp>
 #include <boost/log/log.hpp>
 
-BOOST_DEFINE_LOG( ewslog, "ewslog" )
+BOOST_DEFINE_LOG( www, "www" )
 
 
 
@@ -33,7 +33,7 @@ namespace ews {
 				       boost::bind(&server::handle_accept, this,
 						   asio::placeholders::error));
 
-		BOOST_LOGL( ewslog,info) << "EWS running on: " 
+		BOOST_LOGL( www,info) << "EWS running on: " 
 					 << address
 					 << ":" << port
 					 << " root: " << doc_root_.string()

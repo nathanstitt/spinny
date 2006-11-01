@@ -30,14 +30,14 @@ namespace ews {
 // 			  << ( req.conn->doc_root / request_path).string()
 // 			  << std::endl;
 
-		BOOST_LOGL( ewslog, info ) << "Attempting to serve file: " 
+		BOOST_LOGL( www, info ) << "Attempting to serve file: " 
 					   << ( req.conn->doc_root / request_path).string();
 
 		// Request path must be absolute and not contain "..".
 		if (request_path.empty() || request_path[0] != '/'
 		    || request_path.find("..") != std::string::npos)
 		{
-			BOOST_LOGL( ewslog, err ) << "Requested file had .. in the path: "
+			BOOST_LOGL( www, err ) << "Requested file had .. in the path: "
 						  << request_path;
 			rep.set_to( reply::bad_request );
 			return stop;
@@ -62,7 +62,7 @@ namespace ews {
 			is.open( req.conn->doc_root / request_path, std::ios::in | std::ios::binary);
 		}
 		catch ( boost::filesystem::filesystem_error &e ){
-			BOOST_LOGL( ewslog, err ) << "Caught filesystem error: " 
+			BOOST_LOGL( www, err ) << "Caught filesystem error: " 
 						  << e.what() 
 						  << " req file was: "
 						  << ( req.conn->doc_root / request_path).string();
@@ -71,7 +71,7 @@ namespace ews {
 		}
 		if (!is) {
 			rep.set_to( reply::not_found );
-			BOOST_LOGL( ewslog, err ) << "File not opened successfully: " 
+			BOOST_LOGL( www, err ) << "File not opened successfully: " 
 						  << (req.conn->doc_root / request_path).string();
 			return stop;
 		}
@@ -82,7 +82,7 @@ namespace ews {
 		while (is.read(buf, sizeof(buf)).gcount() > 0){
 			rep.content.write(buf, is.gcount());
 		}
-		BOOST_LOGL( ewslog, info ) << "Serving file: " << (req.conn->doc_root / request_path).string();
+		BOOST_LOGL( www, info ) << "Serving file: " << (req.conn->doc_root / request_path).string();
 		rep.set_basic_headers( extension );
 
 		return stop;

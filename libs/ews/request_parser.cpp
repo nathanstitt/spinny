@@ -163,9 +163,9 @@ namespace ews {
 			}
 		case expecting_newline_1:
 			if (input == '\n') {
-				BOOST_LOGL( ewslog, info ) << "---------------------------------------------------";
-				BOOST_LOGL( ewslog, info ) << req.method << " " << req.uri;
-				BOOST_LOGL( ewslog, info ) << "---------------------------------------------------";
+				BOOST_LOGL( www, info ) << "---------------------------------------------------";
+				BOOST_LOGL( www, info ) << req.method << " " << req.uri;
+				BOOST_LOGL( www, info ) << "---------------------------------------------------";
 				state_ = header_line_start;
 				return boost::indeterminate;
 			} else {
@@ -184,7 +184,7 @@ namespace ews {
 				if ( ! req.current_header_name.empty() ){
 					req.headers[ boost::to_upper_copy( decode_str( req.current_header_name ) ) ] 
 						= decode_str( req.current_header_value );
-					BOOST_LOGL( ewslog, info ) << "Finished Header: "
+					BOOST_LOGL( www, info ) << "Finished Header: "
 								   << req.current_header_name << " => " 
 								   << req.current_header_value;
 					req.clear_current_header();
@@ -252,10 +252,10 @@ namespace ews {
 					req.content_length = 0;
 				}
 
-				BOOST_LOGL( ewslog, info ) << "Finished Header: "
+				BOOST_LOGL( www, info ) << "Finished Header: "
 							   << req.current_header_name << " => " 
 							   << req.current_header_value;
-				BOOST_LOGL( ewslog, info ) << "Headers Finished.  Body Length = " << req.content_length;
+				BOOST_LOGL( www, info ) << "Headers Finished.  Body Length = " << req.content_length;
 				req.clear_current_header();
 				if ( req.content_length ){
 					state_ = reading_body;
@@ -360,24 +360,24 @@ namespace ews {
 			req.u1=elements[1];
 		}
 
-		if ( BOOST_IS_LOG_ENABLED( ewslog, info ) ) {
-			BOOST_LOGL( ewslog, info ) << "url elements: "
+		if ( BOOST_IS_LOG_ENABLED( www, info ) ) {
+			BOOST_LOGL( www, info ) << "url elements: "
 						   << req.u1 << "," 
 						   << req.u2 << ","
 						   << req.u3 << ","
 						   << req.u4 << ","
 						   << req.u5;
-			BOOST_LOGL( ewslog, info ) << "Parsing out varibles " << ( rv ? "succeeded" : "failed" );
+			BOOST_LOGL( www, info ) << "Parsing out varibles " << ( rv ? "succeeded" : "failed" );
 			for ( request::varibles_t::const_iterator rv=req.varibles.begin();
 			      req.varibles.end() != rv;
 				++rv )
 			{
-				BOOST_LOGL( ewslog, info ) << "    " << rv->first << ":";
+				BOOST_LOGL( www, info ) << "    " << rv->first << ":";
 				for ( request::varible_t::const_iterator vrb=rv->second.begin();
 				      rv->second.end() != vrb;
 				      ++vrb )
 				{
-					BOOST_LOGL( ewslog, info ) << "        " << *vrb;
+					BOOST_LOGL( www, info ) << "        " << *vrb;
 				}
 			}
 		}

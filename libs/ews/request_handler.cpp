@@ -44,7 +44,7 @@ namespace ews {
  				res = (*h)->handle( req, rep );
  			}
  			catch ( const std::exception &e ){
- 				BOOST_LOGL( ewslog, err ) << "Handler: " << (*h)->name()
+ 				BOOST_LOGL( www, err ) << "Handler: " << (*h)->name()
  							  << " raised: " << e.what();
  				return false;
  			}
@@ -52,7 +52,7 @@ namespace ews {
  			if ( stop == res || file == res ){
 				break;
 			} else if ( error == res ){
- 				BOOST_LOGL( ewslog, err ) << "Handler: " << (*h)->name()
+ 				BOOST_LOGL( www, err ) << "Handler: " << (*h)->name()
  							  << " returned error.";
  				return false;
 			}

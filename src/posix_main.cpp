@@ -35,8 +35,9 @@ private:
 
 int main(int argv , char** argc ) {
 	handlers::link_up();
-	boost::logging::manipulate_logs("*")
+	boost::logging::manipulate_logs("www")
 		.del_modifier("time")
+		.enable( boost::logging::level::err )
 		.del_modifier("prefix")
 		.del_modifier("enter")
 		.add_appender(&boost::logging::write_to_cout)    // all messages are written to cout

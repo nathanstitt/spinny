@@ -219,7 +219,7 @@ namespace ews {
 	static NEOERR *
 	cs_renderer ( void *r, char *contents ){
 		reply *rep = reinterpret_cast<reply*>( r );
-//		BOOST_LOGL( ewslog, info ) << "Rendered TMPL to:\n" << contents;
+//		BOOST_LOGL( www, info ) << "Rendered TMPL to:\n" << contents;
 		rep->content << contents;
 		return STATUS_OK;
 	}
@@ -228,17 +228,17 @@ namespace ews {
 	bool
 	reply::parse_template(){
 		NEOERR *cs_res;
-//		BOOST_LOGL( ewslog, info ) << "Parsing HDF:\n" << content.str();
-		BOOST_LOGL( ewslog, info ) << "Parsing TMPL File: " << template_.string();
+//		BOOST_LOGL( www, info ) << "Parsing HDF:\n" << content.str();
+		BOOST_LOGL( www, info ) << "Parsing TMPL File: " << template_.string();
 		if ( STATUS_OK != ( cs_res =
 				    hdf_read_string ( hdf_, const_cast<char*>( content.str().c_str() ) ) ) ){
-			BOOST_LOGL( ewslog, err ) << "Error: " 
+			BOOST_LOGL( www, err ) << "Error: " 
 						  << cs_res->error << " : " << cs_res->desc
 						  << " was encountered while parsing hdf: "
 						  << content.str();
 		} else if ( STATUS_OK != ( cs_res =
 					   cs_parse_file( cs_parse_, template_.string().c_str() ) ) ) {
-			BOOST_LOGL( ewslog, err ) << "Error: " 
+			BOOST_LOGL( www, err ) << "Error: " 
 						  << cs_res->error << " : " << cs_res->desc
 						  << " was encountered while parsing tmpl file: "
 						  << cs_res->file << ":" << cs_res->lineno;
@@ -249,7 +249,7 @@ namespace ews {
 			cs_res = cs_render( cs_parse_, this, cs_renderer );
 		}
 		if ( STATUS_OK != cs_res ){
-			BOOST_LOGL( ewslog, err ) << "Error: " 
+			BOOST_LOGL( www, err ) << "Error: " 
 						  << cs_res->error << " : " << cs_res->desc
 						  << " failed to render hdf to template";
 		}
@@ -264,7 +264,7 @@ namespace ews {
 		buffers.push_back(status_strings::to_buffer(status));
 
 		if ( ! template_.empty() ){
-			BOOST_LOGL(ewslog,info) << "Using Template: " << template_.string() << "\nHDF:\n" << content.str();
+			BOOST_LOGL(www,info) << "Using Template: " << template_.string() << "\nHDF:\n" << content.str();
 			if ( parse_template() ){
 				headers[ "Content-Length" ] = boost::lexical_cast<std::string>( content.size() );
 			} else {
@@ -309,15 +309,15 @@ namespace ews {
 		if ( template_.empty() ){
 
 			if ( STATUS_OK != ( cs_res = hdf_init ( &hdf_ ) ) ){
-				BOOST_LOGL( ewslog, err ) << "An error was encountered while initializeing hdf: "
+				BOOST_LOGL( www, err ) << "An error was encountered while initializeing hdf: "
 							  << cs_res->error << " : " << cs_res->desc;
 			} else if ( STATUS_OK != ( cs_res
 						   = cs_init ( &cs_parse_, hdf_ ) ) ){
-				BOOST_LOGL( ewslog, err ) << "An error was encountered while initializeing clearsilver: "
+				BOOST_LOGL( www, err ) << "An error was encountered while initializeing clearsilver: "
 							  << cs_res->error << " : " << cs_res->desc;
 			} else if ( STATUS_OK != ( cs_res 
 						   = hdf_set_value ( hdf_, "hdf.loadpaths.def", conn_->tmpl_root.string().c_str() ) ) ){
-				BOOST_LOGL( ewslog, err ) << "Failed to set hdf load paths"
+				BOOST_LOGL( www, err ) << "Failed to set hdf load paths"
 							  << cs_res->error << " : " << cs_res->desc;
 			}
 			if ( STATUS_OK == cs_res ){

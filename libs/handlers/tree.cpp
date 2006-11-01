@@ -105,7 +105,7 @@ h_start_with( ews::reply &rep, const std::string &ch, const std::string &type ){
 
 ews::request_handler::result
 Tree::handle( const ews::request& req, ews::reply& rep ) const { 
-	BOOST_LOGL( ewslog, info ) << "Index T: " << req.url;
+	BOOST_LOGL( www, info ) << "Index T: " << req.url;
 
 	if ( req.u1 != "tree" ) {
 		return cont;
