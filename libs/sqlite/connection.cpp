@@ -3,11 +3,29 @@
 #include <sstream>
 #include <algorithm>
 
+#include "boost/thread.hpp"
+
+static
+int
+busy_handler( void*, int num_waiting ){
+	if ( num_waiting > 3 ){
+		return 0;
+	} else {
+		boost::xtime xt;
+		boost::xtime_get(&xt, boost::TIME_UTC);
+		xt.sec += num_waiting;
+		boost::thread::sleep( xt );
+		return 1;
+	}
+}
+
 namespace sqlite {
 
 	connection::connection() : std::ostream( &_cmd ), db(NULL) {}
 
-	connection::connection( const std::string &db ) : std::ostream( &_cmd ), db(NULL) { this->open(db); }
+	connection::connection( const std::string &db ) : std::ostream( &_cmd ), db(NULL) {
+		this->open(db); 
+	}
 
 	connection::~connection() { if(this->db) sqlite3_close(this->db); }
 
@@ -49,6 +67,9 @@ namespace sqlite {
 	void connection::open( const std::string &db ) {
 		if(sqlite3_open(db.c_str(), &this->db)!=SQLITE_OK)
 			throw database_error("unable to open database");
+
+		sqlite3_busy_handler( this->db, busy_handler, NULL );
+
 	}
 
 	void

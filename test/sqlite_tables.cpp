@@ -3,8 +3,6 @@
 #include "sqlite_testing.hpp"
 
 
-
-
 SUITE(SqliteTables) {
 
 

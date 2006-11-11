@@ -69,6 +69,21 @@ public:
 			con->exec<sqlite::none>("create table testing( col1 int, col2 string, col3 int )");
 		}
 
+	void populate_test_files( const char *lib ){
+		filesystem::directory_iterator end_itr;
+		boost::filesystem::create_directory( fixtures_path / lib );
+		boost::filesystem::directory_iterator file( filesystem::path( SRC_PATH,boost::filesystem::native ) / "libs" / lib / "test-files" );
+		for (  file ;file != end_itr; ++file ){
+			if ( file->leaf() != ".svn" ){
+				try {
+					boost::filesystem::copy_file( *file, fixtures_path / lib / file->leaf() );
+				}
+				catch ( std::exception & ){ }
+			}
+		}
+	}
+
+
 	void
 	populate_web(){
 		filesystem::directory_iterator end_itr;

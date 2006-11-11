@@ -15,7 +15,11 @@ class Album;
 class Artist : public sqlite::table {
 	GRANT_NEEDED_FRIENDSHIP(Artist);
 
-	std::string _name;
+	std::string name_;
+	sqlite::id_t num_songs_;
+	sqlite::id_t num_albums_;
+	bool counts_loaded_;
+
 
 	// begin db methods
 	virtual void table_insert_values( std::ostream &str ) const;
@@ -31,6 +35,9 @@ public:
 	bool save() const;
 
 	// end db methods
+
+	Artist::ptr
+	static load( sqlite::id_t db_id );
 
 	Artist::result_set
 	static all();
@@ -63,7 +70,12 @@ public:
 
 	std::string
 	name() const;
+	
+	sqlite::id_t
+	num_albums();
 
+	sqlite::id_t
+	num_songs();
 };
 
 

@@ -16,12 +16,13 @@ decode_str(  const std::string& in ){
 	out.reserve(in.size());
 	for (std::size_t i = 0; i < in.size(); ++i) {
 		if (in[i] == '%') {
-			if ( i + 3 < in.size() ) {
+			if ( ( i + 2 ) < in.size() ) {
 				int value;
 				std::istringstream is(in.substr(i + 1, 2));
 				if (is >> std::hex >> value) {
 					out += static_cast<char>(value);
 				}
+				i+=2;
 			} else {
 				i = in.size();
 			}
@@ -163,9 +164,9 @@ namespace ews {
 			}
 		case expecting_newline_1:
 			if (input == '\n') {
-				BOOST_LOGL( www, info ) << "---------------------------------------------------";
-				BOOST_LOGL( www, info ) << req.method << " " << req.uri;
-				BOOST_LOGL( www, info ) << "---------------------------------------------------";
+				BOOST_LOGL( www, debug ) << "---------------------------------------------------";
+				BOOST_LOGL( www, debug ) << req.method << " " << req.uri;
+				BOOST_LOGL( www, debug ) << "---------------------------------------------------";
 				state_ = header_line_start;
 				return boost::indeterminate;
 			} else {
@@ -184,7 +185,7 @@ namespace ews {
 				if ( ! req.current_header_name.empty() ){
 					req.headers[ boost::to_upper_copy( decode_str( req.current_header_name ) ) ] 
 						= decode_str( req.current_header_value );
-					BOOST_LOGL( www, info ) << "Finished Header: "
+					BOOST_LOGL( www, debug ) << "Finished Header: "
 								   << req.current_header_name << " => " 
 								   << req.current_header_value;
 					req.clear_current_header();
@@ -252,10 +253,10 @@ namespace ews {
 					req.content_length = 0;
 				}
 
-				BOOST_LOGL( www, info ) << "Finished Header: "
+				BOOST_LOGL( www, debug ) << "Finished Header: "
 							   << req.current_header_name << " => " 
 							   << req.current_header_value;
-				BOOST_LOGL( www, info ) << "Headers Finished.  Body Length = " << req.content_length;
+				BOOST_LOGL( www, debug ) << "Headers Finished.  Body Length = " << req.content_length;
 				req.clear_current_header();
 				if ( req.content_length ){
 					state_ = reading_body;
@@ -347,6 +348,9 @@ namespace ews {
 		std::vector< std::string > elements;
 		boost::split( elements, req.url, boost::is_any_of("/"), boost::token_compress_on );
 		req.num_url_elements=(char)elements.size()-1;
+		if ( req.num_url_elements > 5 ){
+			req.num_url_elements=5;
+		}
 		switch ( req.num_url_elements ){
 		case 5:
 			req.u5=elements[5];
@@ -360,24 +364,24 @@ namespace ews {
 			req.u1=elements[1];
 		}
 
-		if ( BOOST_IS_LOG_ENABLED( www, info ) ) {
-			BOOST_LOGL( www, info ) << "url elements: "
+		if ( BOOST_IS_LOG_ENABLED( www, debug ) ) {
+			BOOST_LOGL( www, debug ) << "found: " << (int)req.num_url_elements << " url elements: "
 						   << req.u1 << "," 
 						   << req.u2 << ","
 						   << req.u3 << ","
 						   << req.u4 << ","
 						   << req.u5;
-			BOOST_LOGL( www, info ) << "Parsing out varibles " << ( rv ? "succeeded" : "failed" );
+			BOOST_LOGL( www, debug ) << "Parsing out varibles " << ( rv ? "succeeded" : "failed" );
 			for ( request::varibles_t::const_iterator rv=req.varibles.begin();
 			      req.varibles.end() != rv;
 				++rv )
 			{
-				BOOST_LOGL( www, info ) << "    " << rv->first << ":";
+				BOOST_LOGL( www, debug ) << "    " << rv->first << ":";
 				for ( request::varible_t::const_iterator vrb=rv->second.begin();
 				      rv->second.end() != vrb;
 				      ++vrb )
 				{
-					BOOST_LOGL( www, info ) << "        " << *vrb;
+					BOOST_LOGL( www, debug ) << "        " << *vrb;
 				}
 			}
 		}

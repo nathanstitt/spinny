@@ -17,6 +17,9 @@ public:
 	typedef ::sqlite::result_set<MusicDir> result_set;
 	typedef ::sqlite::result_set<MusicDir>::iterator iterator;
 private:
+	sqlite::id_t num_children_;
+	sqlite::id_t num_songs_;
+	bool loaded_counts_;
 	GRANT_NEEDED_FRIENDSHIP(MusicDir);
 	friend class Song;
 
@@ -74,10 +77,14 @@ public:
 	sqlite::id_t
 	num_children();
 
+	sqlite::id_t
+	num_songs();
+
  	void
  	sync( unsigned char depth = 0 );
 
 	virtual void destroy();
+
 };
 
 

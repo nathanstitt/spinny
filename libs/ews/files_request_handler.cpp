@@ -30,7 +30,7 @@ namespace ews {
 // 			  << ( req.conn->doc_root / request_path).string()
 // 			  << std::endl;
 
-		BOOST_LOGL( www, info ) << "Attempting to serve file: " 
+		BOOST_LOGL( www, debug ) << "Attempting to serve file: " 
 					   << ( req.conn->doc_root / request_path).string();
 
 		// Request path must be absolute and not contain "..".
@@ -71,7 +71,7 @@ namespace ews {
 		}
 		if (!is) {
 			rep.set_to( reply::not_found );
-			BOOST_LOGL( www, err ) << "File not opened successfully: " 
+			BOOST_LOGL( www, debug ) << "File not opened successfully: " 
 						  << (req.conn->doc_root / request_path).string();
 			return stop;
 		}
@@ -82,7 +82,8 @@ namespace ews {
 		while (is.read(buf, sizeof(buf)).gcount() > 0){
 			rep.content.write(buf, is.gcount());
 		}
-		BOOST_LOGL( www, info ) << "Serving file: " << (req.conn->doc_root / request_path).string();
+		BOOST_LOGL( www, debug ) << "Serving file: " << (req.conn->doc_root / request_path).string();
+		BOOST_LOGL( www, debug  ) << "EXT: " << extension;
 		rep.set_basic_headers( extension );
 
 		return stop;

@@ -62,9 +62,14 @@ void
 MusicDir::initialize_from_db( const sqlite::reader *reader ) {
 	parent_id_ = reader->get<int>(0);
 	name_	   = reader->get<std::string>(1);
+	if ( reader->num_columns() == 5 ){
+		num_children_ = reader->get<sqlite::id_t>(2);
+		num_songs_ = reader->get<sqlite::id_t>(3);
+		loaded_counts_=true;
+	}
 }
 
-MusicDir::MusicDir() : sqlite::table(), parent_id_(0), name_("") {
+MusicDir::MusicDir() : sqlite::table(), num_children_(0), num_songs_(0), loaded_counts_(false), parent_id_(0), name_("") {
 
 }
 
@@ -131,7 +136,7 @@ MusicDir::parent() const {
 
 Song::result_set
 MusicDir::songs(){
- 	return sqlite::db()->load_many<Song>( "dir_id", db_id(), "upper(title)" );
+ 	return sqlite::db()->load_many<Song>( "dir_id", db_id(), "track,upper(title)" );
 }
 
 MusicDir::result_set
@@ -141,7 +146,14 @@ MusicDir::children() const {
 
 MusicDir::result_set
 MusicDir::children_of( sqlite::id_t db_id ) {
-	return sqlite::db()->load_many<MusicDir>( "parent_id", db_id,"upper(name)" );
+	sqlite::connection *con=sqlite::db();
+	*con << "select ";
+	table_desc.insert_fields( *con );
+	*con << ",( select count(*) from music_dirs b where b.parent_id=music_dirs.rowid )"
+	     << ",( select count(*) from songs where dir_id = music_dirs.rowid)"
+	     << ",rowid from music_dirs where parent_id = "
+	     << db_id << " order by upper(name)";
+	return con->load_stored<MusicDir>();
 }
 
 
@@ -243,6 +255,8 @@ MusicDir::sync( unsigned char depth ){
 				}
 				catch( Song::file_error & ){	}
 			} else {
+				// remove the song from our list,
+				// so it won't be destroyed later
 				songs.remove( *song );
 			}
 
@@ -258,9 +272,24 @@ MusicDir::sync( unsigned char depth ){
 
 sqlite::id_t
 MusicDir::num_children(){
-	std::string sql( "select count(*) from music_dirs where parent_id = " );
-	sql+=boost::lexical_cast<std::string>( db_id() );
-	return sqlite::db()->exec<sqlite::id_t>( sql );
+	if ( loaded_counts_ ){
+		return num_children_;
+	} else { 
+		sqlite::connection *con = sqlite::db();
+		*con << "select count(*) from music_dirs where parent_id = " << db_id();
+		return con->exec<sqlite::id_t>();
+	}
+}
+
+sqlite::id_t
+MusicDir::num_songs(){
+	if ( loaded_counts_ ){
+		return num_songs_;
+	} else {
+		sqlite::connection *con = sqlite::db();
+		*con << "select count(*) from songs where dir_id = " << db_id();
+		return con->exec<sqlite::id_t>();
+	}
 }
 
 void

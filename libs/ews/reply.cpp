@@ -219,7 +219,7 @@ namespace ews {
 	static NEOERR *
 	cs_renderer ( void *r, char *contents ){
 		reply *rep = reinterpret_cast<reply*>( r );
-//		BOOST_LOGL( www, info ) << "Rendered TMPL to:\n" << contents;
+//		BOOST_LOGL( www, debug ) << "Rendered TMPL to:\n" << contents;
 		rep->content << contents;
 		return STATUS_OK;
 	}
@@ -228,7 +228,7 @@ namespace ews {
 	bool
 	reply::parse_template(){
 		NEOERR *cs_res;
-//		BOOST_LOGL( www, info ) << "Parsing HDF:\n" << content.str();
+		BOOST_LOGL( www, debug ) << "Parsing HDF:\n" << content.str();
 		BOOST_LOGL( www, info ) << "Parsing TMPL File: " << template_.string();
 		if ( STATUS_OK != ( cs_res =
 				    hdf_read_string ( hdf_, const_cast<char*>( content.str().c_str() ) ) ) ){
@@ -264,7 +264,7 @@ namespace ews {
 		buffers.push_back(status_strings::to_buffer(status));
 
 		if ( ! template_.empty() ){
-			BOOST_LOGL(www,info) << "Using Template: " << template_.string() << "\nHDF:\n" << content.str();
+			BOOST_LOGL(www,debug) << "Using Template: " << template_.string() << "\nHDF:\n" << content.str();
 			if ( parse_template() ){
 				headers[ "Content-Length" ] = boost::lexical_cast<std::string>( content.size() );
 			} else {

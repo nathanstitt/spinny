@@ -178,6 +178,8 @@ namespace sqlite {
 		get() const;
 
 		std::string colname(int index) const;
+
+		int num_columns() const;
 	};
 
 
@@ -197,7 +199,7 @@ namespace sqlite {
 		command(connection &con, const std::string &sql );
 		~command();
 
-		int num_columns();
+		int num_columns() const;
 
 		template<typename T>
 		void bind( const T& data );
@@ -369,7 +371,7 @@ namespace sqlite {
 		load_stored(){
 			command *cmd = new command( *this,  _cmd.curval() );
 			result_set<T> ret( cmd );
-			BOOST_LOGL(sql,info) << "load_stored of " << typeid(T).name();
+			BOOST_LOGL(sql,debug) << "load_stored of " << typeid(T).name();
 			this->clear_cmd();
 			return ret;
 		}
@@ -463,17 +465,17 @@ namespace sqlite {
 				*this << ") values (";
 				obj.table_insert_values( *this );
 				*this << ")";
-				BOOST_LOGL(sql,info) << "save (insert) of " << typeid(T).name();
+				BOOST_LOGL(sql,debug) << "save (insert) of " << typeid(T).name();
 				this->exec<none>();
 				obj.set_db_id( this->insertid() );
 			} else {
 				*this << "update " << td->table_name() << " set ";
 				obj.table_update_values( *this );
 				* this << " where rowid=" << obj.db_id();
-				BOOST_LOGL(sql,info) << "save (update) of " << typeid(T).name();
+				BOOST_LOGL(sql,debug) << "save (update) of " << typeid(T).name();
 				this->exec<none>();
 			}
-			BOOST_LOGL(sql,info) << "ID: " << obj.db_id();
+			BOOST_LOGL(sql,debug) << "ID: " << obj.db_id();
 			return true;
 		}
 

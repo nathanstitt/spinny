@@ -39,7 +39,7 @@ namespace sqlite {
 
 
 	int
-	command::num_columns(){
+	command::num_columns() const {
 		return sqlite3_column_count(this->_stmt);
 	}
 

@@ -65,7 +65,7 @@ BOOST_LOG_DEFINE_LEVEL(err, 1600)
 BOOST_LOG_DEFINE_LEVEL(dbg, 1400)
 BOOST_LOG_DEFINE_LEVEL(warn, 1200)
 BOOST_LOG_DEFINE_LEVEL(info, 1000)
-
+BOOST_LOG_DEFINE_LEVEL(debug, 800)
 
 
 namespace boost { namespace logging {

@@ -48,6 +48,10 @@ namespace sqlite {
 	}
 
 
+	int
+	reader::num_columns() const {
+		return _cmd->num_columns(); 
+	}
 
 	std::string reader::colname(int index) const {
 		if(!this->_cmd) throw database_error("reader is closed");

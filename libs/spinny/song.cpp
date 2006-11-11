@@ -29,15 +29,15 @@ public:
 	}
 	virtual const char** field_types() const {
 		static const char *field_types[] = {
-			"int",
-			"int",
-			"int",
+			"integer",
+			"integer",
+			"integer",
 			"string",
 			"string",
-			"int",
-			"int",
-			"int",
-			"int",
+			"integer",
+			"integer",
+			"integer",
+			"integer",
 		};
 		return field_types;
 	};
@@ -146,7 +146,9 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 
  	frame = tag.Find( ID3FID_ALBUM );
  	if ( artist && frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
+		BOOST_LOGL( app,info ) << "Album: " << field->GetRawText();
 		Album::ptr a = Album::find_or_create( artist, field->GetRawText() );
+		a->add_artist( artist );
  		song->_album_id=a->db_id();
  	}
 
@@ -178,6 +180,9 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 		song->_year=0;
 	}
 	song->save();
+
+	BOOST_LOGL( app,info ) << "Added song id: " << song->db_id() << " artist: " << song->_artist_id
+			       << " album: " << song->_album_id << " : " << song->_title;
 
 	return song;
 }

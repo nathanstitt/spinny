@@ -22,7 +22,7 @@ namespace ews {
 		typedef std::map < std::string, FormValue > map;
 		typedef std::map < std::string, std::string > string_map_t;
 
-		/// for MIME attachments only, normal header information like content-type
+		/// for MIME attachments only, normal header debugrmation like content-type
 		// -- everything except content-disposition, which is in oContentDisposition
 		string_map_t headers;
 

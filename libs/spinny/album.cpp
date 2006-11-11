@@ -55,10 +55,17 @@ Album::table_update_values( std::ostream &str ) const {
 void
 Album::initialize_from_db( const sqlite::reader *reader ) {
 	_name	   = reader->get<std::string>(0);
+	if ( reader->num_columns() == 3 ){
+		num_songs_=reader->get<sqlite::id_t>( 1 );
+		counts_loaded_=true;
+	}
 }
 
 Album::Album() : sqlite::table(),
-		 _name(""){}
+		 _name(""),
+		 num_songs_(0),
+		 counts_loaded_(false)
+{}
 
 bool
 Album::save() const {
@@ -66,17 +73,35 @@ Album::save() const {
 }
 // END DB METHODS
 
+
+Album::ptr
+Album::load( sqlite::id_t db_id ){
+	return sqlite::db()->load<Album>( db_id );
+}
+
+
+
 Album::result_set
 Album::all(){
 	return sqlite::db()->load_all<Album>( "upper(name)" );
 }
 
 Album::result_set
-Album::name_starts_with( const std::string &name ){
-	std::string where("upper(name) like '");
-	where += sqlite::q( name, false );
-	where += "%'";
+Album::with_artist_id( sqlite::id_t db_id ){
+	std::string where("rowid in ( select album_id from albums_artists where artist_id = ");
+	where += boost::lexical_cast<std::string>( db_id );
+	where += ")";
 	return sqlite::db()->load_where<Album>( where,"upper(name)" );
+}
+
+Album::result_set
+Album::name_starts_with( const std::string &name ){
+	sqlite::connection *con = sqlite::db();
+	*con << "select ";
+	table_desc.insert_fields( *con );
+	*con << ",(select count(*) from songs where album_id=albums.rowid),albums.rowid"
+	     << " from albums where upper(name) like '" << sqlite::q( name, false ) << "%'" << "order by upper(name)";
+	return sqlite::db()->load_stored<Album>();
 }
 
 Album::starting_char_t
@@ -94,17 +119,33 @@ Album::count(){
 	return sqlite::db()->count<Album>();
 }
 
+sqlite::id_t
+Album::num_songs(){
+	if ( counts_loaded_ ){
+		return num_songs_;
+	} else {
+		sqlite::connection *con = sqlite::db();
+		*con << "select count(*) from songs where album_id = "
+		     << this->db_id();
+		return con->exec<sqlite::id_t>();
+	}
+}
+
 void
 Album::add_artist( const Artist::ptr &artist ){
-	this->save_if_needed();
 	sqlite::connection *con = sqlite::db();
-	*con << "insert into albums_artists( album_id, artist_id ) values ( " << this->db_id() << ","<< artist->db_id()<<")";
-	con->exec<sqlite::none>();
+	*con << "select count(*) from albums_artists where album_id = " << this->db_id() << " and artist_id = " << artist->db_id();
+	if ( ! con->exec<int>() ){
+		this->save_if_needed();
+		*con << "insert into albums_artists( album_id, artist_id ) values ( " << this->db_id() << "," << artist->db_id() << ")";
+		BOOST_LOGL( app,info ) << "Added artist " << artist->db_id() << " to " << this->db_id();
+		con->exec<sqlite::none>();
+	}
 }
 
 Song::result_set
 Album::songs() const {
-	return sqlite::db()->load_many<Song>( "album_id", db_id(),"upper(title)" );
+	return sqlite::db()->load_many<Song>( "album_id", db_id(),"track,upper(title)" );
 }
 
 Album::ptr

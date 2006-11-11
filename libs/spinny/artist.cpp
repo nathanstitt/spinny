@@ -74,23 +74,31 @@ Artist::m_table_description() const {
 
 void
 Artist::table_insert_values( std::ostream &str ) const {
-	str << sqlite::q(_name);
+	str << sqlite::q(name_);
 }
 
 void
 Artist::table_update_values( std::ostream &str ) const {
-	str << "name=" << sqlite::q(_name);
+	str << "name=" << sqlite::q(name_);
 }
 
 
 void
 Artist::initialize_from_db( const sqlite::reader *reader ) {
-	_name	   = reader->get<std::string>(0);
+	name_	   = reader->get<std::string>(0);
+	if ( reader->num_columns() == 4 ){
+		num_songs_=reader->get<sqlite::id_t>( 1 );
+		num_albums_=reader->get<sqlite::id_t>( 2 );
+		counts_loaded_=true;
+	}
 }
 
 
 Artist::Artist() : sqlite::table(),
-		   _name(""){}
+		   name_(""),
+		   num_songs_(0),
+		   counts_loaded_(false)
+{}
 
 
 bool
@@ -100,6 +108,11 @@ Artist::save() const {
 // END DB METHODS
 
 
+Artist::ptr
+Artist::load( sqlite::id_t db_id ){
+	return sqlite::db()->load<Artist>( db_id );
+}
+
 Artist::result_set
 Artist::all(){
 	return sqlite::db()->load_all<Artist>( "upper(name)" );
@@ -108,7 +121,7 @@ Artist::all(){
 
 Song::result_set
 Artist::songs() const {
-	return sqlite::db()->load_many<Song>( "artist_id", db_id(),"upper(title)" );
+	return sqlite::db()->load_many<Song>( "artist_id", db_id(),"track,upper(title)" );
 }
 
 
@@ -125,10 +138,13 @@ Artist::with_album( const Album *alb ){
 
 Artist::result_set
 Artist::name_starts_with( const std::string &name ){
-	std::string where("upper(name) like '");
-	where += sqlite::q( name, false );
-	where += "%'";
-	return sqlite::db()->load_where<Artist>( where, "upper(name)" );
+	sqlite::connection *con = sqlite::db();
+	*con << "select ";
+	table_desc.insert_fields( *con );
+	*con << ",(select count(*) from songs where artist_id=artists.rowid)"
+		",(select count(*) from albums_artists where artist_id=artists.rowid),artists.rowid"
+	     << " from artists where upper(name) like '" << sqlite::q( name, false ) << "%'" << "order by upper(name)";
+	return sqlite::db()->load_stored<Artist>();
 }
 
 
@@ -147,13 +163,41 @@ Artist::count(){
 	return sqlite::db()->count<Artist>();
 }
 
+sqlite::id_t
+Artist::num_albums(){
+	if ( counts_loaded_ ){
+		return num_albums_;
+	} else {
+		sqlite::connection *con = sqlite::db();
+		*con << "select count(*) from albums_artists where artist_id = "
+		     << this->db_id();
+		return con->exec<sqlite::id_t>();
+	}
+}
+
+sqlite::id_t
+Artist::num_songs(){
+	if ( counts_loaded_ ){
+		return num_songs_;
+	} else {
+
+		sqlite::connection *con = sqlite::db();
+		*con << "select count(*) from songs where artist_id = "
+		     << this->db_id();
+		return con->exec<sqlite::id_t>();
+	}
+}
+
+
+
 Album::result_set
 Artist::albums() const {
 	sqlite::connection *con = sqlite::db();
 	const sqlite::table::description *td = Album::table_description();
 	*con << "select ";
 	td->insert_fields( *con );
-	*con << ",albums.rowid from albums, albums_artists where albums.rowid=albums_artists.album_id"
+	*con << ",(select count(*) from songs where album_id=albums.rowid), "
+	     << "albums.rowid from albums, albums_artists where albums.rowid=albums_artists.album_id"
 	     << " and albums_artists.artist_id = " << this->db_id() << "order by upper(name)";
 	return con->load_stored<Album>();
 }
@@ -164,7 +208,7 @@ Artist::find_or_create( const std::string &name ){
 	Artist::ptr ret=sqlite::db()->load_one<Artist>( "name", name );
 	if ( ! ret ){
 		Artist *a = new Artist;
-		a->_name=name;
+		a->name_=name;
 		a->save();
 		ret.reset( a );
 	}
@@ -174,5 +218,5 @@ Artist::find_or_create( const std::string &name ){
 
 std::string
 Artist::name() const {
-	return _name;
+	return name_;
 }
