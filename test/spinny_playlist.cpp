@@ -15,7 +15,7 @@ SUITE(SpinnyPlayList){
 TEST( Load ){
 	DummyApp da;
 
-	PlayList::ptr p = PlayList::create( 128, "128 Kbs" );
+	PlayList::ptr p = PlayList::create( 128, std::string("128 Kbs"), std::string("BooYah") );
 	p->save();
 
  	PlayList::ptr pl = PlayList::load( p->db_id() );
@@ -27,7 +27,7 @@ TEST( Load ){
 
 TEST( Create ){
  	DummyApp da;
- 	PlayList::ptr pl = PlayList::create( 128, "128 Kbs" );
+ 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
 	pl->save();
  	CHECK_EQUAL( "128 Kbs", pl->name() );
 }
@@ -41,7 +41,7 @@ TEST( PushBack ){
 
 	Song::result_set songs = md->songs();
 
- 	PlayList::ptr pl = PlayList::create( 128, "128 Kbs" );
+ 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
 		pl->push_back( *s );
@@ -59,7 +59,7 @@ TEST( Clear ){
 
 	Song::result_set songs = md->songs();
 
- 	PlayList::ptr pl = PlayList::create( 128, "128 Kbs" );
+ 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
 		pl->push_back( *s );
@@ -82,7 +82,7 @@ TEST( Remove ){
 
 	Song::result_set songs = md->songs();
 
- 	PlayList::ptr pl = PlayList::create( 128, "128 Kbs" );
+ 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
 		pl->push_back( *s );
@@ -99,6 +99,35 @@ TEST( Remove ){
 
 	CHECK_EQUAL( songs.size()/2, pl->size() );
 
+}
+
+TEST( Update ){
+	DummyApp da;
+ 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
+	pl->save();
+ 	CHECK_EQUAL( "128 Kbs", pl->name() );
+	CHECK_EQUAL( "BooYah", pl->description() );
+	CHECK_EQUAL( 128, pl->bitrate() );
+	pl->set_name("Funny Name");
+	pl->set_description("A longer descrip is needed");
+	pl->set_bitrate( 24 );
+ 	CHECK_EQUAL( "Funny Name", pl->name() );
+	CHECK_EQUAL( "A longer descrip is needed", pl->description() );
+	CHECK_EQUAL( 24, pl->bitrate() );
+
+	sqlite::id_t id = pl->db_id();
+
+	PlayList::ptr pl2 = PlayList::load( id );
+ 	CHECK_EQUAL( "128 Kbs", pl2->name() );
+	CHECK_EQUAL( "BooYah", pl2->description() );
+	CHECK_EQUAL( 128, pl2->bitrate() );
+
+	pl->save();
+	PlayList::ptr pl3 = PlayList::load( id );
+	CHECK_EQUAL( "Funny Name", pl3->name() );
+	CHECK_EQUAL( "A longer descrip is needed", pl3->description() );
+	CHECK_EQUAL( 24, pl3->bitrate() );
+	
 }
 
 } // SUITE(SpinnyPlayList)

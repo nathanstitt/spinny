@@ -4,215 +4,121 @@
     <title>Spinny</title>
     <!-- begin common includes -->
     <script type="text/javascript" src="/js/yahoo.js"></script>
+    <script type="text/javascript" src="/js/dom.js" ></script>
     <script type="text/javascript" src="/js/event.js" ></script>
     <script type="text/javascript" src="/js/treeview.js" ></script>
     <script type="text/javascript" src="/js/dragdrop.js" ></script>
     <script type="text/javascript" src="/js/connection.js" ></script>
     <script type="text/javascript" src="/js/animation.js" ></script>
-    <script type="text/javascript" src="/js/dom.js" ></script>
     <script type="text/javascript" src="/js/yui-ext.js"></script>
     <script type="text/javascript" src="/js/splitbar-lib.js"></script>
     <script type="text/javascript" src="/js/ie-bg.js"></script>
     <script type="text/javascript" src="/js/tree.js"></script>
+    <script type="text/javascript" src="/js/logger.js"></script> 
+
+    <script type="text/javascript" src="/js/tree.js"></script>
+    <script type="text/javascript" src="/js/spinny-grid.js"></script>
+    <script type="text/javascript" src="/js/songs.js"></script>
+    <script type="text/javascript" src="/js/playlists.js"></script>
+    <script type="text/javascript" src="/js/layout.js"></script>
 
     <link rel="stylesheet" type="text/css" href="/css/reset-min.css">
     <link rel="stylesheet" type="text/css" href="/css/tabs.css"/>
     <link rel="stylesheet" type="text/css" href="/css/tree.css">
     <link rel="stylesheet" type="text/css" href="/css/layout.css"/>
-    <link rel="stylesheet" type="text/css" href="/css/grid.css"/>
-    <style type="text/css">
-      body {font:normal 9pt verdana; margin:0;padding:0;border:0px none;overflow:hidden;}
-	.ylayout-panel-north {
-	    border:0px none;
-	    background-color:#c3daf9;
-	}
-	#nav {
-	}
-	#autoTabs, #center1, #center2, #west {
-	    padding:10px;
-	}
-	#north, #south{
-	    font:normal 8pt arial, helvetica;
-	    padding:4px;
-	}
-	.ylayout-panel-center p {
-	    margin:5px;
-	}
-	#props-panel .ygrid-col-0{
-	}
-	#props-panel .ygrid-col-1{
-	}
+    <script type="text/javascript">
 
-/* via css class selector */
-#dirsContent .ygtvtn {background: transparent;  width:1em; height:20px; }
-#dirsContent .ygtvtm { background: url(/img/tree/collapse.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-#dirsContent .ygtvtmh { background: url(/img/tree/collapseh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-#dirsContent .ygtvtp { background: url(/img/tree/expand.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-#dirsContent .ygtvtph { background: url(/img/tree/expandh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-#dirsContent .ygtvln { background: transparent; width:1em; height:20px; }
-#dirsContent .ygtvlm { background: url(/img/tree/collapse.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-#dirsContent .ygtvlmh { background: url(/img/tree/collapseh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-#dirsContent .ygtvlp { background: url(/img/tree/expand.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-#dirsContent .ygtvlph { background: url(/img/tree/expandh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-#dirsContent .ygtvloading { background: url(/img/tree/loading.gif) 0 6px no-repeat; width:1em; height:22px; }
-#dirsContent .ygtvdepthcell { background: transparent; width:1em; height:20px; }
-#dirsContent .ygtvblankdepthcell {background: transparent;  width:1em; height:20px; }
-#dirsContent .ygtvitem { border: 0px solid grey; }  
-#dirsContent .ygtvchildren { }  
-#dirsContent .ygtvlabel, .ygtvlabel:link, .ygtvlabel:visited, .ygtvlabel:hover { 
-	font-size: 12px;
-}
+      Trees.prototype.init = function( el ){
 
-	</style>
-	<script type="text/javascript">
+      this.artists=new YAHOO.widget.TreeView(document.getElementById("artistsTree"));
+      var artistRoot = this.artists.getRoot();
+      <?cs each:item = Artists ?>
+      Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, artistRoot );<?cs /each ?>
 
-      var tree;
-      function treeInit() {
+      this.albums=new YAHOO.widget.TreeView(document.getElementById("albumsTree"));
+      var albumRoot = this.albums.getRoot();
+      <?cs each:item = Albums ?>
+      Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, albumRoot );<?cs /each ?>
 
-        artistTree=new YAHOO.widget.TreeView(document.getElementById("artistsContent"));
-        var artistRoot = artistTree.getRoot();
-        <?cs each:item = Artists ?>
-	addTreeNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, artistRoot );<?cs /each ?>
-        artistTree.draw(); 
+      this.dirs=new YAHOO.widget.TreeView(document.getElementById("dirsTree"));
+      var dirRoot = this.dirs.getRoot();
+      <?cs each:item = RootDirectories ?>
+      Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, dirRoot );<?cs /each ?>
 
-        albumTree=new YAHOO.widget.TreeView(document.getElementById("albumsContent"));
-        var albumRoot = albumTree.getRoot();
-        <?cs each:item = Albums ?>
-	addTreeNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, albumRoot );<?cs /each ?>
-        albumTree.draw(); 
+      this.artists.draw(); 
+      this.albums.draw(); 
+      this.dirs.draw(); 
 
-        dirTree=new YAHOO.widget.TreeView(document.getElementById("dirsContent"));
-        var dirRoot = dirTree.getRoot();
-        <?cs each:item = RootDirectories ?>
-	addTreeNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, dirRoot );<?cs /each ?>
-        dirTree.draw(); 
+      }
 
-        }
+    </script>
+  </head>
+  <body>
+      <div id="west" class="ylayout-inactive-content">
+	Hi. I'm the west panel.
+      </div>
 
-	Layout = function(){
-	        var layout;
-	        return {
-	            init : function(){
-	               layout = new YAHOO.ext.BorderLayout(document.body, {
-	                    hideOnLayout: true,
-	                    north: {
-	                        split:false,
-	                        initialSize: 25,
-	                        titlebar: false
-	                    },
-	                    west: {
-	                        split:true,
-	                        initialSize: 200,
-	                        minSize: 175,
-	                        maxSize: 400,
-	                        titlebar: true,
-	                        collapsible: true,
-	                        autoScroll:true
+      <div id="north" class="ylayout-inactive-content">
+	<div id="playlist-desc"><div>
+      </div>
 
-	                    },
-	                    south: {
-	                        split:true,
-	                        initialSize: 75,
-	                        minSize: 25,
-	                        maxSize: 200,
-	                        titlebar: true,
-	                        collapsible: true
-	                    },
-	                    center: {
-	                        titlebar: true,
-	                        autoScroll:true
-	                    }
-	                });
-	                var innerLayout = new YAHOO.ext.BorderLayout('content', {
-	                    south: {
-	                        split:true,
-	                        initialSize: 400,
-	                        minSize: 100,
+      <div id="playlists" style="width:200px;height:200px;overflow:hidden;"  class="ygrid-mso"></div>
 
-	                        autoScroll:true,
-	                        collapsible:true,
-	                        titlebar: true
-	                    },
-	                    center: {
-	                        autoScroll:true,
-	                        tabPosition: 'top'
+      <div id="west-content" class="ylayout-inactive-content"></div>
 
-	                    }
-	                });
-                    layout.beginUpdate();
-	                layout.add('north', new YAHOO.ext.ContentPanel('north', 'North'));
-	                layout.add('south', new YAHOO.ext.ContentPanel('console', {title: 'Message Console', closable: true}));
-	                layout.add('west', new YAHOO.ext.ContentPanel( 'albumsContent', {title: 'Albums' }));
-	                layout.add('west', new YAHOO.ext.ContentPanel('artistsContent', {title: 'Artist' }));
-	                layout.add('west', new YAHOO.ext.ContentPanel( 'dirsContent', {title: 'Dirs'}));
-
-	                layout.add('center', new YAHOO.ext.NestedLayoutPanel(innerLayout) );
-	innerLayout.add( 'center', new YAHOO.ext.ContentPanel('center1', {title: 'Info Panel #1', closable: false}));
-        innerLayout.add( 'center', new YAHOO.ext.ContentPanel('center2', {title: 'Info Panel #2', closable: false}));
-       innerLayout.add( 'south', new YAHOO.ext.ContentPanel('playlist', {title: 'Playlist', closable: false}));
-	                layout.getRegion('center').showPanel('center1');
-
-	                layout.endUpdate();
-
-	treeInit();
-	           },
-	           
-	           toggleWest : function(link){
-	                var west = layout.getRegion('west');
-	                if(west.isVisible()){
-	                    west.hide();
-	                    link.innerHTML = 'Show West Region';
-	                }else{
-	                    west.show();
-	                    link.innerHTML = 'Hide West Region';
-	                }
-	           }
-	     }
-	       
-	}();
-	YAHOO.ext.EventManager.onDocumentReady(Layout.init, Layout, true);
-
-
-
-
-
-	</script>
-</head>
-<body>
-<div id ="container">
-  <div id="west" class="ylayout-inactive-content">
-    Hi. I'm the west panel.
-  </div>
-
-  <div id="north" class="ylayout-inactive-content">
-    Menus, toolbars and/or advertisements 
-  </div>
-  <div id="content" class="ylayout-inactive-content"></div>
-
-  <div id="center1" class="ylayout-inactive-content">
+      <div id="center-content" class="ylayout-inactive-content"></div>
+      <div id="center1" class="ylayout-inactive-content">
         <p>Info Panel #1</p>
-  </div>
-  <div id="center2" class="ylayout-inactive-content">
+      </div>
+      <div id="center2" class="ylayout-inactive-content">
         <p><a href="#" onclick="Layout.toggleWest(this);return false;">Show West Region</a></p>
-  
-        <p>Info Panel #2</p>
-  </div>
-  <div id="playlist" class="ylayout-inactive-content">
-        <p>Playlist</p>
-  </div>
+<input type="button" id="show-dialog-btn" value="Hello World" />
+        Info Panel #2
+      </div>
+      <div id="albumsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
+      <div id="artistsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
+      <div id="dirsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
+      <div id="searchSongs" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
 
-  <div id="albumsContent" class="ylayout-inactive-content" style="padding-left: 3px;">
-  </div>
-  <div id="artistsContent" class="ylayout-inactive-content" style="padding-left: 3px;">
-  </div>
+      <div id="songs" class="ygrid-mso" style="width:800px;height:800px;overflow:hidden;"></div>
 
-  <div id="dirsContent" class="ylayout-inactive-content" style="padding-left: 3px;">
-  </div>
+      <div id="console" class="ylayout-inactive-content">
+	message console - generally for informational stuff as it occurs on the server
+      </div>
+    <script type="text/javascript">
+      var myLogReader = new YAHOO.widget.LogReader("console"); 
+    </script>
+    </div>
 
-  <div id="console" class="ylayout-inactive-content">
-    message console - generally for informational stuff as it occurs on the server
-  </div>
-</div>
- </body>
+    <div id="playlist-edit-dlg" style="visibility:hidden;">
+      <div class="ydlg-hd">Playlists</div>
+
+      <div class="ydlg-bd">
+	<div id="edit-tab" class="ydlg-tab" title="Create Playlist">
+	  <div class="inner-tab">
+            <form action="" method="post" id="playlist-form" onsubmit="return false;">
+              <input id="postId" type="hidden" name="postId" value="1" />
+              <p>
+		<label for="name">Name</label>
+		<input class="textinput" type="text" name="name" id="name" value="" size="22" tabindex="1" />
+	      </p>
+	      <p>
+              </p>
+              <p>
+		<label for="description">Description</label>
+		<textarea name="description" id="description" tabindex="4" cols="40" rows="10"></textarea>
+              </p>
+            </form>
+	  </div>
+	</div>
+      </div>
+      <div class="ydlg-ft">
+	<div id="dlg-msg">
+	  <span id="post-error" class="posting-msg"><img src="/img/dialog/warning.gif" alt="Warning" width="16" height="16" />&nbsp;<span id="post-error-msg"></span></span>
+	  <span id="post-wait" class="posting-msg"><img src="/img/dialog/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
+	</div>
+      </div>
+
+</body>
 </html>
 

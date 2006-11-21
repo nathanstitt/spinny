@@ -7,7 +7,8 @@
 #define _HANDLERS_INSTANTIATE_H 1
 
 
-#include "ews/request_handler.hpp"
+#include "ews/server.hpp"
+
 
 
 

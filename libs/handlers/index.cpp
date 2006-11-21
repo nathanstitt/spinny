@@ -65,7 +65,7 @@ hdf_insert_dirs( ews::reply &rep ){
 	}
 	int num=0;
 	for(MusicDir::result_set::iterator md = rs.begin(); rs.end() != md; ++md ){
-		insert( rep, num++, md->db_id(), md->path().leaf(), md->num_children()+md->num_songs(), JsonDir );
+		insert( rep, num++, md->db_id(), md->filesystem_name(), md->num_children()+md->num_songs(), JsonDir );
 	}
 	if ( songs_dir ){
 		Song::result_set songs=songs_dir->songs();

@@ -16,6 +16,8 @@
 	 border:1px solid #98c0f4;
 	 z-index:20;
 }
+
+
 .ylayout-collapsed-over{
     cursor:pointer;
 	 background-color:#d9e8fb;
@@ -186,78 +188,867 @@
 	position:absolute;
 }
 
-/** gray theme */
+.ygrid-cell-text {
+	display: block;
+	font: normal 8pt arial;
+	overflow: hidden;
+	padding: 3px 5px;
+	white-space: nowrap;
+}
+.ygrid-col{
+	cursor: default;
+	height:21px !important;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	position:absolute;
+	display:block;
+	-moz-outline: none;
+	-moz-user-focus: normal;
+	overflow: hidden;
+	border-left: 1px solid #f1efe2;
+}
+.yeditgrid .ygrid-col{
+	-moz-outline: normal;
+}
+.ygrid-col, .ygrid-hd {
+	font: normal 8pt arial;
+	-o-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+}
+.ygrid-col-0{
+	border-left: 0px;
+}
+.ygrid-col-last{
+	border-right: 1px solid #f1efe2;
+}
+.ygrid-editor{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	position:absolute;
+	visibility:hidden;
+	font: normal 8pt arial;
+	border: 1px solid #afbdc9;
+	z-index:10;
+}
+.ygrid-editor input{
+	font: normal 8pt arial;
+	border: 0px;
+	padding-top:2px;
+	padding-left:3px;
+}
+.ygrid-editor-container{
+	overflow:hidden;
+	display:block;
+	background-color:white;
+}
+.ygrid-editor .pick-button{
+	width:15px;
+	height:20px;
+	position:absolute;
+	display:block;
+	right:0;
+	top:0;
+	z-index:2;
+	background-image: url(/img/grid/pick-button.gif);
+	background-repeat: no-repeat;
+}
+.ygrid-editor-invalid{
+	background-image: url(/img/grid/invalid_line.gif);
+	background-repeat: repeat-x;
+	background-position: bottom;
+	border: 1px solid #afbdc9;
+}
+.ygrid-checkbox-editor{
+	text-align: center;
+	overflow:hidden;
+	display:block;
+	background-color:white;
+}
+.ygrid-checkbox-editor input{
+	margin-top:3px;
+	height:13px;
+	width:13px;
+}
+select.ygrid-editor{
+	padding: 0px;
+	-moz-outline: none;
+	border: 1px solid #afbdc9;
+}
+.ygrid-num-editor{
+	text-align:right;
+	padding-top:2px;
+	padding-left:3px;
+}
+.ygrid-text-editor{
+	padding-top:2px;
+	padding-left:3px;
+}
+.ygrid-hd{
+	background-color: #ebeadb;
+	border-bottom: 1px solid #cbc7b8;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	display: block;
+	position: absolute;
+	overflow:hidden;
+}
+.ygrid-column-sizer {
+	width:1px;
+	border-right:1px dashed #6593cf;
+	background:none;
+	cursor: col-resize;
+}
+.ygrid-drag-proxy{
+	width:150px;
+	height:24px;
+	background-color:#3366cc;
+	border: 1px solid #002266;
+	position:absolute;
+	visibility:hidden;
+	z-index:10000;
+}
+.ygrid-drag-text{
+   font: normal 8pt arial;
+	color:white;
+	position:absolute;
+	top:0px;
+	left:26px;
+	padding:3px;
+	display:block;
+}
+.ygrid-drop-icon{
+   position:absolute;
+	top:0px;
+	left:0px;
+	display:block;
+	width:24px;
+	height:100%;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+.ygrid-drop-nodrop{
+   background-image: url(/img/grid/drop-no.gif);
+}
+.ygrid-drop-ok{
+   background-image: url(/img/grid/drop-yes.gif);
+}
+.ygrid-hd .sort-asc {
+	background-image: url(/img/grid/sort_asc.gif);
+	background-position: right;
+	background-repeat: no-repeat;
+	display: none;
+	height: 14px;
+	width: 16px;
+}
+.ygrid-hd .sort-desc {
+	background-image: url(/img/grid/sort_desc.gif);
+	background-position: right;
+	background-repeat: no-repeat;
+	display: none;
+	height: 14px;
+	width: 16px;
+}
+.ygrid-hd-body {
+	border-bottom: 2px solid #d6d2c2;
+	cursor: default;
+	display: block;
+	font: normal 8pt arial;
+	left: 0;
+	overflow: hidden;
+	padding: 3px 5px;
+	position: relative;
+	top: 0;
+	white-space: nowrap;
+}
+.ygrid-hd-body span {
+	font: normal 8pt arial;
+	white-space: nowrap; 
+}
+.ygrid-hd-over{
+	border-bottom: 2px solid #fcc247;
+}
+.ygrid-hd-over .ygrid-hd-body{
+	background-color: #faf9f4;
+	border-bottom: 1px solid #f9a900;
+}
+.ygrid-hd-split {
+	background-image: url(/img/grid/grid-split.gif);
+	background-position: center;
+	background-repeat: no-repeat;
+	cursor: e-resize;
+	display: block;
+	font-size: 1px;
+	height: 16px;
+	overflow: hidden;
+	position: absolute;
+	top: 2px;
+	width: 6px;
+	z-index: 3;
+}
+.ygrid-hrow{
+	background-color: #ebeadb;
+	display: block;
+	height: 22px;
+	left: 0;
+	position: relative;
+	top: 0;
+	width: 10000px;
+	overflow:hidden;
+	z-index:2;
+}
+.ygrid-hrow-frame{
+	height: 22px;
+	left: 0;
+	display:block;
+	position: absolute;
+	top: 0;
+	width: 10000px;
+	z-index:1;
+}
+.ygrid-footer .ytoolbar{
+	border:0px;
+}
+.ygrid-page-number{
+	width:24px;
+	height:14px;	
+}
+.ygrid-page-first{
+	background-image: url(/img/grid/page-first.gif);
+}
+.ygrid-loading{
+	background-image: url(/img/grid/done.gif);
+}
+.ygrid-page-last{
+	background-image: url(/img/grid/page-last.gif);
+}
+.ygrid-page-next{
+	background-image: url(/img/grid/page-next.gif);
+}
+.ygrid-page-prev{
+	background-image: url(/img/grid/page-prev.gif);
+}
+.ytb-button-disabled .ygrid-loading{
+	background-image: url(/img/grid/loading.gif);
+}
+.ytb-button-disabled .ygrid-page-first{
+	background-image: url(/img/grid/page-first-disabled.gif);
+}
+.ytb-button-disabled .ygrid-page-last{
+	background-image: url(/img/grid/page-last-disabled.gif);
+}
+.ytb-button-disabled .ygrid-page-next{
+	background-image: url(/img/grid/page-next-disabled.gif);
+}
+.ytb-button-disabled .ygrid-page-prev{
+	background-image: url(/img/grid/page-prev-disabled.gif);
+}
+.ygrid-mso{
+}
+.ygrid-mso .ygrid-hd{
+	background:none;
+	border-bottom:0px;
+}
+.ygrid-mso .ygrid-footer {
+	border-top: 1px solid #6593cf;
+}
+
+.ygrid-mso .ygrid-footer .ygrid-fbutton{
+	border:0px;
+}
+.ygrid-mso .ygrid-hd-body {
+	border-bottom:0px;
+}
+.ygrid-mso .ygrid-hd-over{
+	border-bottom:0px;
+}
+.ygrid-mso .ygrid-hd-over .ygrid-hd-body{
+	background-color: transparent;
+}
+.ygrid-mso .ygrid-hd-split {
+	background-image: url(/img/grid/grid-blue-split.gif);
+}
+.ygrid-mso .ytoolbar .ytb-sep {
+	background-image: url(/img/grid/grid-blue-split.gif);
+}
+.ygrid-mso .ygrid-hrow{
+	background: url(/img/grid/mso-hd.gif);
+	border-bottom: 1px solid #6593cf;
+	height: 21px;
+}
+.ygrid-mso .ygrid-row{
+	color: black;
+	border-bottom: 1px solid #ddecfe;
+}
+.ygrid-mso .ygrid-row-alt{
+	background-color: #f5f5f5;
+}
+.ygrid-mso .ygrid-row-selected{
+	background-color: #b3c8e8  !important;
+	color: black;
+}
+.ygrid-mso .ygrid-row-selected span{
+	color: black !important;
+}
 
-.ytheme-gray,div.ytheme-gray,.ytheme-gray .ylayout-container{
-    background-color:#f3f2e7;
+.ygrid-row{
+	border-bottom: 1px solid #f1efe2;
+	overflow: visible;
+	white-space: nowrap;
+	height:21px;
+	width:10000px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	display:block;
+	position:absolute;
+}
+.ygrid-row-alt{
+	background-color: #fcfaf6;
+}
+.ygrid-row-over{
+	background-color: #f1f1f1;
+	color: black;
+}
+.ygrid-row-selected{
+	background-color: #316ac5 !important;
+	color: white;
+}
+.ygrid-row-selected span{
+	color: white !important;
+}
+/* 
+  To have the scrollbars overlap the header, change .ygrid-wrap top style to 0 and 
+  and ygrid-wrap-body top to 22px
+  Then grid.getView().scrollbarMode = YAHOO.ext.grid.GridView.SCROLLBARS_OVERLAP;
+ */
+.ygrid-wrap {
+	height: 100%;
+	left: 0;
+	overflow: auto;
+	position: relative;
+	top: 22px;
+	width: 100%;
+}
+.ygrid-footer{
+	display: block;
+	padding:0px;
+	border-top: 1px solid #cbc7b8;
+}
+.ygrid-wrap-footer {
+	display: block;
+	overflow: hidden;
+	width:100%;
+	height:25px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	background-color: #ebeadb;
+	position:absolute;
+	bottom:0px;
+}
+.ygrid-wrap-body {
+	left: 0;
+	overflow: hidden;
+	position: absolute;
+	top: 0;
+	display: block;
+}
+.ygrid-wrap-headers {
+	left: 0;
+	overflow: hidden;
+	position: absolute;
+	top: 0;
+	z-index: 12;
+}
+/* 
+The grid first check if a column style is defined as:
+#your-grid .ygrid-col-0
+if it doesn't find it, it uses one of the generic empty rules below.
+If you have more than one grid on your page - you MUST define you columns
+like above - #container-id .ygrid-col-0 and they must each be a separate rule
+*/
+.ygrid-col-0{
+}
+.ygrid-col-1{
+}
+.ygrid-col-10{
+}
+.ygrid-col-11{
+}
+.ygrid-col-12{
+}
+.ygrid-col-13{
+}
+.ygrid-col-14{
+}
+.ygrid-col-15{
+}
+.ygrid-col-16{
+}
+.ygrid-col-17{
+}
+.ygrid-col-18{
+}
+.ygrid-col-19{
+}
+.ygrid-col-2{
+}
+.ygrid-col-20{
+}
+.ygrid-col-3{
+}
+.ygrid-col-4{
+}
+.ygrid-col-5{
+}
+.ygrid-col-6{
+}
+.ygrid-col-7{
+}
+.ygrid-col-8{
+}
+.ygrid-col-9{
+}
+
+.ygrid-header-0{
+}
+.ygrid-header-1{
+}
+.ygrid-header-10{
+}
+.ygrid-header-11{
+}
+.ygrid-header-12{
+}
+.ygrid-header-13{
+}
+.ygrid-header-14{
+}
+.ygrid-header-15{
+}
+.ygrid-header-16{
+}
+.ygrid-header-17{
+}
+.ygrid-header-18{
+}
+.ygrid-header-19{
+}
+.ygrid-header-2{
+}
+.ygrid-header-20{
+}
+.ygrid-header-3{
+}
+.ygrid-header-4{
+}
+.ygrid-header-5{
+}
+.ygrid-header-6{
+}
+.ygrid-header-7{
+}
+.ygrid-header-8{
+}
+.ygrid-header-9{
+}
+
+
+
+      body {font:normal 9pt verdana; margin:0;padding:0;border:0px none;overflow:hidden;}
+	.ylayout-panel-north {
+	    border:0px none;
+	    background-color:#c3daf9;
+	}
+	#nav {
+	}
+	#autoTabs, #center1, #center2, #west {
+	    padding:10px;
+	}
+	#north, #south{
+	    font:normal 8pt arial, helvetica;
+	    padding:4px;
+	}
+	.ylayout-panel-center p {
+	    margin:5px;
+	}
+	#props-panel .ygrid-col-0{
+	}
+	#props-panel .ygrid-col-1{
+	}
+
+/* via css class selector */
+.ygtvtn {background: transparent;  width:1em; height:20px; }
+.ygtvtm { background: url(/img/tree/collapse.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
+.ygtvtmh { background: url(/img/tree/collapseh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
+.ygtvtp { background: url(/img/tree/expand.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
+.ygtvtph { background: url(/img/tree/expandh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
+.ygtvln { background: transparent; width:1em; height:20px; }
+.ygtvlm { background: url(/img/tree/collapse.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
+.ygtvlmh { background: url(/img/tree/collapseh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
+.ygtvlp { background: url(/img/tree/expand.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
+.ygtvlph { background: url(/img/tree/expandh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
+.ygtvloading { background: url(/img/tree/loading.gif) 0 6px no-repeat; width:1em; height:22px; }
+.ygtvdepthcell { background: transparent; width:1em; height:20px; }
+.ygtvblankdepthcell {background: transparent;  width:1em; height:20px; }
+.ygtvitem { border: 0px solid grey; }  
+.ygtvchildren { }  
+.ygtvlabel, .ygtvlabel:link, .ygtvlabel:visited, .ygtvlabel:hover { 
+	font-size: 12px;
 }
-.ytheme-gray{
-    background-color:#f3f2e7;
+
+
+
+
+
+.ydlg-proxy {
+
+	background-image: url('/img/gradient-bg.gif');
+
+	background-color:#c3daf9;
+
+	border:1px solid #6593cf;
+
+	z-index:10001;
+
+	overflow:hidden;
+
+	position:absolute;
+
+	left:0;top:0;
+
 }
-.ytheme-gray .ylayout-collapsed{
-    background-color:#f3f2e7;
-	 border:1px solid #aca899;
+
+.ydlg-shadow{
+
+	background:#aaaaaa;
+
+	position:absolute;
+
+	display:none;
+
 }
-.ytheme-gray .ylayout-collapsed-over{
-	 background-color:#fbfbef;
+
+.ydlg-mask{
+
+	z-index:10000;   
+
+   display:none;
+
+   position:absolute;
+
+   top:0;
+
+   left:0;
+
+   -moz-opacity: 0.5;
+
+   opacity:.50;
+
+   filter: alpha(opacity=50);
+
+   background-color:#CCC;
+
 }
-.ytheme-gray .ylayout-panel{
-    border:1px solid #aca899;
+
+body.masked{
+
+	overflow:hidden;
+
 }
-.ytheme-gray .ylayout-nested-layout .ylayout-panel {
-	  border:0px none;
+
+body.masked select {
+
+	visibility:hidden;
+
 }
-.ytheme-gray .ylayout-split{
-    background-color:#f3f2e7;
+
+body.masked .ydlg select {
+
+	visibility:visible;
+
 }
-.ytheme-gray .ylayout-panel-hd{
-    background-image: url(/img/layout/gray/panel-title-light-bg.gif);
-    border-bottom:1px solid #aca899;
+
+.ydlg{
+
+	z-index:10001;
+
+	overflow:hidden;
+
+	position:absolute;
+
+	left:300;top:0;
+
 }
-.ytheme-gray .ylayout-tools-button-over{
-    border:1px solid #aca899;
+
+.yresizable-proxy{
+
+	z-index:10002;
+
 }
-.ytheme-gray .ylayout-close{
-    background-image:url(../images/layout/gray/panel-close.gif);
+
+.ydlg .ydlg-hd {
+
+	background: url(/img/dialog/hd-sprite.gif) repeat-x 0px -82px;
+
+	background-color:navy;
+
+	color:#FFF;
+
+	font:bold 12px "sans serif", tahoma, verdana, helvetica;
+
+	overflow:hidden;
+
+	padding:5px;
+
 }
-.ytheme-gray .ylayout-collapse-west,.ytheme-gray .ylayout-expand-east{
-    background-image:url(../images/layout/gray/collapse.gif);
+
+.ydlg .ydlg-hd-left {
+
+	background: url(/img/dialog/hd-sprite.gif) no-repeat 0px -41px;
+
+	padding-left:3px;
+
+	margin:0px;
+
 }
-.ytheme-gray .ylayout-expand-west,.ytheme-gray .ylayout-collapse-east{
-    background-image:url(../images/layout/gray/expand.gif);
+
+.ydlg .ydlg-hd-right {
+
+	background: url(/img/dialog/hd-sprite.gif) no-repeat right 0px;
+
+	padding-right:3px;
+
 }
-.ytheme-gray .ylayout-collapse-north,.ytheme-gray .ylayout-expand-south{
-    background-image:url(../images/layout/gray/ns-collapse.gif);
+
+.ydlg .ydlg-dlg-body{
+
+	background:url(/img/layout/gradient-bg.gif);
+
+	border:1px solid #6593cf;
+
+	border-top:0px none;
+
+	padding:10px;
+
 }
-.ytheme-gray .ylayout-expand-north,.ytheme-gray .ylayout-collapse-south{
-    background-image:url(../images/layout/gray/ns-expand.gif);
+
+.ydlg .ydlg-bd{
+
+	overflow:hidden;
+
 }
-.ytheme-gray .ylayout-split-h{
-    background-image:url(../images/sizer/gray/e-handle-dark.gif);
+
+.ydlg .ydlg-ft{
+
+	overflow:hidden;
+
+	padding:5px;
+
+	padding-bottom:0px;
+
 }
-.ytheme-gray .ylayout-split-v{
-    background-image:url(../images/sizer/gray/s-handle-dark.gif);
+
+.ydlg .yui-ext-tabbody{
+	background:white;
+	overflow:auto;
+
 }
-.ytheme-gray .ylayout-panel .ytab-wrap{
-    background:url(../images/layout/gray/gradient-bg.gif);
+
+.ydlg .ytabs-top .yui-ext-tabbody{
+	border:1px solid #6593cf;
+	border-top:0px none;
 }
-.ytheme-gray .ylayout-nested-layout .ylayout-panel-north {
-	  border-bottom:1px solid #aca899;
+
+.ydlg .ytabs-bottom .yui-ext-tabbody{
+	border:1px solid #6593cf;
+	border-bottom:0px none;
 }
-.ytheme-gray .ylayout-nested-layout .ylayout-panel-south {
-	  border-top:1px solid #aca899;
+
+.ydlg .ylayout-container  .yui-ext-tabbody{
+	border:0px none;
 }
-.ytheme-gray .ylayout-nested-layout .ylayout-panel-east {
-	  border-left:1px solid #aca899;
+
+.ydlg .inner-tab{
+	margin:5px;
 }
-.ytheme-gray .ylayout-nested-layout .ylayout-panel-west {
-	  border-right:1px solid #aca899;
+
+.ydlg .ydlg-button{
+	font:normal 11px arial, tahoma, verdana, helvetica;
+	margin-right:5px;
+	float:right;
+	cursor:pointer;
+	clear:none;
 }
-.ytheme-gray .ylayout-panel-dragover {
-	border: 2px solid #aca899;
+
+.ydlg-button-left, .ydlg-button-right{
+	font-size:1px;
+	line-height:1px;
 }
-.ytheme-gray .ylayout-panel-proxy {
-	background-image: url('../images/layout/gray/gradient-bg.gif');
-	background-color:#f3f2e7;
-	border:1px dashed #aca899;
+
+
+
+.ydlg-button-left{
+	width:3px;
+	height:21px;
+	background:url(/img/dialog/btn-sprite.gif) no-repeat 0px 0px;
+}
+
+.ydlg-button-right{
+	width:3px;
+	height:21px;
+	background:url(/img/dialog/btn-sprite.gif) no-repeat 0px -21px;
+}
+
+.ydlg-button-focus{
+	text-decoration:none !important;
+}
+
+.ydlg-button-center{
+	background:url(/img/dialog/btn-sprite.gif) repeat-x 0px -42px;
+	font:normal 11px "san serif",tahoma,verdana,helvetica;
+	vertical-align: middle;
+	text-align:center;
+	padding:0px 5px;
+	cursor:pointer;
+	white-space:nowrap;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+}
+
+.ydlg-button-over .ydlg-button-left{
+	background-position:0px -63px;
+
+}
+
+.ydlg-button-over .ydlg-button-right{
+	background-position:0px -84px;
+}
+
+.ydlg-button-over .ydlg-button-center{
+	background-position:0px -105px;
+}
+
+.ydlg-button-click .ydlg-button-center{
+	background-position:0px -126px;
+}
+
+
+.ydlg-button-disabled{
+	cursor:default;
+}
+
+.ydlg-button-disabled .ydlg-button-center{
+	color:gray;
+	cursor:default;
+}
+.ydlg-draggable .ydlg-hd{
+	cursor:move;
+}
+.ydlg-closable .ydlg-hd{
+	padding-right:22px;
+}
+.ydlg .ydlg-close {
+	position:absolute;
+	top:4px;
+	right:4px;
+	z-index:6;
+	height:15px;
+	width:15px;
+	margin:0px;
+	padding:0px;
+	line-height:1px;
+	font-size:1px;
+	background-repeat:no-repeat;
+	cursor:pointer;
+	visibility:inherit;
+	background-image:url(/img/dialog/close.gif);
+}
+
+.ydlg div.yresizable-handle-east{
+	background-image:url(/img/dialog/e-handle.gif);
+	border:0px;
+	background-position:right;
+}
+
+.ydlg div.yresizable-handle-south{
+	background-image:url(/img/sizer/s-handle-dark.gif);
+	border:0px;
+	height:6px;
+}
+
+.ydlg div.yresizable-handle-west{
+	background-image:url(/img/dialog/e-handle.gif);
+	border:0px;
+	background-position:1px;
+}
+
+.ydlg div.yresizable-handle-north{
+	background-image:url(/img/s.gif);
+	border:0px;
+}
+
+.ydlg div.yresizable-handle-southeast{
+	background-image:url(/img/dialog/se-handle.gif);
+	background-position: bottom right;
+	width:8px;
+	height:8px;
+	border:0px;
+}
+
+#playlists .ygrid-hrow { 
+height: 0px;
+}
+#playlists .ygrid-wrap { 
+top: 0px;
+}
+#playlists .ygrid-wrap-body { 
+top: 0px;
+}
+
+
+.playlist-item {
+background: white;
+	display:block;
+	margin: 1px;
+	padding: 2px;
+	vertical-align: middle;
+	font-size:11px;
+	border:1px solid grey;
+	border-bottom:1px solid #dddddd;
+	color:#222222;
+	cursor:pointer;
+	line-height: 18px;
+	-moz-user-select: none;
+	-khtml-user-select:none;
+}
+
+#songs .ygrid-col-0 {
+}
+#songs .ygrid-col-1 {
+}
+#songs .ygrid-col-2 {
+}
+
+#plGrid 
+{
+	width:100%;
+	height:4000px;
+	position:absolute;
+	overflow:hidden;
+	border: 1px solid #c3daf9;
+	cursor:default;
+}
+
+#playlist-desc
+{
+  margin-left: auto; 
+  margin-right: auto;
+  width: 50em;
+  text-align: center;
+}
+
+
+.ylayout-collapsed-east{
+    background-image:url(/img/messages.gif);
+    background-repeat:no-repeat;
+    background-position:center;
 }

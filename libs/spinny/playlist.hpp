@@ -28,7 +28,7 @@ private:
 
         int bitrate_;
 	string name_;
-
+	string description_;
 public:
 	static ptr
 	load( sqlite::id_t db_id );
@@ -37,13 +37,25 @@ public:
 	all();
 
 	static ptr
-	create( int bitrate, std::string name );
+	create( int bitrate, const std::string &name, const std::string &desc );
 
 	std::string
 	name() const;
 
+	std::string
+	set_name( const std::string& name );
+
+	std::string
+	description() const;
+
+	std::string
+	set_description( const std::string& desc );
+
 	int
 	bitrate() const;
+
+	int
+	set_bitrate( int br );
 
 	Song::result_set
 	songs() const;

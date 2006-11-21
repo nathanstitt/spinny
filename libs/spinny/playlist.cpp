@@ -47,18 +47,20 @@ public:
 		return "play_lists";
 	};
 	virtual int num_fields() const {
-		return 2;
+		return 3;
 	}
 	virtual const char** fields() const {
 		static const char *fields[] = {
 			"bitrate",
 			"name",
+			"description",
 		};
 		return fields;
 	}
 	virtual const char** field_types() const {
 		static const char *field_types[] = {
 			"int",
+			"string",
 			"string",
 		};
 		return field_types;
@@ -82,12 +84,12 @@ PlayList::m_table_description() const {
 
 void
 PlayList::table_insert_values( std::ostream &str ) const {
-	str << bitrate_ << "," << sqlite::q(name_);
+	str << bitrate_ << ',' << sqlite::q(name_) << ',' << sqlite::q(description_);
 }
 
 void
 PlayList::table_update_values( std::ostream &str ) const {
-	str << "bitrate=" << bitrate_ << ",name=" << sqlite::q(name_);
+	str << "bitrate=" << bitrate_ << ",name=" << sqlite::q(name_) << ",description=" << sqlite::q(description_);
 }
 
 
@@ -95,9 +97,10 @@ void
 PlayList::initialize_from_db( const sqlite::reader *reader ) {
 	bitrate_ = reader->get<int>(0);
 	name_	   = reader->get<std::string>(1);
+	description_ = reader->get<std::string>(2);
 }
 
-PlayList::PlayList() : sqlite::table(), bitrate_(0), name_("") {
+PlayList::PlayList() : sqlite::table(), bitrate_(0), name_("") , description_("") {
 
 }
 
@@ -118,9 +121,10 @@ PlayList::all(){
 
 
 PlayList::ptr
-PlayList::create( int bitrate, std::string name ){
+PlayList::create( int bitrate, const std::string &name, const std::string &description ){
 	PlayList::ptr pl( new PlayList );
 	pl->name_=name;
+	pl->description_ = description;
 	pl->bitrate_ = bitrate;
 	return pl;
 }
@@ -131,11 +135,30 @@ PlayList::name() const {
 	return name_;
 }
 
+std::string
+PlayList::set_name(  const std::string& name ){
+	return name_=name;
+}
+
+std::string
+PlayList::description() const {
+	return description_;
+}
+
+std::string
+PlayList::set_description(  const std::string& desc ){
+	return description_=desc;
+}
+
 int
 PlayList::bitrate() const {
 	return bitrate_;
 }
 
+int
+PlayList::set_bitrate( int bitrate ){
+	return bitrate_=bitrate;
+}
 
 Song::result_set
 PlayList::songs() const {

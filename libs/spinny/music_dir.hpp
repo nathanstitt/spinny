@@ -57,16 +57,17 @@ public:
  	bool
  	is_root() const;
 
-	bool save() const;
+	bool
+	save() const;
 
- 	string filesystem_name() const;
+	std::string
+	filesystem_name() const;
 
 	MusicDir::ptr
   	parent() const;
 
 	result_set
 	children() const;
-
 
   	boost::filesystem::path
   	path() const;
