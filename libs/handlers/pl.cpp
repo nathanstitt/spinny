@@ -46,8 +46,8 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 				       << "\nBitrate:     " << req.single_value<int>("bitrate")
 				       << "\nDescription: " << req.single_value<std::string>("description");
 		PlayList::ptr pl =
-			PlayList::create( req.single_value<int>("bitrate"),
-					  0,
+			PlayList::create( 0,
+					  req.single_value<std::string>("name"),
 					  req.single_value<std::string>("description") );
 		
 		if ( ! pl->save() ){
@@ -62,13 +62,21 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 		rep.content << "]}";
 	} else if ( req.u2 == "mod" ){
 		PlayList::ptr pl = PlayList::load( boost::lexical_cast<sqlite::id_t>( req.u3 ) );
-		pl->set_bitrate( 0 )
+		pl->set_bitrate( 0 );
 		pl->set_name( req.single_value<std::string>("name") );
 		pl->set_description( req.single_value<std::string>("description") );
 		pl->save();
 		rep.content << "{Playlists: [";
 		insert( pl, comma, rep );
 		rep.content << "]}";
+	} else if ( req.u2 == "reorder" ) {
+		for ( ews::request::varibles_t::const_iterator var=req.varibles.begin();
+		      req.varibles.end() != var; ++var ){
+			BOOST_LOGL( www,info ) << var->first << " == " << var->second.front();
+			PlayList::set_order(  boost::lexical_cast<sqlite::id_t>(var->first), boost::lexical_cast<int>( var->second.front() ) );
+		}
+
+
 	}
 
 

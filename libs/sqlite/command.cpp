@@ -6,29 +6,44 @@ namespace sqlite {
 #endif
 	command::command(connection *c) : _con(*c), _reader(this) {
 		BOOST_LOG(sql) << " : " <<  _con._cmd.curval();
-		if( sqlite3_prepare( _con.db,_con._cmd.curval().c_str(),_con._cmd.curval().length() , &this->_stmt, 0)!=SQLITE_OK )
-			throw database_error(_con);
+		if( sqlite3_prepare( _con.db,_con._cmd.curval().c_str(),_con._cmd.curval().length() , &this->_stmt, 0)!=SQLITE_OK ){
+			database_error err(_con);
+			BOOST_LOGL(sql, err ) << "Err raised executing " << _con._cmd.curval() << " : " << err.what();
+			_con.clear_cmd();
+			throw err;
+		}
 		_con.clear_cmd();
 	}
 
 	command::command(connection *c, const std::string &sqlstmt) : _con(*c),_reader(this) {
 		BOOST_LOG(sql) <<  sqlstmt;
-		if(sqlite3_prepare(_con.db, sqlstmt.data(), (int)sqlstmt.length(), &this->_stmt, 0)!=SQLITE_OK)
-			throw database_error(_con);
+		if(sqlite3_prepare(_con.db, sqlstmt.data(), (int)sqlstmt.length(), &this->_stmt, 0)!=SQLITE_OK){
+			database_error err(_con);
+			BOOST_LOGL(sql, err ) << "Err raised executing " << sqlstmt << " : " << err.what();
+			throw err;
+		}
+
 	}
 
 
 	command::command(connection &c) : _con(c), _reader(this) {
 		BOOST_LOG(sql) <<  _con._cmd.curval();
-		if( sqlite3_prepare( _con.db,_con._cmd.curval().c_str(),_con._cmd.curval().length() , &this->_stmt, 0)!=SQLITE_OK )
-			throw database_error(_con);
+		if( sqlite3_prepare( _con.db,_con._cmd.curval().c_str(),_con._cmd.curval().length() , &this->_stmt, 0)!=SQLITE_OK ){
+			database_error err(_con);
+			BOOST_LOGL(sql, err ) << "Err raised executing " << _con._cmd.curval() << " : " << err.what();
+			_con.clear_cmd();
+			throw err;
+		}
 		_con.clear_cmd();
 	}
 
 	command::command(connection &c, const std::string &sqlstmt) : _con(c),_reader(this) {
 		BOOST_LOG(sql) <<  sqlstmt;
-		if(sqlite3_prepare(_con.db, sqlstmt.data(), (int)sqlstmt.length(), &this->_stmt, 0)!=SQLITE_OK)
-			throw database_error(_con);
+		if(sqlite3_prepare(_con.db, sqlstmt.data(), (int)sqlstmt.length(), &this->_stmt, 0)!=SQLITE_OK){
+			database_error err(_con);
+			BOOST_LOGL(sql, err ) << "Err raised executing " << _con._cmd.curval() << " : " << err.what();
+			throw err;			
+		}
 	}
 
 

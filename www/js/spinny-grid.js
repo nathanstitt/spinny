@@ -9,7 +9,7 @@ for (var i in arguments )
     // enables dropping rows from this grid on this grid
     // required for row ordering via D&D
     this.selfTarget = true;
-    this.selectAfterDrop = true;
+
 };
 
 YAHOO.extendX(SpinnyGrid, YAHOO.ext.grid.Grid, {
@@ -41,17 +41,17 @@ YAHOO.extendX(SpinnyGrid, YAHOO.ext.grid.Grid, {
             targetDm.addRows(rowData);
             selStart = targetDm.getRowCount()-indexes.length;
         }
-        if(this.selectAfterDrop){
-            var sm = targetGrid.getSelectionModel();
-            sm.unlock();
-            sm.selectRange(selStart, selStart+indexes.length-1);
-            sm.lock();
-        }
-	url="?";
+	var params='';
 	for( var i=0; i<targetDm.getRowCount();++i){
-		url+=targetDm.getRowId(i)+"="+i+"&";
-		YAHOO.log("ROW: " + url );
+		params+=targetDm.getRowId(i)+"="+i+"&";
+		YAHOO.log("ROW: " + params );
 	}
+	var cb = {
+	success: function(o){ YAHOO.log( "RE-Order req success" ); },
+        failure: function(o){ YAHOO.log("RE-Order req success"); }
+	}
+	YAHOO.log( "About to conn to: " + this.reOrderUrl );
+	YAHOO.util.Connect.asyncRequest( 'POST', this.reOrderUrl, cb, params );
     },
     
     getTargetRow : function(e){
@@ -60,7 +60,7 @@ YAHOO.extendX(SpinnyGrid, YAHOO.ext.grid.Grid, {
         var cell = this.getView().getCellAtPoint(xy[0], xy[1]);
         return cell ? Math.max(0, cell[1]) : null;
     },
-    
+
     onRowsDropped : function(grid, dd, id, e){
        if(id == this.id) { // only handle if it's a row order drop
            var indexes = this.getSelectedRowIndexes();

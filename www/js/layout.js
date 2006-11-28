@@ -21,7 +21,7 @@ Layout = function(){
 							titlebar: true,
 							collapsible: true,
 							autoScroll:true,
-							title: '<img style="vertical-align: middle; cursor: pointer;" onClick="Playlists.add();" src="/img/add.gif"> Playlists'
+							title: '<img style="vertical-align: middle; cursor: pointer;" id="playlists-show-btn" onClick="PlaylistsDlg.showDialog();" src="/img/add.gif"> Playlists'
 
 							},
 						center: {
@@ -76,7 +76,9 @@ Layout = function(){
 
 			this.songsGrid = new Songs;
 			this.songsGrid.init('songs');
-			innerLayout.add( 'center', new YAHOO.ext.GridPanel(this.songsGrid.grid) );
+			this.plgp=new YAHOO.ext.GridPanel(this.songsGrid.grid);
+
+			innerLayout.add( 'center', this.plgp );
 
 			this.layout.beginUpdate();
 			this.layout.add('north', new YAHOO.ext.ContentPanel('north', 'North'));

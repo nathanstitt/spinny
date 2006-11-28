@@ -45,7 +45,8 @@ namespace ews {
  			}
  			catch ( const std::exception &e ){
  				BOOST_LOGL( www, err ) << "Handler: " << (*h)->name()
- 							  << " raised: " << e.what();
+						       << " raised: " << e.what();
+				rep.set_to( reply::internal_server_error );
  				return false;
  			}
 
@@ -53,7 +54,7 @@ namespace ews {
 				break;
 			} else if ( error == res ){
  				BOOST_LOGL( www, err ) << "Handler: " << (*h)->name()
- 							  << " returned error.";
+						       << " returned error.";
  				return false;
 			}
  		}

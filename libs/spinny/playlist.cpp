@@ -47,13 +47,14 @@ public:
 		return "play_lists";
 	};
 	virtual int num_fields() const {
-		return 3;
+		return 4;
 	}
 	virtual const char** fields() const {
 		static const char *fields[] = {
 			"bitrate",
 			"name",
 			"description",
+			"present_order",
 		};
 		return fields;
 	}
@@ -62,6 +63,7 @@ public:
 			"int",
 			"string",
 			"string",
+			"int",
 		};
 		return field_types;
 	};
@@ -84,12 +86,13 @@ PlayList::m_table_description() const {
 
 void
 PlayList::table_insert_values( std::ostream &str ) const {
-	str << bitrate_ << ',' << sqlite::q(name_) << ',' << sqlite::q(description_);
+	str << bitrate_ << ',' << sqlite::q(name_) << ',' << sqlite::q(description_) << ',' << present_order_;
 }
 
 void
 PlayList::table_update_values( std::ostream &str ) const {
-	str << "bitrate=" << bitrate_ << ",name=" << sqlite::q(name_) << ",description=" << sqlite::q(description_);
+	str << "bitrate=" << bitrate_ << ",name=" << sqlite::q(name_) 
+	    << ",description=" << sqlite::q(description_) << ",present_order=" << present_order_;
 }
 
 
@@ -98,9 +101,10 @@ PlayList::initialize_from_db( const sqlite::reader *reader ) {
 	bitrate_ = reader->get<int>(0);
 	name_	   = reader->get<std::string>(1);
 	description_ = reader->get<std::string>(2);
+	present_order_ = reader->get<int>(3);
 }
 
-PlayList::PlayList() : sqlite::table(), bitrate_(0), name_("") , description_("") {
+PlayList::PlayList() : sqlite::table(), bitrate_(0), name_("") , description_(""),present_order_(0) {
 
 }
 
@@ -116,7 +120,7 @@ PlayList::load( sqlite::id_t db_id ){
 
 PlayList::result_set
 PlayList::all(){
-	return sqlite::db()->load_all<PlayList>( "upper(name)" );
+	return sqlite::db()->load_all<PlayList>( "present_order,upper(name)" );
 }
 
 
@@ -126,7 +130,17 @@ PlayList::create( int bitrate, const std::string &name, const std::string &descr
 	pl->name_=name;
 	pl->description_ = description;
 	pl->bitrate_ = bitrate;
+	pl->present_order_=sqlite::db()->exec<int>( "select max(present_order)+1 from play_lists" );
 	return pl;
+}
+
+void
+PlayList::set_order( sqlite::id_t db_id, int order ){
+	sqlite::connection *con = sqlite::db();
+	*con << "update "
+	     << PlayList::table_description()->table_name()
+	     << " set present_order = " << order << " where rowid = " << db_id;
+	con->exec<sqlite::none>();
 }
 
 
@@ -158,6 +172,16 @@ PlayList::bitrate() const {
 int
 PlayList::set_bitrate( int bitrate ){
 	return bitrate_=bitrate;
+}
+
+int
+PlayList::present_order() const {
+	return present_order_;
+}
+
+int
+PlayList::set_present_order( int present_order ){
+	return present_order_=present_order;
 }
 
 Song::result_set

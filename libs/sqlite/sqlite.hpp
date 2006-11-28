@@ -536,8 +536,7 @@ namespace sqlite {
 	template<class T1> inline
 	T1 connection::exec(){
 		this->validate_db();
-		command c( *this, _cmd.curval() );
-		this->clear_cmd();
+		command c( *this );
 		return c.exec<T1>();
 	}
 

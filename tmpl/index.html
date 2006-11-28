@@ -25,6 +25,8 @@
     <link rel="stylesheet" type="text/css" href="/css/reset-min.css">
     <link rel="stylesheet" type="text/css" href="/css/tabs.css"/>
     <link rel="stylesheet" type="text/css" href="/css/tree.css">
+    <link rel="stylesheet" type="text/css" href="/css/resizable.css">
+    <link rel="stylesheet" type="text/css" href="/css/dialog.css"/>
     <link rel="stylesheet" type="text/css" href="/css/layout.css"/>
     <script type="text/javascript">
 
@@ -54,59 +56,58 @@
     </script>
   </head>
   <body>
-      <div id="west" class="ylayout-inactive-content">
-	Hi. I'm the west panel.
-      </div>
+    <div id="west" class="ylayout-inactive-content">
+      Hi. I'm the west panel.
+    </div>
 
-      <div id="north" class="ylayout-inactive-content">
-	<div id="playlist-desc"><div>
-      </div>
+    <div id="north" class="ylayout-inactive-content">
+      <div id="playlist-desc"></div>
+    </div>
 
-      <div id="playlists" style="width:200px;height:200px;overflow:hidden;"  class="ygrid-mso"></div>
+    <div id="playlists" style="width:200px;height:200px;overflow:hidden;"  class="ygrid-mso"></div>
 
-      <div id="west-content" class="ylayout-inactive-content"></div>
+    <div id="west-content" class="ylayout-inactive-content"></div>
 
-      <div id="center-content" class="ylayout-inactive-content"></div>
-      <div id="center1" class="ylayout-inactive-content">
-        <p>Info Panel #1</p>
-      </div>
-      <div id="center2" class="ylayout-inactive-content">
-        <p><a href="#" onclick="Layout.toggleWest(this);return false;">Show West Region</a></p>
-<input type="button" id="show-dialog-btn" value="Hello World" />
-        Info Panel #2
-      </div>
-      <div id="albumsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
-      <div id="artistsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
-      <div id="dirsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
-      <div id="searchSongs" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
+    <div id="center-content" class="ylayout-inactive-content"></div>
+    <div id="center1" class="ylayout-inactive-content">
+      <p>Info Panel #1</p>
+    </div>
+    <div id="center2" class="ylayout-inactive-content">
+      <p><a href="#" onclick="Layout.toggleWest(this);return false;">Show West Region</a></p>
+      <input type="button" id="show-dialog-btn" value="Hello World" />
+      Info Panel #2
+    </div>
 
-      <div id="songs" class="ygrid-mso" style="width:800px;height:800px;overflow:hidden;"></div>
+    <div id="albumsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
+    <div id="artistsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
+    <div id="dirsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
+    <div id="searchSongs" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
 
-      <div id="console" class="ylayout-inactive-content">
-	message console - generally for informational stuff as it occurs on the server
-      </div>
+    <div id="songs" class="ygrid-mso" style="width:800px;height:800px;overflow:hidden;"></div>
+
+    <div id="console" class="ylayout-inactive-content">
+      message console - generally for informational stuff as it occurs on the server
+    </div>
     <script type="text/javascript">
       var myLogReader = new YAHOO.widget.LogReader("console"); 
     </script>
-    </div>
 
-    <div id="playlist-edit-dlg" style="visibility:hidden;">
+    <div id="playlists-dlg" style="visibility:hidden;">
       <div class="ydlg-hd">Playlists</div>
 
       <div class="ydlg-bd">
 	<div id="edit-tab" class="ydlg-tab" title="Create Playlist">
 	  <div class="inner-tab">
-            <form action="" method="post" id="playlist-form" onsubmit="return false;">
+            <form action="" method="post" id="playlist-dlg-form" onsubmit="return false;">
               <input id="postId" type="hidden" name="postId" value="1" />
               <p>
 		<label for="name">Name</label>
-		<input class="textinput" type="text" name="name" id="name" value="" size="22" tabindex="1" />
+		<input class="textinput" type="text" name="name" id="playlist-dlg-name" value="" size="22" tabindex="1" />
 	      </p>
-	      <p>
-              </p>
+
               <p>
 		<label for="description">Description</label>
-		<textarea name="description" id="description" tabindex="4" cols="40" rows="10"></textarea>
+		<textarea name="description" id="playlist-dlg-desc" tabindex="4" cols="40" rows="10"></textarea>
               </p>
             </form>
 	  </div>
@@ -114,11 +115,13 @@
       </div>
       <div class="ydlg-ft">
 	<div id="dlg-msg">
-	  <span id="post-error" class="posting-msg"><img src="/img/dialog/warning.gif" alt="Warning" width="16" height="16" />&nbsp;<span id="post-error-msg"></span></span>
-	  <span id="post-wait" class="posting-msg"><img src="/img/dialog/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
+	  <span id="dlg-save-error" class="posting-msg"><img src="/img/dialog/warning.gif" alt="Warning" width="16" height="16" />&nbsp;<span id="post-error-msg"></span></span>
+	  <span id="dlg-save-wait" class="posting-msg"><img src="/img/dialog/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
+	  <span id="dlg-error-msg"></span>
 	</div>
       </div>
+    </div>
 
-</body>
+  </body>
 </html>
 
