@@ -4,7 +4,7 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include "spinny/spinny.hpp"
-#include "handlers/instantiate.hpp"
+#include "handlers/shared.hpp"
 
 #if defined(_WIN32)
 
