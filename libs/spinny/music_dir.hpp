@@ -5,7 +5,6 @@
 #define _MUSIC_DIR_H 1
 
 #include "spinny/spinny.hpp"
-
 #include "boost/filesystem/path.hpp"
 #include <vector>
 

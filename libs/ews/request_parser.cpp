@@ -345,6 +345,10 @@ namespace ews {
 		bool rv = ( parse_form_elements( req.varibles,  req.uri ) && 
 			    parse_form_elements( req.varibles,  req.body ) );
 
+		std::string cookies = req.get_header<std::string>( "COOKIE" );
+		if ( ! cookies.empty() ){
+			parse_form_elements( req.varibles, cookies );
+		}
 		std::vector< std::string > elements;
 		boost::split( elements, req.url, boost::is_any_of("/"), boost::token_compress_on );
 		req.num_url_elements=(char)elements.size()-1;

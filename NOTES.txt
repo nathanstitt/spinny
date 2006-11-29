@@ -1,3 +1,11 @@
 
 
-class  dir
+Methods of authen:
+
+  Guest, with optional username, defaults to Guest
+
+  Authenticated, w/user & pass
+
+
+
+First show screen asking for Username / Pass , with message saying pass is optional if not set to require

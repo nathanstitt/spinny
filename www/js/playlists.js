@@ -112,7 +112,7 @@ Playlists.prototype.init = function( el ){
 	YAHOO.log("PLaylists Grid id: " + this.grid.id);
 	this.grid.autoSize = function(){
 		SpinnyGrid.superclass.autoSize.call(this);
-		this.colModel.setColumnWidth(1, this.getView().wrap.clientWidth - this.colModel.getColumnWidth(0));
+		this.colModel.setColumnWidth(1, this.getView().wrap.clientWidth - 30 );
 	};
 
 	this.grid.enableDragDrop = true;

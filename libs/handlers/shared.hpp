@@ -10,13 +10,9 @@
 #include "ews/server.hpp"
 
 
-
-
 namespace handlers {
 	
 	void link_up();
-
-
 
 	enum JsonReqType {
 		JsonDir		     = 'a',

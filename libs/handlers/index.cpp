@@ -5,6 +5,7 @@
 #include "spinny/artist.hpp"
 #include "boost/lambda/lambda.hpp"
 #include "boost/lambda/bind.hpp"
+#include "boost/nondet_random.hpp"
 #include "handlers/shared.hpp"
 #include <algorithm>
 
@@ -116,6 +117,19 @@ hdf_insert_artists( ews::reply &rep ){
 	rep.content << "}\n";
 }
 
+
+std::string
+make_ticket(){
+
+	std::string ticket;
+	boost::random_device dev;
+	for ( int i=0; i<10; ++i ){
+		BOOST_LOGL( www,info ) << "RAND " << i << " : " << dev();
+		ticket+="a";
+	}
+	return ticket;
+}
+
 ews::request_handler::result
 Index::handle( const ews::request& req, ews::reply& rep ) const {
 	BOOST_LOGL( www, debug ) << name() << " examine " << req.url;
@@ -124,22 +138,38 @@ Index::handle( const ews::request& req, ews::reply& rep ) const {
 		return cont;
 	}
 
-	rep.set_template( "index.html" );
+	for( ews::request::headers_t::const_iterator header = req.headers.begin(); header != req.headers.end(); ++header ){
+		BOOST_LOGL( www,info ) << "\t" << header->first << " => " << header->second;
+	}
 
-	hdf_insert_dirs( rep );
-	hdf_insert_albums( rep );
-	hdf_insert_artists( rep );
-
-	rep.set_hdf_value( "NumArtists", Artist::count() );
-	rep.set_hdf_value( "NumAlbums", Album::count() );
-	rep.set_hdf_value( "NumSongs", Song::count() );
-
+	std::string ticket = req.single_value<std::string>( "Ticket" );
 
 	rep.add_header( "X-HANDLED-BY", name() );
 	rep.set_basic_headers( "html" );
 	
+	if ( ticket.empty() ){
+		ticket = "Ticket=";
+		ticket += make_ticket();
+		ticket += ";";
+		rep.add_header( "Set-Cookie",ticket );
+		rep.set_template( "welcome.html" );
+		return stop;
+	} else {
+		hdf_insert_dirs( rep );
+		hdf_insert_albums( rep );
+		hdf_insert_artists( rep );
+
+		rep.set_hdf_value( "NumArtists", Artist::count() );
+		rep.set_hdf_value( "NumAlbums", Album::count() );
+		rep.set_hdf_value( "NumSongs", Song::count() );
+	}
+
+
+
 	return stop;
 }
+
+
 std::string
 Index::name() const { return "Index"; }
 
