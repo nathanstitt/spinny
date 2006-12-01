@@ -1,5 +1,4 @@
 #include "request_handler.hpp"
-#include "files_request_handler.hpp"
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -15,8 +14,6 @@ namespace ews {
 
 
 	typedef std::list<request_handler*> handlers_t;
-
-	static files_request_handler files_handler_;
 
 	handlers_t**
 	register_new_handler( request_handler *handler, request_handler::RequestPhase phase ){
