@@ -11,7 +11,7 @@ class User : public sqlite::table {
 public:
 	enum Role_t {
 		GuestRole,
-		UserRole,
+		TrustedRole,
 		AdminRole
 	};
 private:
@@ -25,8 +25,9 @@ private:
  	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
-	
 	Role_t role_;
+	std::string password_;
+	
 public:
 	typedef boost::shared_ptr<User> ptr;
 
@@ -34,15 +35,23 @@ public:
 	static ptr create( const std::string &login, const std::string &password );
 
 	std::string login;
-	std::string password;
 	std::string ticket;
 	boost::posix_time::ptime last_visit;
 
 	bool
-	is_admin();
+	is_guest() const;
 
 	bool
-	is_guest();
+	is_trusted() const;
+
+	bool
+	is_admin() const;
+
+	Role_t
+	set_role( Role_t role );
+
+	std::string
+	set_password( const std::string &pass );
 
 	bool
 	authen( const std::string &password );

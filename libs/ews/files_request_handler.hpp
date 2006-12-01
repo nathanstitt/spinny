@@ -15,11 +15,13 @@ class files_request_handler
 	: public request_handler
 {
 public:
+
+
 	/// Construct with a directory containing files to be served.
 	explicit files_request_handler();
 
 	/// Handle a request and produce a reply.
-	virtual request_handler::result
+	virtual request_handler::RequestStatus
 	handle(const request& req, reply& rep ) const;
 
 	virtual std::string name() const;

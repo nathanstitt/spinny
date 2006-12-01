@@ -18,23 +18,33 @@ class request_handler
 public:
 	static bool handle_request( const request& req, reply &rep );
 
-	/// Construct with a directory containing files to be served.
-	explicit request_handler( bool should_register=true );
-
-	enum result {
-		cont,    // All ok, continue passing the request to other handlers
-		stop,    // All ok, but don't continue passing the request to other handlers
-		error,   // Error occured, stop processing & set status to 500
-		file,    // Handle request with the filesystem handler
+	enum RequestStatus {
+		Continue,    // All ok, continue passing the request to other handlers
+		Stop,    // All ok, but don't continue passing the request to other handlers
+	};
+	enum RequestPhase {
+		Beginning,
+		Middle,
+		End,
+		Last
 	};
 
-	/// Handle a request and produce a reply.
-	virtual result handle( const request &req, reply &rep ) const = 0;
+	/// Construct with a directory containing files to be served.
+	explicit request_handler( const char *name, RequestPhase phase );
 
-	virtual std::string name() const = 0;
+
+	/// Handle a request and produce a reply.
+	virtual RequestStatus handle( const request &req, reply &rep ) const = 0;
+
+	const char* name() const;
+	RequestPhase phase() const;
 
 	virtual ~request_handler();
+private:
+	const char *name_;
+	RequestPhase phase_;
 };
+
 
 
 } // namespace ews

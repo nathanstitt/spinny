@@ -1,22 +1,21 @@
-/* @(#)index.hpp
+/* @(#)login.hpp
  */
 
-#ifndef _HANDLERS_INDEX_H
-#define _HANDLERS_INDEX_H 1
+#ifndef _HANDLERS_LOGIN_H
+#define _HANDLERS_LOGIN_H 1
 
-#include "ews/server.hpp"
-#include "ews/request_handler.hpp"
-
+#include "handlers/shared.hpp"
 
 namespace handlers {
 
-	class Index
+	class Login
 		: public ews::request_handler {
 	public:
-		Index();
+		Login();
 
 		virtual request_handler::RequestStatus
 		handle( const ews::request& req, ews::reply& rep ) const;
+		std::string name() const;
 	
 	};
 
@@ -24,5 +23,5 @@ namespace handlers {
 
 
 
-#endif /* _HANDLERS_INDEX_H */
+#endif /* _HANDLERS_LOGIN_H */
 

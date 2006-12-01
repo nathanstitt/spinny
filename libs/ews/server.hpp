@@ -5,11 +5,12 @@
 #include <string>
 #include <map>
 #include <boost/noncopyable.hpp>
-#include "connection.hpp"
-#include "connection_manager.hpp"
+#include "ews/connection.hpp"
+#include "ews/exceptions.hpp"
+#include "ews/connection_manager.hpp"
+#include "ews/mime_types.hpp"
 #include "ews/request_handler.hpp"
 #include <boost/log/log.hpp>
-#include "ews/mime_types.hpp"
 
 BOOST_DECLARE_LOG(www);
 

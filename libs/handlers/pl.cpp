@@ -16,12 +16,14 @@ insert( PlayList::ptr pl,sqlite::commas &comma, ews::reply &rep ){
 		    << ",\"description\":\"" <<  boost::replace_all_copy( pl->description(), "\"", "\\\"") << "\"}";
 }
 
-ews::request_handler::result
+PL::PL() : ews::request_handler( "Playlists", Middle ) {}
+
+ews::request_handler::RequestStatus
 PL::handle( const ews::request& req, ews::reply& rep ) const {
 //	BOOST_LOGL( www, info ) << name() << " examine " << req.url << " req.u1: " << req.u1;
 
  	if ( req.u1 != "pl"){
-		return cont;
+		return Continue;
 	}
 
 	sqlite::commas comma;
@@ -55,7 +57,7 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 				       << "\nName:        " << req.single_value<std::string>("name")
 				       << "\nBitrate:     " << req.single_value<int>("bitrate")
 				       << "\nDescription: " << req.single_value<std::string>("description");
-			return error;
+			throw ews::error("Failed to create playlist");
 		}
 		rep.content << "{Playlists: [";
 		insert( pl, comma, rep );
@@ -81,13 +83,11 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 
 
 
-	rep.add_header( "X-HANDLED-BY", name() );
+	rep.set_header( "X-HANDLED-BY", name() );
 	rep.set_basic_headers( "json" );
 
-	return stop;
+	return Stop;
 }
-std::string
-PL::name() const { return "PlayList"; }
 
 
 

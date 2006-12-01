@@ -72,8 +72,9 @@ namespace sqlite {
 		} else {
 			res=sqlite3_bind_blob(this->_stmt, index, data, datalen, SQLITE_TRANSIENT);
 		}
-		if (res!=SQLITE_OK)
+		if (res!=SQLITE_OK){
 			throw database_error(this->_con);
+		}
 	}
 
 	command::reader_iterator

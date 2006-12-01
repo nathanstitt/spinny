@@ -8,6 +8,7 @@
 #include <sstream>
 #include "boost/filesystem/path.hpp"
 #include "cs/cs.h"
+#include "spinny/user.hpp"
 
 namespace ews {
 
@@ -42,6 +43,8 @@ namespace ews {
 		bool parse_template();
 	public:
 		const char *tmpl_results_;
+
+		User::ptr user;
 
 		/// The content to be sent in the reply.
 		stream content;
@@ -89,8 +92,9 @@ namespace ews {
 
 		bool set_basic_headers( const std::string &file_ext );
 
-		bool add_header( const std::string &name, const std::string& value );
+		bool set_header( const std::string &name, const std::string& value );
 
+		void clear_contents();
 	};
 
 

@@ -348,7 +348,12 @@ namespace ews {
 		std::string cookies = req.get_header<std::string>( "COOKIE" );
 		if ( ! cookies.empty() ){
 			parse_form_elements( req.varibles, cookies );
+			std::string ticket = req.single_value<std::string>("Ticket");
+			if ( ! ticket.empty() ){
+				req.user = User::with_ticket( ticket );
+			}
 		}
+
 		std::vector< std::string > elements;
 		boost::split( elements, req.url, boost::is_any_of("/"), boost::token_compress_on );
 		req.num_url_elements=(char)elements.size()-1;

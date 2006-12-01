@@ -127,12 +127,16 @@ struct EnableLogging {
 	EnableLogging( const std::string logs="*" ){
 		boost::logging::manipulate_logs(logs)
  			.del_modifier("time")
+			.enable( boost::logging::level::debug )
  			.del_modifier("prefix")
  			.del_modifier("enter")
 			.add_appender(&boost::logging::write_to_cout)    // all messages are written to cout
 			.add_modifier(&boost::logging::prepend_prefix,"prefix" )
 			.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" )
 			.add_modifier(&boost::logging::append_enter,"enter");
+
+		boost::logging::flush_log_cache();
+
 	}
 };
 

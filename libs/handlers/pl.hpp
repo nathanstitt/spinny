@@ -1,8 +1,8 @@
 /* @(#)pl.hpp
  */
 
-#ifndef _PL_H
-#define _PL_H 1
+#ifndef _HANDLERS_PL_H
+#define _HANDLERS_PL_H 1
 
 
 #include "handlers/shared.hpp"
@@ -12,10 +12,11 @@ namespace handlers {
 	class PL
 		: public ews::request_handler {
 	public:
+		PL();
 
-		virtual request_handler::result
+		virtual request_handler::RequestStatus
 		handle( const ews::request& req, ews::reply& rep ) const;
-		std::string name() const;
+
 	
 	};
 
@@ -23,5 +24,5 @@ namespace handlers {
 
 
 
-#endif /* _PL_H */
+#endif /* _HANDLERS_PL_H */
 

@@ -9,16 +9,61 @@
 #include <algorithm>
 
 SUITE(EwsHandlers) {
-	
+
+
+struct H_Begin : public ews::request_handler {
+	H_Begin() : ews::request_handler( "H_Begin", Beginning ){};
+	/// Handle a request and produce a reply.
+	virtual request_handler::RequestStatus
+	handle( const ews::request& req, ews::reply& rep ) const {
+		if ( ! boost::starts_with( req.url,"/order" ) ){
+			return Continue;
+		}
+		rep.content << name();
+		return Continue;
+	}
+};
+static H_Begin hb;
+
+struct H_Middle : public ews::request_handler {
+	H_Middle() : ews::request_handler( "H_Middle", Middle ){};
+	/// Handle a request and produce a reply.
+	virtual request_handler::RequestStatus
+	handle( const ews::request& req, ews::reply& rep ) const {
+		if ( ! boost::starts_with( req.url,"/order" ) ){
+			return Continue;
+		}
+		rep.content << name();
+		return Continue;
+	}
+};
+static H_Middle hm;
+
+struct H_End : public ews::request_handler {
+	H_End() : ews::request_handler( "H_End",End ){};
+	/// Handle a request and produce a reply.
+	virtual request_handler::RequestStatus
+	handle( const ews::request& req, ews::reply& rep ) const {
+		if ( ! boost::starts_with( req.url,"/order" ) ){
+			return Continue;
+		}
+		rep.content << name();
+		rep.set_basic_headers("txt");
+		return Stop;
+	}
+};
+static H_End he;	
 
 class CustomHandler
 	: public ews::request_handler
 {
+public:
+	CustomHandler() : ews::request_handler( "CustomHandler", Middle ){};
 	/// Handle a request and produce a reply.
-	virtual request_handler::result
+	virtual request_handler::RequestStatus
 	handle( const ews::request& req, ews::reply& rep ) const {
 		if ( ! boost::starts_with( req.url,"/test" ) ){
-			return cont;
+			return Continue;
 		}
 		rep.status=ews::reply::ok;
 		for ( ews::request::varibles_t::const_iterator vars = req.varibles.begin(); req.varibles.end() != vars; ++vars ){
@@ -30,22 +75,29 @@ class CustomHandler
 			}
 		}
 
-		rep.add_header( "X-HANDLED-BY", "CustomHandler" );
+		rep.set_header( "X-HANDLED-BY", "CustomHandler" );
 		rep.set_basic_headers( "txt" );
 
-		return stop;
+		return Stop;
 	}
-	std::string name() const { return "CustomHandler"; }
-
-
 };
 
 
 static CustomHandler ca;
 
+TEST( Ordering ){
+	DummyApp da;
+//	EnableLogging el;
+	EWSTestClient ews;
+	EWSTestClient::Page page = ews.get( "/order" );
+	CHECK_EQUAL( 200, page.status );	
+	CHECK_EQUAL( "H_BeginH_MiddleH_End", page.body );
+
+}
+
 TEST( Status ){
 	DummyApp da;
-	EnableLogging el;
+//	EnableLogging el("www");
 	EWSTestClient ews;
 	CHECK_EQUAL( 404, ews.get( "/non/existant/url" ).status );
 	CHECK_EQUAL( 200, ews.get( "/testurl/" ).status );

@@ -88,16 +88,16 @@ insert_songs( ews::reply &rep, Song::result_set rs,sqlite::commas &comma ){
 // 	}}
 
 
+Tree::Tree() : ews::request_handler( "Tree", Middle ) {}
 
-
-ews::request_handler::result
+ews::request_handler::RequestStatus
 Tree::handle( const ews::request& req, ews::reply& rep ) const { 
 //	BOOST_LOGL( www, info ) << "Index T: " << req.url;
 
 	if ( req.u1 != "tree" ) {
-		return cont;
+		return Continue;
 	} else if ( req.u2.empty() || req.u3.empty() ){
-		return ews::request_handler::error;
+		throw ews::error("Wasn't given any additional params for request");
 	}
 
 	rep.content << "[";
@@ -159,16 +159,14 @@ Tree::handle( const ews::request& req, ews::reply& rep ) const {
 
 	default:
 		BOOST_LOGL( www, err ) << "Tree Ajax handler recieved unknown request code: " << req.u2;
-		return ews::request_handler::error;
+		throw ews::error( "Unknown code recieved" );
 	}
 
 	rep.content << "\n]";
-	rep.add_header( "X-HANDLED-BY", "TreeHandler" );
+	rep.set_header( "X-HANDLED-BY", "TreeHandler" );
 	rep.set_basic_headers( "json" );
 
-	return stop;
+	return Stop;
 }
-std::string
-Tree::name() const { return "Tree"; }
 
 

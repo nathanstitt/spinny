@@ -13,10 +13,10 @@ namespace handlers {
 	class Tree
 		: public ews::request_handler {
 	public:
+		Tree();
 
-		virtual request_handler::result
+		virtual request_handler::RequestStatus
 		handle( const ews::request& req, ews::reply& rep ) const;
-		std::string name() const;
 	};
 
 } // handlers

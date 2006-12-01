@@ -245,7 +245,7 @@ namespace ews {
 			nerr_log_error(cs_res);
 		}
 		if ( STATUS_OK == cs_res ){
-			content.str("");
+			clear_contents();
 			cs_res = cs_render( cs_parse_, this, cs_renderer );
 		}
 		if ( STATUS_OK != cs_res ){
@@ -360,17 +360,21 @@ namespace ews {
 		content.str( stock_replies::to_string(stat) );
 	}
 
+	void
+	reply::clear_contents(){
+		content.str("");
+	}
 
 	bool
 	reply::set_basic_headers( const std::string &ext ) {
 		this->status=ok;
-		add_header( "Content-Type", ews::mime_types::extension_to_type( ext ) );
-		add_header("Content-Length", boost::lexical_cast<std::string>( content.str().size() ) );
+		set_header( "Content-Type", ews::mime_types::extension_to_type( ext ) );
+		set_header("Content-Length", boost::lexical_cast<std::string>( content.str().size() ) );
 		return true;
 	}
 
 	bool
-	reply::add_header( const std::string &name, const std::string &value ) {
+	reply::set_header( const std::string &name, const std::string &value ) {
 		headers.insert( headers_t::value_type( name,value) );
 		return true;
 	}

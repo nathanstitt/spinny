@@ -130,12 +130,14 @@ make_ticket(){
 	return ticket;
 }
 
-ews::request_handler::result
+Index::Index() : ews::request_handler( "Index", Middle ) {}
+
+ews::request_handler::RequestStatus
 Index::handle( const ews::request& req, ews::reply& rep ) const {
 	BOOST_LOGL( www, debug ) << name() << " examine " << req.url;
 
 	if ( ! req.u1.empty() ){
-		return cont;
+		return Continue;
 	}
 
 	for( ews::request::headers_t::const_iterator header = req.headers.begin(); header != req.headers.end(); ++header ){
@@ -144,16 +146,12 @@ Index::handle( const ews::request& req, ews::reply& rep ) const {
 
 	std::string ticket = req.single_value<std::string>( "Ticket" );
 
-	rep.add_header( "X-HANDLED-BY", name() );
+	rep.set_header( "X-HANDLED-BY", name() );
 	rep.set_basic_headers( "html" );
 	
-	if ( ticket.empty() ){
-		ticket = "Ticket=";
-		ticket += make_ticket();
-		ticket += ";";
-		rep.add_header( "Set-Cookie",ticket );
+	if ( ! req.user ){
 		rep.set_template( "welcome.html" );
-		return stop;
+		return Stop;
 	} else {
 		hdf_insert_dirs( rep );
 		hdf_insert_albums( rep );
@@ -166,11 +164,8 @@ Index::handle( const ews::request& req, ews::reply& rep ) const {
 
 
 
-	return stop;
+	return Stop;
 }
 
-
-std::string
-Index::name() const { return "Index"; }
 
 

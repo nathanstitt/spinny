@@ -11,7 +11,7 @@
 
 
 
-class md_desc : public sqlite::table::description {
+class user_desc : public sqlite::table::description {
 public:
 	virtual const char* table_name() const {
 		return "users";
@@ -41,7 +41,7 @@ public:
 	};
 };
 
-static md_desc table_desc;
+static user_desc table_desc;
 
 User::User() : role_(GuestRole)
 { }
@@ -60,14 +60,14 @@ User::m_table_description() const {
 
 void
 User::table_insert_values( std::ostream &str ) const {
-	str << sqlite::q(login) << ',' << sqlite::q(password) << sqlite::q(ticket)
-	    <<  ',' << boost::posix_time::to_iso_string( last_visit ) << ',' << role_;
+	str << sqlite::q(login) << ',' << sqlite::q(password_) << ',' << sqlite::q(ticket)
+	    <<  ',' << sqlite::q( boost::posix_time::to_iso_string( last_visit ) ) << ',' << role_;
 }
 
 void
 User::table_update_values( std::ostream &str ) const {
-	str << "login=" << sqlite::q(login) << ",password=" << sqlite::q(password) 
-	    << ",ticket=" << sqlite::q(ticket) << ",last_visit=" << boost::posix_time::to_iso_string( last_visit )
+	str << "login=" << sqlite::q(login) << ",password=" << sqlite::q(password_) 
+	    << ",ticket=" << sqlite::q(ticket) << ",last_visit=" << sqlite::q( boost::posix_time::to_iso_string( last_visit ) )
 	    << ",role=" << role_;
 }
 
@@ -75,7 +75,7 @@ User::table_update_values( std::ostream &str ) const {
 void
 User::initialize_from_db( const sqlite::reader *reader ) {
 	login	   = reader->get<std::string>(0);
-	password   = reader->get<std::string>(1);
+	password_   = reader->get<std::string>(1);
 	ticket	   = reader->get<std::string>(2);
 	last_visit = boost::posix_time::from_iso_string( reader->get<std::string>(3) );
 	role_	   = static_cast<Role_t>( reader->get<int>(4) );
@@ -92,7 +92,7 @@ User::ptr
 User::create( const std::string &login, const std::string &password ){
 	User::ptr user( new User );
 	user->login = login;
-	user->password = password;
+	user->password_ = password;
 	user->generate_new_ticket();
 	user->last_visit = boost::posix_time::second_clock::local_time();
 	return user;
@@ -101,18 +101,33 @@ User::create( const std::string &login, const std::string &password ){
 
 
 bool
-User::is_admin(){
+User::is_admin() const {
 	return AdminRole == role_;
 }
 
 bool
-User::is_guest(){
+User::is_guest() const {
 	return GuestRole == role_;
 }
 
 bool
+User::is_trusted() const {
+	return TrustedRole == role_;
+}
+
+User::Role_t
+User::set_role( Role_t role ){
+	return role_=role;
+}
+
+std::string
+User::set_password( const std::string &pass ){
+	return password_=pass;
+}
+
+bool
 User::authen( const std::string &pass ){
-	if ( pass == password ){
+	if ( pass == password_ ){
 		this->generate_new_ticket();
 		return true;
 	} else {

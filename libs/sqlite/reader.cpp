@@ -6,7 +6,15 @@ namespace sqlite {
 	void
 	reader::validate( int index ) const {
 		if(!this->_cmd) throw database_error("reader is closed");
-		if((index)>(this->_cmd->num_columns()-1)) throw std::out_of_range("index out of range");
+		if((index)>(this->_cmd->num_columns()-1)){
+			std::string msg;
+			msg="have ";
+			msg += boost::lexical_cast<std::string>( this->_cmd->num_columns()-1 );
+			msg += " columns, but ";
+			msg += boost::lexical_cast<std::string>( index );
+			msg += " was requested";
+			throw std::out_of_range( msg );
+		}
 	}
 
 	reader::reader() : _cmd(NULL) {}

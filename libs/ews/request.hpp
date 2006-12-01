@@ -9,6 +9,7 @@
 #include "boost/algorithm/string/find.hpp"
 #include "ews/request_parser.hpp"
 #include "ews/header.hpp"
+#include "spinny/user.hpp"
 #include "cs/cs.h"
 
 namespace ews {
@@ -23,6 +24,8 @@ namespace ews {
 		void clear_current_header();
 	public:
 		request( const connection *conn );
+
+		User::ptr user;
 
 		const connection *conn;
 

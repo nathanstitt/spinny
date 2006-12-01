@@ -16,13 +16,13 @@ namespace ews {
 
 
 	files_request_handler::files_request_handler()
-		: request_handler( false )
+		: request_handler( "Filesystem", Last )
 	{
 
 	}
 
 
-	request_handler::result
+	request_handler::RequestStatus
 	files_request_handler::handle( const request& req, reply& rep ) const {
 		std::string request_path=req.url;
 
@@ -39,8 +39,7 @@ namespace ews {
 		{
 			BOOST_LOGL( www, err ) << "Requested file had .. in the path: "
 						  << request_path;
-			rep.set_to( reply::bad_request );
-			return stop;
+			throw ews::error("Illegal (for us) character seq .. in request");
 		}
 
 		// If path ends in slash (i.e. is a directory) then add "index.html".
@@ -66,14 +65,12 @@ namespace ews {
 						  << e.what() 
 						  << " req file was: "
 						  << ( req.conn->doc_root / request_path).string();
-			rep.set_to( reply::not_found );
-			return stop;
+			throw ews::not_found_error( "File not found" );
 		}
 		if (!is) {
-			rep.set_to( reply::not_found );
 			BOOST_LOGL( www, debug ) << "File not opened successfully: " 
 						  << (req.conn->doc_root / request_path).string();
-			return stop;
+			throw ews::not_found_error( (req.conn->doc_root / request_path).string().c_str() );
 		}
 
 		// Fill out the reply to be sent to the client.
@@ -86,7 +83,7 @@ namespace ews {
 		BOOST_LOGL( www, debug  ) << "EXT: " << extension;
 		rep.set_basic_headers( extension );
 
-		return stop;
+		return Stop;
 	}
 
 	files_request_handler::~files_request_handler(){}

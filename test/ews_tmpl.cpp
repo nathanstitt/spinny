@@ -11,12 +11,16 @@ SUITE(EwsTmpl) {
 
 class TmplTestHandler
 	: public ews::request_handler {
+
+public:
+	TmplTestHandler() : ews::request_handler( "TmplTestHandler", Middle ){}
+
 	/// Handle a request and produce a reply.
-	virtual request_handler::result
+	virtual request_handler::RequestStatus
 	handle( const ews::request& req, ews::reply& rep ) const {
 
 		if ( ! boost::starts_with( req.url,"/tmpl/" ) ){
-			return cont;
+			return Continue;
 		}
 
 		boost::filesystem::ifstream is( template_path / "test.hdf" );
@@ -34,11 +38,10 @@ class TmplTestHandler
 		
 
 		rep.status=ews::reply::ok;
-		rep.add_header( "X-HANDLED-BY", "TmplTestHandler" );
+		rep.set_header( "X-HANDLED-BY", "TmplTestHandler" );
 		rep.set_basic_headers( "txt" );
-		return stop;
+		return Stop;
 	}
-	std::string name() const { return "CustomHandler"; }
 
 
 };

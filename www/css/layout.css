@@ -654,6 +654,7 @@ like above - #container-id .ygrid-col-0 and they must each be a separate rule
 
 
       body {font:normal 9pt verdana; margin:0;padding:0;border:0px none;overflow:hidden;}
+
 	.ylayout-panel-north {
 	    border:0px none;
 	    background-color:#c3daf9;
