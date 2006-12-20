@@ -19,6 +19,13 @@ namespace ews {
 		not_found_error( const char *msg );
 	};
 
+	class forbidden_error : public error {
+	public:
+		forbidden_error( const char *msg );
+	};
+
+
+
 } // ews namespace
 
 

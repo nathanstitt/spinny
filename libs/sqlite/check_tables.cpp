@@ -34,10 +34,8 @@ sqlite::check_and_create_tables(){
 		*con << "SELECT 1 FROM sqlite_master WHERE type='table' and name='"
 		    << (*table)->table_name()
 		    << "'";
-
-
-		int res= con->exec<int>();
-
+		int res = con->exec<int>();
+		BOOST_LOGL( sql,info ) << "Checking " << (*table)->table_name() ;
 		if ( ! res ){
 			const char **fields=(*table)->fields();
 			const char **field_types=(*table)->field_types();
@@ -53,6 +51,7 @@ sqlite::check_and_create_tables(){
 
 			con->exec<none>();
 		}
+		(*table)->checked_callback( (!res) );
 		BOOST_LOGL(sql,info) << "Checking for table " << (*table)->table_name() << " : " << ( ( res ) ? " exists" : " doesn't exist, created" ); 
 	}
 }

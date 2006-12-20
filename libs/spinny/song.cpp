@@ -5,6 +5,8 @@
 #include "artist.hpp"
 #include "album.hpp"
 
+namespace Spinny {
+
 class song_desc : public sqlite::table::description {
 public:
 	virtual const char* table_name() const {
@@ -188,6 +190,11 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 }
 
 
+Song::ptr
+Song::load( sqlite::id_t db_id ){
+	return sqlite::db()->load<Song>( db_id );
+}
+
 
 boost::filesystem::path
 Song::path() const{
@@ -201,7 +208,7 @@ Song::directory() const {
 }
 
 
-Album::ptr
+boost::shared_ptr<Album>
 Song::album() const {
 	Album::ptr al = sqlite::db()->load<Album>( _album_id );
 	BOOST_LOG(sql) << "LOADING: " << _album_id << " : " << al->name();
@@ -256,3 +263,6 @@ int
 Song::year() const {
 	return _year;
 }
+
+
+} // namespace Spinny

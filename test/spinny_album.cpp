@@ -4,20 +4,21 @@
 
 SUITE(SpinnyAlbum) {
 
+using namespace Spinny;
 
 TEST( Table ){
 	DummyApp da;
-	CHECK( da.test_table_obj<Album>() );
+	CHECK( da.test_table_obj<Spinny::Album>() );
 }
 
 
 TEST( FromSong ){
 	DummyApp da;
 	da.populate_music_fixtures();
-	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+	Spinny::MusicDir::ptr md = Spinny::MusicDir::create_root( da.music_path );
 
-	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
-	Album::ptr alb = song->album();
+	Spinny::Song::ptr song = Spinny::Song::create_from_file( *md, "sonny_stitt.mp3" );
+	Spinny::Album::ptr alb = song->album();
 
 	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
 }
@@ -26,10 +27,10 @@ TEST( FromSong ){
 TEST( Songs ){
 	DummyApp da;
 	da.populate_music_fixtures();
-	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+	Spinny::MusicDir::ptr md = Spinny::MusicDir::create_root( da.music_path );
 
-	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
-	Album::ptr alb = song->album();
+	Spinny::Song::ptr song = Spinny::Song::create_from_file( *md, "sonny_stitt.mp3" );
+	Spinny::Album::ptr alb = song->album();
 
 	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
 	Song::result_set songs = alb->songs();

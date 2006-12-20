@@ -8,81 +8,81 @@ Version: 0.11.3
 /* first or middle sibling, no children */
 .ygtvtn {
 	width:16px; height:22px; 
-	background: url(tn.gif) 0 0 no-repeat; 
+	background: url(/img/tree/tn.gif) 0 0 no-repeat; 
 }
 
 /* first or middle sibling, collapsable */
 .ygtvtm {
 	width:16px; height:22px; 
 	cursor:pointer ;
-	background: url(tm.gif) 0 0 no-repeat; 
+	background: url(/img/tree/tm.gif) 0 0 no-repeat; 
 }
 
 /* first or middle sibling, collapsable, hover */
 .ygtvtmh {
 	width:16px; height:22px; 
 	cursor:pointer ;
-	background: url(tmh.gif) 0 0 no-repeat; 
+	background: url(/img/tree/tmh.gif) 0 0 no-repeat; 
 }
 
 /* first or middle sibling, expandable */
 .ygtvtp {
 	width:16px; height:22px; 
 	cursor:pointer ;
-	background: url(tp.gif) 0 0 no-repeat; 
+	background: url(/img/tree/tp.gif) 0 0 no-repeat; 
 }
 
 /* first or middle sibling, expandable, hover */
 .ygtvtph {
 	width:16px; height:22px; 
 	cursor:pointer ;
-	background: url(tph.gif) 0 0 no-repeat; 
+	background: url(/img/tree/tph.gif) 0 0 no-repeat; 
 }
 
 /* last sibling, no children */
 .ygtvln {
 	width:16px; height:22px; 
-	background: url(ln.gif) 0 0 no-repeat; 
+	background: url(/img/tree/ln.gif) 0 0 no-repeat; 
 }
 
 /* Last sibling, collapsable */
 .ygtvlm {
 	width:16px; height:22px; 
 	cursor:pointer ;
-	background: url(lm.gif) 0 0 no-repeat; 
+	background: url(/img/tree/lm.gif) 0 0 no-repeat; 
 }
 
 /* Last sibling, collapsable, hover */
 .ygtvlmh {
 	width:16px; height:22px; 
 	cursor:pointer ;
-	background: url(lmh.gif) 0 0 no-repeat; 
+	background: url(/img/tree/lmh.gif) 0 0 no-repeat; 
 }
 
 /* Last sibling, expandable */
 .ygtvlp { 
 	width:16px; height:22px; 
 	cursor:pointer ;
-	background: url(lp.gif) 0 0 no-repeat; 
+	background: url(/img/tree/lp.gif) 0 0 no-repeat; 
 }
 
 /* Last sibling, expandable, hover */
 .ygtvlph { 
 	width:16px; height:22px; cursor:pointer ;
-	background: url(lph.gif) 0 0 no-repeat; 
+	background: url(/img/tree/lph.gif) 0 0 no-repeat; 
 }
 
 /* Loading icon */
 .ygtvloading { 
 	width:16px; height:22px; 
-	background: url(loading.gif) 0 0 no-repeat; 
+	background: url(/img/tree/loading.gif) 0 0 no-repeat; 
 }
 
 /* the style for the empty cells that are used for rendering the depth 
  * of the node */
 .ygtvdepthcell { 
 	width:16px; height:22px; 
-	background: url(vline.gif) 0 0 no-repeat; 
+	background: url(/img/tree/vline.gif) 0 0 no-repeat; 
 }
 
 .ygtvblankdepthcell { width:16px; height:22px; }

@@ -15,7 +15,6 @@ namespace handlers {
 
 		virtual request_handler::RequestStatus
 		handle( const ews::request& req, ews::reply& rep ) const;
-		std::string name() const;
 	
 	};
 

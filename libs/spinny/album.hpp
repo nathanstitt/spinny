@@ -1,15 +1,17 @@
 /* @(#)album.hpp
  */
 
-#ifndef _ALBUM_H
-#define _ALBUM_H 1
+#ifndef _SPINNY_ALBUM_H
+#define _SPINNY_ALBUM_H 1
 
-#include "spinny.hpp"
-#include "artist.hpp"
-#include "song.hpp"
+#include "spinny/spinny.hpp"
+#include "spinny/artist.hpp"
+#include "spinny/song.hpp"
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
+
+namespace Spinny {
 
 
 class Album : public sqlite::table {
@@ -24,11 +26,12 @@ class Album : public sqlite::table {
 	virtual void table_insert_values( std::ostream &str ) const;
 	virtual void table_update_values( std::ostream &str ) const;
 	void initialize_from_db( const sqlite::reader *reader );
- 	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
 	Album();
 public:
+ 	static const sqlite::table::description* table_description();
+
 	typedef ::sqlite::result_set<Album> result_set;
 	typedef boost::shared_ptr<Album> ptr;
 	bool save() const;
@@ -78,6 +81,7 @@ public:
 	name() const;
 };
 
+} // namespace Spinny
 
-#endif /* _ALBUM_H */
+#endif /* _SPINNY_ALBUM_H */
 

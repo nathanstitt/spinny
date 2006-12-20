@@ -1,11 +1,13 @@
 /* @(#)album.cpp
  */
 
-//#include <config.h>
+
 #include "spinny/album.hpp"
 #include "spinny/artist.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "id3lib/tag.h"
+
+namespace Spinny {
 
 class album_desc : public sqlite::table::description {
 public:
@@ -30,6 +32,7 @@ public:
 };
 
 static album_desc table_desc;
+
 
 const sqlite::table::description*
 Album::table_description(){
@@ -172,3 +175,6 @@ Artist::result_set
 Album::artists() const {
 	return Artist::with_album( this );
 }
+
+
+} // namespace Spinny

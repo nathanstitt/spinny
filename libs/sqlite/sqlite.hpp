@@ -2,6 +2,7 @@
 #define __SQLITE_HPP__
 
 #include "sqlite/csrc/sqlite3.h"
+#include "sqlite/comma.hpp"
 #include <string>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -103,6 +104,7 @@ namespace sqlite {
 			virtual int num_fields() const = 0;
 			virtual const char** fields() const = 0;
 			virtual const char** field_types() const = 0;
+			virtual void checked_callback( bool created );
 		};
 		virtual ~table();
 		virtual bool needs_saved() const;
@@ -308,6 +310,7 @@ namespace sqlite {
 	// really just a wrapper for sqlite::command
 	template<typename T>
 	struct result_set {
+		result_set(){}
 		typedef command::iterator<T> iterator;
 
 		result_set( command *c ) : cmd(c){ }

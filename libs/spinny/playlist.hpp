@@ -9,7 +9,7 @@
 
 #include <vector>
 
-
+namespace Spinny {
 
 class PlayList : public sqlite::table {
 public:
@@ -23,7 +23,6 @@ private:
 	virtual void table_insert_values( std::ostream &str ) const;
 	virtual void table_update_values( std::ostream &str ) const;
 	void initialize_from_db( const sqlite::reader *reader );
- 	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
         int bitrate_;
@@ -31,6 +30,8 @@ private:
 	string description_;
 	int present_order_;
 public:
+ 	static const sqlite::table::description* table_description();
+
 	static ptr
 	load( sqlite::id_t db_id );
 
@@ -42,6 +43,9 @@ public:
 
 	static void
 	set_order( sqlite::id_t db_id, int order );
+
+	void
+	set_song_order( sqlite::id_t db_id, int order );
 
 	std::string
 	name() const;
@@ -71,7 +75,10 @@ public:
 	songs() const;
 
 	void
-	push_back( const Song &s );
+	insert( const Song::ptr s, int position );
+
+	void
+	insert( const PlayList::ptr pl, int position );
 
 	bool
 	save() const;
@@ -83,8 +90,10 @@ public:
 	clear();
 
 	void
-	remove( const Song &s );
+	remove( sqlite::id_t song_id );
 };
+
+} // namespace Spinny
 
 #endif /* _PLAYLIST_H */
 

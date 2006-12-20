@@ -1,6 +1,7 @@
 #include "testing.hpp"
 #include "spinny/user.hpp"
 
+using namespace Spinny;
 
 SUITE(SpinnyUser) {
 
@@ -12,14 +13,41 @@ TEST( Create ){
 	CHECK( ! u->ticket.empty() );
 }
 
+TEST( IdLoad ){
+	DummyApp da;
+	EnableLogging el;
+	User::ptr u = User::create( "test-login", "test" );
+	u->save();
+
+	sqlite::id_t uid = sqlite::db()->exec<sqlite::id_t>( "select rowid from users order by rowid desc limit 1" );
+	CHECK_EQUAL( u->db_id(), uid );
+}
+
 TEST( Roles ){
 	DummyApp da;
 	User::ptr u = User::create( "test-login", "test" );
+	u->save();
 
-	CHECK( u->is_guest() );
-	u->set_role( User::TrustedRole );
-	CHECK( u->is_trusted() );
+	sqlite::id_t uid = sqlite::db()->exec<sqlite::id_t>( "select rowid from users" );
+	CHECK_EQUAL( u->db_id(), uid );
 
+	CHECK( u->has_at_least( User::ReadOnlyRole ) );
+	CHECK( ! u->has_modify_role() );
+	CHECK( ! u->has_at_least( User::ModifyRole ) );
+
+
+	u->set_role( User::ModifyRole );
+	CHECK( u->has_modify_role() );
+	CHECK( u->has_at_least( User::ModifyRole ) );
+
+	u->set_role( User::ReadOnlyRole );
+	CHECK( ! u->has_modify_role() );
+
+
+	u->set_role( User::AdminRole );
+	CHECK( u->has_modify_role() );
+	CHECK( u->is_admin() );
+	CHECK( u->has_at_least( User::ReadOnlyRole ) );
 }
 
 TEST( Authen ){
@@ -51,9 +79,6 @@ TEST( FromTicket ){
 	CHECK_EQUAL( u1->login, u2->login );
 	CHECK_EQUAL( u1->ticket, u2->ticket );
 	CHECK_EQUAL( u1->last_visit, u2->last_visit );
-
-
-
 }
 
 }

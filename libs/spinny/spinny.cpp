@@ -9,34 +9,40 @@
 #include "boost/log/functions.hpp"
 #include "boost/filesystem/path.hpp"
 #include "boost/asio.hpp"
+#include "spinny/settings.hpp"
 #include "boost/bind.hpp"
 #include "ews/server.hpp"
 #include "spinny/music_dir.hpp"
 
 using namespace std;
 using namespace boost;
+using namespace Spinny;
 
 BOOST_DEFINE_LOG(app, "app")
-
-static Spinny *_instance=0;
-static ews::server *_ews=0;
-static asio::thread *_web_thread=0;
-
 
 boost::program_options::variables_map
 parse_program_options(int ac, char* av[]);
 
+namespace Spinny {
 
 
-Spinny::Spinny(int argc, char **argv) :
+static App *_instance=0;
+static ews::server *_ews=0;
+static asio::thread *_web_thread=0;
+
+
+
+
+
+App::App(int argc, char **argv) :
 	_argc( argc ),
 	_argv( argv )
 {
 	_vm=parse_program_options(argc,argv);
 }
 
-Spinny*
-Spinny::instance(){
+App*
+App::instance(){
 	return _instance;
 }
 
@@ -49,8 +55,10 @@ init_music_dir( const std::string &dir ){
 
 
 int
-Spinny::run(int argc, char **argv)
+App::run(int argc, char **argv)
 {
+	Settings::link_up();
+
 	boost::logging::manipulate_logs("*")
 		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" );
 
@@ -58,17 +66,17 @@ Spinny::run(int argc, char **argv)
 		boost::filesystem::path::default_name_check( boost::filesystem::native );
 	}
 
-	BOOST_LOGL(app, warn) << "Spinny starting up";
+	BOOST_LOGL(app, warn) << "App starting up";
 
 	if ( _instance != 0 ){
-		throw( "Spinny::run called twice!" );
+		throw( "App::run called twice!" );
 	}
 
 	try {
-		_instance=new Spinny( argc, argv );
+		_instance=new App( argc, argv );
 	}
 
-	catch( Spinny::CmdLineEx & ){
+	catch( App::CmdLineEx & ){
 		return 0;
 	}
 
@@ -91,7 +99,7 @@ Spinny::run(int argc, char **argv)
 
 
 void
-Spinny::stop(){
+App::stop(){
 	sqlite::stop_db();
 
 	delete _instance;
@@ -106,5 +114,7 @@ Spinny::stop(){
 	delete _web_thread;
 	_web_thread=0;
 
-	BOOST_LOGL(app, warn) << "Spinny stopped";
+	BOOST_LOGL(app, warn) << "App stopped";
 }
+
+} // namespace Spinny

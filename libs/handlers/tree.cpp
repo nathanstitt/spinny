@@ -44,8 +44,8 @@ insert( ews::reply &rep,
 // }
 
 static void
-insert_songs( ews::reply &rep, Song::result_set rs,sqlite::commas &comma ){
-	for ( Song::result_set::iterator song = rs.begin(); rs.end() != song; ++song ){
+insert_songs( ews::reply &rep, Spinny::Song::result_set rs,sqlite::commas &comma ){
+	for ( Spinny::Song::result_set::iterator song = rs.begin(); rs.end() != song; ++song ){
 		std::string name = boost::lexical_cast<std::string>( song->track() );
 		name += "-" + song->name();
 		insert( rep, comma, song->db_id(), name, 0, JsonSong );
@@ -109,10 +109,10 @@ Tree::handle( const ews::request& req, ews::reply& rep ) const {
 	switch ( type ){
 
 	case JsonDir: {
-		MusicDir::ptr md = MusicDir::load(  boost::lexical_cast<sqlite::id_t>( req.u3 ) );
+		Spinny::MusicDir::ptr md = Spinny::MusicDir::load(  boost::lexical_cast<sqlite::id_t>( req.u3 ) );
 		BOOST_LOGL( www, info ) << "Tree loading children of Dir " << md->path().string() << " id: " << md->db_id();
-		MusicDir::result_set rs = md->children();
-		for ( MusicDir::result_set::iterator md = rs.begin(); rs.end() != md; ++md ){
+		Spinny::MusicDir::result_set rs = md->children();
+		for ( Spinny::MusicDir::result_set::iterator md = rs.begin(); rs.end() != md; ++md ){
 			insert( rep, comma, md->db_id(), md->path().leaf(), md->num_children()+md->num_songs(), JsonDir );
 		}
 		insert_songs( rep, md->songs(),comma );
@@ -121,8 +121,8 @@ Tree::handle( const ews::request& req, ews::reply& rep ) const {
 
 	case JsonArtistsFirstChar: {
 		BOOST_LOGL( www, info ) << "Tree loading artists starting with " << req.u3;
-		Artist::result_set rs = Artist::name_starts_with( req.u3 );
-		for ( Artist::result_set::iterator artist = rs.begin(); rs.end() != artist; ++artist ){
+		Spinny::Artist::result_set rs = Spinny::Artist::name_starts_with( req.u3 );
+		for ( Spinny::Artist::result_set::iterator artist = rs.begin(); rs.end() != artist; ++artist ){
  			insert( rep,comma, artist->db_id(), artist->name(), artist->num_albums()+artist->num_songs(), JsonArtistsAlbum );
  		}
 		break;
@@ -130,15 +130,15 @@ Tree::handle( const ews::request& req, ews::reply& rep ) const {
 
 	case JsonAlbumsFirstChar: {
 		BOOST_LOGL( www, info ) << "Tree loading albums starting with " << req.u3;
-		Album::result_set rs = Album::name_starts_with( req.u3 );
-		for ( Album::result_set::iterator album = rs.begin(); rs.end() != album; ++album ){
+		Spinny::Album::result_set rs = Spinny::Album::name_starts_with( req.u3 );
+		for ( Spinny::Album::result_set::iterator album = rs.begin(); rs.end() != album; ++album ){
  			insert( rep,comma, album->db_id(), album->name(), album->num_songs(), JsonAlbum );
  		}
 		break;
 	}
 
 	case JsonAlbum: {
-		Album::ptr album = Album::load( boost::lexical_cast<sqlite::id_t>( req.u3 ) );
+		Spinny::Album::ptr album = Spinny::Album::load( boost::lexical_cast<sqlite::id_t>( req.u3 ) );
 		BOOST_LOGL( www, info ) << "Tree loading songs for album " << album->name() << " id: " << album->db_id();
 
 		insert_songs( rep, album->songs(),comma );
@@ -147,10 +147,10 @@ Tree::handle( const ews::request& req, ews::reply& rep ) const {
 
 
 	case JsonArtistsAlbum: {
-		Artist::ptr artist = Artist::load( boost::lexical_cast<sqlite::id_t>( req.u3 ) );
+		Spinny::Artist::ptr artist = Spinny::Artist::load( boost::lexical_cast<sqlite::id_t>( req.u3 ) );
 		BOOST_LOGL( www, info ) << "Tree loading albums and songs for artist " << artist->name() << " id: " << artist->db_id();
-		Album::result_set ars = artist->albums();
-		for ( Album::result_set::iterator album = ars.begin(); ars.end() != album; ++album ){
+		Spinny::Album::result_set ars = artist->albums();
+		for ( Spinny::Album::result_set::iterator album = ars.begin(); ars.end() != album; ++album ){
 			insert( rep, comma, album->db_id(),album->name(), album->num_songs(), JsonAlbum );
 		}
 		insert_songs( rep, artist->songs(),comma );

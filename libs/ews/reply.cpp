@@ -370,6 +370,7 @@ namespace ews {
 		this->status=ok;
 		set_header( "Content-Type", ews::mime_types::extension_to_type( ext ) );
 		set_header("Content-Length", boost::lexical_cast<std::string>( content.str().size() ) );
+		set_header("Connection","close");
 		return true;
 	}
 

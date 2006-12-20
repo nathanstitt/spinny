@@ -99,7 +99,7 @@ TEST( Status ){
 	DummyApp da;
 //	EnableLogging el("www");
 	EWSTestClient ews;
-	CHECK_EQUAL( 404, ews.get( "/non/existant/url" ).status );
+	CHECK_EQUAL( 404, ews.get( "/non/existant/url.gif" ).status );
 	CHECK_EQUAL( 200, ews.get( "/testurl/" ).status );
 }
 

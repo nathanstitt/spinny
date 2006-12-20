@@ -7,6 +7,8 @@
 
 #include "spinny/config.h"
 
+using namespace Spinny;
+
 SUITE(SpinnyMusicDir) {
 
 

@@ -8,6 +8,7 @@
 #include <iostream>
 
 
+using namespace Spinny;
 
 SUITE(SpinnySong) {
 

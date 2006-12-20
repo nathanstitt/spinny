@@ -2,6 +2,17 @@
 <html>
   <head>
     <title>Spinny</title>
+    <link rel="stylesheet" type="text/css" href="/css/reset-min.css">
+    <link rel="stylesheet" type="text/css" href="/css/tabs.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/resizable.css">
+    <link rel="stylesheet" type="text/css" href="/css/dialog.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/layout.css"/>
+  </head>
+  <body> <!--scroll="no"-->
+    <div id="loading">
+      <div class="loading-indicator">Loading...</div>
+    </div>
+
     <!-- begin common includes -->
     <script type="text/javascript" src="/js/yahoo.js"></script>
     <script type="text/javascript" src="/js/dom.js" ></script>
@@ -18,27 +29,24 @@
 
     <script type="text/javascript" src="/js/tree.js"></script>
     <script type="text/javascript" src="/js/spinny-grid.js"></script>
+    <script type="text/javascript" src="/js/layout.js"></script>
     <script type="text/javascript" src="/js/songs.js"></script>
     <script type="text/javascript" src="/js/playlists.js"></script>
-    <script type="text/javascript" src="/js/layout.js"></script>
+    <script type="text/javascript" src="/js/user-admin.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="/css/reset-min.css">
-    <link rel="stylesheet" type="text/css" href="/css/tabs.css"/>
-    <link rel="stylesheet" type="text/css" href="/css/tree.css">
-    <link rel="stylesheet" type="text/css" href="/css/resizable.css">
-    <link rel="stylesheet" type="text/css" href="/css/dialog.css"/>
-    <link rel="stylesheet" type="text/css" href="/css/layout.css"/>
     <script type="text/javascript">
 
       Trees.prototype.init = function( el ){
 
       this.artists=new YAHOO.widget.TreeView(document.getElementById("artistsTree"));
       var artistRoot = this.artists.getRoot();
+//      artistRoot.data.type='artist';
       <?cs each:item = Artists ?>
       Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, artistRoot );<?cs /each ?>
 
       this.albums=new YAHOO.widget.TreeView(document.getElementById("albumsTree"));
       var albumRoot = this.albums.getRoot();
+//      albumRoot.data.type='album';
       <?cs each:item = Albums ?>
       Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, albumRoot );<?cs /each ?>
 
@@ -54,15 +62,38 @@
       }
 
     </script>
-  </head>
-  <body>
+
     <div id="west" class="ylayout-inactive-content">
       Hi. I'm the west panel.
     </div>
 
     <div id="north" class="ylayout-inactive-content">
-      <div id="playlist-desc"></div>
+      <div id="playlist-description">Current Playlist Description goes here</div>
+      <?cs if:isAdmin ?>
+      <img src="/img/user_edit.gif" height="16" width="16" id="show-user-admin-btn" alt="Edit Users" title="Edit User Accounts">
+      <?cs /if ?>
     </div>
+
+    <?cs if:isAdmin ?>
+      <div id="user-edit-dlg" style="visibility:hidden;position:absolute;top:0px;right:0px;">
+	<div class="ydlg-hd">Users</div>
+
+	<div class="ydlg-bd">
+	   <div id="users-grid" style="width:200px;height:200px;overflow:hidden;" class="ygrid-mso">&nbsp;</div>
+	   <select id="role-selector" class="ygrid-editor" style="visibility:hidden;">
+	     <option value="0">ReadOnly</option>
+	     <option value="1">Modify Playlists</option>
+	     <option value="2">Admin</option>
+	   </select>
+	</div>
+
+	<div class="ydlg-ft">
+	  <span id="user-admin-dlg-save-wait" class="posting-msg"><img src="/img/dialog/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
+	  <span id="user-admin-dlg-error-msg"></span>
+	</div>
+      </div>
+      </div>
+    <?cs /if ?>
 
     <div id="playlists" style="width:200px;height:200px;overflow:hidden;"  class="ygrid-mso"></div>
 
@@ -73,8 +104,7 @@
       <p>Info Panel #1</p>
     </div>
     <div id="center2" class="ylayout-inactive-content">
-      <p><a href="#" onclick="Layout.toggleWest(this);return false;">Show West Region</a></p>
-      <input type="button" id="show-dialog-btn" value="Hello World" />
+      <p><a href="#" onclick="Layout.toggleWest(this);return false;">Hide Playlists</a></p>
       Info Panel #2
     </div>
 
@@ -92,14 +122,13 @@
       var myLogReader = new YAHOO.widget.LogReader("console"); 
     </script>
 
-    <div id="playlists-dlg" style="visibility:hidden;">
+    <div id="playlists-dlg" style="visibility:hidden;position:absolute;top:0px;">
       <div class="ydlg-hd">Playlists</div>
 
       <div class="ydlg-bd">
-	<div id="edit-tab" class="ydlg-tab" title="Create Playlist">
+	<div id="edit-pl-tab" class="ydlg-tab" title="Create Playlist">
 	  <div class="inner-tab">
             <form action="" method="post" id="playlist-dlg-form" onsubmit="return false;">
-              <input id="postId" type="hidden" name="postId" value="1" />
               <p>
 		<label for="name">Name</label>
 		<input class="textinput" type="text" name="name" id="playlist-dlg-name" value="" size="22" tabindex="1" />
@@ -114,10 +143,10 @@
 	</div>
       </div>
       <div class="ydlg-ft">
-	<div id="dlg-msg">
-	  <span id="dlg-save-error" class="posting-msg"><img src="/img/dialog/warning.gif" alt="Warning" width="16" height="16" />&nbsp;<span id="post-error-msg"></span></span>
-	  <span id="dlg-save-wait" class="posting-msg"><img src="/img/dialog/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
-	  <span id="dlg-error-msg"></span>
+	<div id="playlist-dlg-msg">
+	  <span id="playlist-dlg-save-error" class="posting-msg"><img src="/img/dialog/warning.gif" alt="Warning" width="16" height="16" />&nbsp;</span>
+	  <span id="playlist-dlg-save-wait" class="posting-msg"><img src="/img/dialog/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
+	  <span id="playlist-dlg-error-msg"></span>
 	</div>
       </div>
     </div>

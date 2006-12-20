@@ -1,7 +1,7 @@
 #include "testing.hpp"
 #include "spinny/artist.hpp"
 
-
+using namespace Spinny;
 
 SUITE(SpinnyArtist) {
 

@@ -350,7 +350,7 @@ namespace ews {
 			parse_form_elements( req.varibles, cookies );
 			std::string ticket = req.single_value<std::string>("Ticket");
 			if ( ! ticket.empty() ){
-				req.user = User::with_ticket( ticket );
+				req.user = Spinny::User::with_ticket( ticket );
 			}
 		}
 

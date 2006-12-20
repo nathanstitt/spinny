@@ -8,6 +8,8 @@
 #include "boost/filesystem/path.hpp"
 #include <vector>
 
+namespace Spinny {
+
 class Song;
 
 class MusicDir : public sqlite::table {
@@ -29,12 +31,12 @@ private:
 	virtual void table_insert_values( std::ostream &str ) const;
 	virtual void table_update_values( std::ostream &str ) const;
 	void initialize_from_db( const sqlite::reader *reader );
- 	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
 	MusicDir::ptr add_child( const std::string &name );
 
 public:
+ 	static const sqlite::table::description* table_description();
 
 	static MusicDir::ptr
 	load( sqlite::id_t db_id );
@@ -89,7 +91,7 @@ public:
 
 
 
-
+} // namespace Spinny
 
 
 

@@ -7,11 +7,13 @@
 #include "spinny/spinny.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
 
+namespace Spinny {
+
 class User : public sqlite::table {
 public:
-	enum Role_t {
-		GuestRole,
-		TrustedRole,
+	enum Role {
+		ReadOnlyRole,
+		ModifyRole,
 		AdminRole
 	};
 private:
@@ -25,30 +27,48 @@ private:
  	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
-	Role_t role_;
+	Role role_;
 	std::string password_;
 	
 public:
 	typedef boost::shared_ptr<User> ptr;
+	typedef ::sqlite::result_set<User> result_set;
 
-	static ptr with_ticket( std::string &ticket );
-	static ptr create( const std::string &login, const std::string &password );
+	User::ptr
+	static load( sqlite::id_t db_id );
 
+	static ptr
+	with_ticket( const std::string &ticket );
+
+	static ptr
+	with_login( const std::string &login );
+
+	static ptr
+	create( const std::string &login, const std::string &password );
+
+	static result_set
+	list( int first=0, int count=0, const std::string &sort="", bool descending=true );
+
+	static unsigned int
+	count();
+	
 	std::string login;
 	std::string ticket;
 	boost::posix_time::ptime last_visit;
 
 	bool
-	is_guest() const;
-
-	bool
-	is_trusted() const;
+	has_modify_role() const;
 
 	bool
 	is_admin() const;
 
-	Role_t
-	set_role( Role_t role );
+	Role role() const;
+
+	Role
+	set_role( Role role );
+
+	bool
+	has_at_least( Role role ) const;
 
 	std::string
 	set_password( const std::string &pass );
@@ -62,6 +82,8 @@ public:
 	bool
 	save() const;
 };
+
+} // namespace Spinny
 
 #endif /* _USER_H */
 

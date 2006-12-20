@@ -54,6 +54,8 @@ struct foo_desc_table : public sqlite::table::description {
 
 static foo_desc_table foo_desc;
 
+namespace Spinny{
+
 struct FooTable : public sqlite::table {
 	GRANT_NEEDED_FRIENDSHIP(FooTable);
 
@@ -85,7 +87,7 @@ struct FooTable : public sqlite::table {
 	}
 };
 
-
+}
 
 #endif /* _SQLITE_TESTING_H */
 

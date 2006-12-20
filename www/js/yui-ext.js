@@ -1,71 +1,47 @@
-
 /*
-------------------------------------------------------------------
-// File: \yutil.js
-------------------------------------------------------------------
-*/
-YAHOO.namespace('ext');
-YAHOO.namespace('ext.util');
-YAHOO.namespace('ext.grid');
+ * YUI Extensions 0.33 RC3
+ * Copyright(c) 2006, Jack Slocum.
+ */
+
+YAHOO.namespace('ext', 'ext.util', 'ext.grid');
 YAHOO.ext.Strict = (document.compatMode == 'CSS1Compat');
 YAHOO.ext.SSL_SECURE_URL = 'javascript:false';
 
-/**
- * Creates a callback that passes arguments[0], arguments[1], arguments[2], ...
- * Call directly on any function. Example: <code>myFunction.createCallback(myarg, myarg2)</code>
- * Will create a function that is bound to those 2 args.
- * @addon
- * @return {Function} The new function
-*/
-Function.prototype.createCallback = function(/*args...*/){
-    // make args available, in function below
+window.undefined = undefined;
+
+ 
+ 
+Function.prototype.createCallback = function(){
+    
     var args = arguments;
     var method = this;
     return function() {
         return method.apply(window, args);
-    }
+    };
 };
 
-/**
- * Creates a delegate (callback) that sets the scope to obj.
- * Call directly on any function. Example: <code>this.myFunction.createDelegate(this)</code>
- * Will create a function that is automatically scoped to this.
- * @addon
- * @param {Object} obj The object for which the scope is set
- * @param {<i>Array</i>} args (optional) Overrides arguments for the call. (Defaults to the arguments passed by the caller)
- * @param {<i>Boolean/Number</i>} appendArgs (optional) if True args are appended to call args instead of overriding, 
- *                                             if a number the args are inserted at the specified position
- * @return {Function} The new function
- */
+
 Function.prototype.createDelegate = function(obj, args, appendArgs){
     var method = this;
     return function() {
-        var callargs = args || arguments;
+        var callArgs = args || arguments;
         if(appendArgs === true){
             callArgs = Array.prototype.slice.call(arguments, 0);
-            callargs = callArgs.concat(args);
+            callArgs = callArgs.concat(args);
         }else if(typeof appendArgs == 'number'){
-            callargs = Array.prototype.slice.call(arguments, 0); // copy arguments first
-            var applyArgs = [appendArgs, 0].concat(args); // create method call params
-            Array.prototype.splice.apply(callargs, applyArgs); // splice them in
+            callArgs = Array.prototype.slice.call(arguments, 0); 
+            var applyArgs = [appendArgs, 0].concat(args); 
+            Array.prototype.splice.apply(callArgs, applyArgs); 
         }
-        return method.apply(obj || window, callargs);
-    }
+        return method.apply(obj || window, callArgs);
+    };
 };
+
 
 Function.prototype.defer = function(millis, obj, args, appendArgs){
-    return setTimeout(this.createDelegate(obj, args, appendArgs), millis)
+    return setTimeout(this.createDelegate(obj, args, appendArgs), millis);
 };
 
-/**
- * Create a combined function call sequence of the original function + the passed function.
- * The resulting function returns the results of the original function.
- * The passed fcn is called with the parameters of the original function
- * @addon
- * @param {Function} fcn The function to sequence
- * @param {<i>Object</i>} scope (optional) The scope of the passed fcn (Defaults to scope of original function or window)
- * @return {Function} The new function
- */
 Function.prototype.createSequence = function(fcn, scope){
     if(typeof fcn != 'function'){
         return this;
@@ -75,18 +51,19 @@ Function.prototype.createSequence = function(fcn, scope){
         var retval = method.apply(this || window, arguments);
         fcn.apply(scope || this || window, arguments);
         return retval;
-    }
+    };
 };
 
-/**
- * Creates an interceptor function. The passed fcn is called before the original one. If it returns false, the original one is not called.
- * The resulting function returns the results of the original function.
- * The passed fcn is called with the parameters of the original function.
- * @addon
- * @param {Function} fcn The function to call before the original
- * @param {<i>Object</i>} scope (optional) The scope of the passed fcn (Defaults to scope of original function or window)
- * @return {Function} The new function
- */
+
+YAHOO.util.Event.on(window, 'unload', function(){
+    delete Function.prototype.createSequence;
+    delete Function.prototype.defer;
+    delete Function.prototype.createDelegate;
+    delete Function.prototype.createCallback;
+    delete Function.prototype.createInterceptor;
+});
+
+
 Function.prototype.createInterceptor = function(fcn, scope){
     if(typeof fcn != 'function'){
         return this;
@@ -95,46 +72,85 @@ Function.prototype.createInterceptor = function(fcn, scope){
     return function() {
         fcn.target = this;
         fcn.method = method;
-        if(fcn.apply(scope || this || window, arguments) === false) 
+        if(fcn.apply(scope || this || window, arguments) === false){
             return;
+        }
         return method.apply(this || window, arguments);;
-    }
+    };
 };
 
-/**
- * @class
- * @constructor
- */
+
 YAHOO.ext.util.Browser = new function(){
 	var ua = navigator.userAgent.toLowerCase();
-	/** @type Boolean */
+	
 	this.isOpera = (ua.indexOf('opera') > -1);
-   	/** @type Boolean */
+   	
 	this.isSafari = (ua.indexOf('webkit') > -1);
-   	/** @type Boolean */
+   	
 	this.isIE = (window.ActiveXObject);
-   	/** @type Boolean */
+   	
 	this.isIE7 = (ua.indexOf('msie 7') > -1);
-   	/** @type Boolean */
+   	
 	this.isGecko = !this.isSafari && (ua.indexOf('gecko') > -1);
 	
 	if(ua.indexOf("windows") != -1 || ua.indexOf("win32") != -1){
+	    
 	    this.isWindows = true;
 	}else if(ua.indexOf("macintosh") != -1){
-		this.isMac = true;
+		
+	    this.isMac = true;
 	}
+	if(this.isIE && !this.isIE7){
+        try{
+            document.execCommand("BackgroundImageCache", false, true);
+        }catch(e){}
+    }
 }();
 
-/**
- * Enable custom handler signature and event cancelling. Using fireDirect() instead of fire() calls the subscribed event handlers 
- * with the exact parameters passed to fireDirect, instead of the usual (eventType, args[], obj). IMO this is more intuitive 
- * and promotes cleaner code. Also, if an event handler returns false, it is returned by fireDirect and no other handlers will be called.<br>
- * Example:<br><br><pre><code>
- * if(beforeUpdateEvent.fireDirect(myArg, myArg2) !== false){
- *     // do update
- * }</code></pre>
- * @addon
- */
+YAHOO.print = function(arg1, arg2, etc){
+    if(!YAHOO.ext._console){
+        var cs = YAHOO.ext.DomHelper.insertBefore(document.body.firstChild,
+        {tag: 'div',style:'width:250px;height:350px;overflow:auto;border:3px solid #c3daf9;' +
+                'background:white;position:absolute;right:5px;top:5px;' +
+                'font:normal 8pt arial,verdana,helvetica;z-index:50000;padding:5px;'}, true);
+        new YAHOO.ext.Resizable(cs, {
+            transparent:true,
+            handles: 'all',
+            pinned:true, 
+            adjustments: [0,0], 
+            wrap:true, 
+            draggable:(YAHOO.util.DD ? true : false)
+        });
+        cs.on('dblclick', cs.hide);
+        YAHOO.ext._console = cs;
+    }
+    var msg = '';
+    for(var i = 0, len = arguments.length; i < len; i++) {
+    	msg += arguments[i] + '<hr noshade style="color:#eeeeee;" size="1">';
+    }
+    YAHOO.ext._console.dom.innerHTML = msg + YAHOO.ext._console.dom.innerHTML;
+    YAHOO.ext._console.dom.scrollTop = 0;
+    YAHOO.ext._console.show();
+};
+
+YAHOO.printf = function(format, arg1, arg2, etc){
+    var args = Array.prototype.slice.call(arguments, 1);
+    YAHOO.print(format.replace(
+      /\{\{[^{}]*\}\}|\{(\d+)(,\s*([\w.]+))?\}/g,
+      function(m, a1, a2, a3) {
+        if (m.chatAt == '{') {
+          return m.slice(1, -1);
+        }
+        var rpl = args[a1];
+        if (a3) {
+          var f = eval(a3);
+          rpl = f(rpl);
+        }
+        return rpl ? rpl : '';
+      }));
+}
+
+ 
 YAHOO.util.CustomEvent.prototype.fireDirect = function(){
     var len=this.subscribers.length;
     for (var i=0; i<len; ++i) {
@@ -154,11 +170,13 @@ YAHOO.extendX = function(subclass, superclass, overrides){
     subclass.override = function(o){
         YAHOO.override(subclass, o);
     };
-    subclass.prototype.override = function(o){
-        for(var method in o){
-            this[method] = o[method];
-        }  
-    };
+    if(!subclass.prototype.override){
+        subclass.prototype.override = function(o){
+            for(var method in o){
+                this[method] = o[method];
+            }  
+        };
+    }
     if(overrides){
         subclass.override(overrides);
     }
@@ -173,28 +191,11 @@ YAHOO.override = function(origclass, overrides){
     }
 };
 
-/**
- * @class
- * Provides a convenient method of performing setTimeout where a new
- * timeout cancels the old timeout. An example would be performing validation on a keypress.
- * You can use this class to buffer
- * the keypress events for a certain number of milliseconds, and perform only if they stop
- * for that amount of time.
- * @constructor The parameters to this constructor serve as defaults and are not required.
- * @param {<i>Function</i>} fn (optional) The default function to timeout
- * @param {<i>Object</i>} scope (optional) The default scope of that timeout
- * @param {<i>Array</i>} args (optional) The default Array of arguments
- */
+
 YAHOO.ext.util.DelayedTask = function(fn, scope, args){
     var timeoutId = null;
     
-    /**
-     * Cancels any pending timeout and queues a new one
-     * @param {Number} delay The milliseconds to delay
-     * @param {Function} newFn Overrides function passed to constructor
-     * @param {Object} newScope Overrides scope passed to constructor
-     * @param {Array} newArgs Overrides args passed to constructor
-     */
+    
     this.delay = function(delay, newFn, newScope, newArgs){
         if(timeoutId){
             clearTimeout(timeoutId);
@@ -205,9 +206,7 @@ YAHOO.ext.util.DelayedTask = function(fn, scope, args){
         timeoutId = setTimeout(fn.createDelegate(scope, args), delay);
     };
     
-    /**
-     * Cancel the last queued timeout
-     */
+    
     this.cancel = function(){
         if(timeoutId){
             clearTimeout(timeoutId);
@@ -216,21 +215,110 @@ YAHOO.ext.util.DelayedTask = function(fn, scope, args){
     };
 };
 
+
+YAHOO.ext.KeyMap = function(el, config, eventName){
+    this.el  = getEl(el);
+    this.eventName = eventName || 'keydown';
+    this.bindings = [];
+    if(config instanceof Array){
+	    for(var i = 0, len = config.length; i < len; i++){
+	        this.addBinding(config[i]);
+	    }
+    }else{
+        this.addBinding(config);
+    }
+    this.keyDownDelegate = YAHOO.ext.EventManager.wrap(this.handleKeyDown, this, true);
+    this.enable();
+}
+
+YAHOO.ext.KeyMap.prototype = {
+    
+	addBinding : function(config){
+        var keyCode = config.key, 
+            shift = config.shift, 
+            ctrl = config.ctrl, 
+            alt = config.alt,
+            fn = config.fn,
+            scope = config.scope;
+        if(typeof keyCode == 'string'){
+            var ks = [];
+            var keyString = keyCode.toUpperCase();
+            for(var j = 0, len = keyString.length; j < len; j++){
+                ks.push(keyString.charCodeAt(j));
+            }
+            keyCode = ks;
+        }        
+        var keyArray = keyCode instanceof Array;
+        var handler = function(e){
+            if((!shift || e.shiftKey) && (!ctrl || e.ctrlKey) &&  (!alt || e.altKey)){
+                var k = e.getKey();
+                if(keyArray){
+                    for(var i = 0, len = keyCode.length; i < len; i++){
+                        if(keyCode[i] == k){
+                          fn.call(scope || window, k, e);
+                          return;
+                        }
+                    }
+                }else{
+                    if(k == keyCode){
+                        fn.call(scope || window, k, e);
+                    }
+                }
+            }
+        };
+        this.bindings.push(handler);  
+	},
+	
+	handleKeyDown : function(e){
+	    if(this.enabled){ 
+    	    var b = this.bindings;
+    	    for(var i = 0, len = b.length; i < len; i++){
+    	        b[i](e);
+    	    }
+	    }
+	},
+	
+	
+	isEnabled : function(){
+	    return this.enabled;  
+	},
+	
+	
+	enable: function(){
+		if (!this.enabled){
+	        this.el.on(this.eventName, this.keyDownDelegate);
+		    this.enabled = true;
+		}
+	},
+
+	
+	disable: function(){
+		if (this.enabled){
+			this.el.removeListener(this.eventName, this.keyDownDelegate);
+		    this.enabled = false;
+		}
+	}
+};
+
+
 YAHOO.ext.util.Observable = function(){};
 YAHOO.ext.util.Observable.prototype = {
+    
     fireEvent : function(){
         var ce = this.events[arguments[0].toLowerCase()];
         return ce.fireDirect.apply(ce, Array.prototype.slice.call(arguments, 1));
     },
     
+    
     addListener : function(eventName, fn, scope, override){
         eventName = eventName.toLowerCase();
         if(!this.events[eventName]){
-            // added for a better message when subscribing to wrong event
+            
             throw 'You are trying to listen for an event that does not exist: "' + eventName + '".';
         }
         this.events[eventName].subscribe(fn, scope, override);
     },
+    
     
     delayedListener : function(eventName, fn, scope, delay){
         var newFn = function(){
@@ -240,14 +328,29 @@ YAHOO.ext.util.Observable.prototype = {
         return newFn;
     },
     
+    
     removeListener : function(eventName, fn, scope){
         this.events[eventName.toLowerCase()].unsubscribe(fn, scope);
+    },
+    
+    
+    purgeListeners : function(){
+        for(var evt in this.events){
+            if(typeof this.events[evt] != 'function'){
+                 this.events[evt].unsubscribeAll();
+            }
+        }
     }
 };
 YAHOO.ext.util.Observable.prototype.on = YAHOO.ext.util.Observable.prototype.addListener;
 
+
 YAHOO.ext.util.Config = {
-    apply : function(obj, config){
+    
+    apply : function(obj, config, defaults){
+        if(defaults){
+            this.apply(obj, defaults);
+        }
         if(config){
             for(var prop in config){
                 obj[prop] = config[prop];
@@ -258,15 +361,11 @@ YAHOO.ext.util.Config = {
 };
 
 if(!String.escape){
-    /** @ignore */
     String.escape = function(string) {
         return string.replace(/('|\\)/g, "\\$1");
     };
 };
 
-/**
- * Left pads a string to size with ch
- */
 String.leftPad = function (val, size, ch) {
     var result = new String(val);
     if (ch == null) {
@@ -278,21 +377,60 @@ String.leftPad = function (val, size, ch) {
     return result;
 };
 
-/*
-------------------------------------------------------------------
-// File: \MixedCollection.js
-------------------------------------------------------------------
-*/
-/**
- * Collection class that maintains both numeric indexes and keys and exposes events
- */
+
+if(YAHOO.util.Connect){
+    YAHOO.util.Connect.setHeader = function(o){
+		for(var prop in this._http_header){
+		    
+			if(typeof this._http_header[prop] != 'function'){
+				o.conn.setRequestHeader(prop, this._http_header[prop]);
+			}
+		}
+		delete this._http_header;
+		this._http_header = {};
+		this._has_http_headers = false;
+	};   
+}
+
+if(YAHOO.util.DragDrop){
+    
+    YAHOO.util.DragDrop.prototype.defaultPadding = {left:0, right:0, top:0, bottom:0};
+    
+    
+    YAHOO.util.DragDrop.prototype.constrainTo = function(constrainTo, pad, inContent){
+        if(typeof pad == 'number'){
+            pad = {left: pad, right:pad, top:pad, bottom:pad};
+        }
+        pad = pad || this.defaultPadding;
+        var b = getEl(this.getEl()).getBox();
+        var ce = getEl(constrainTo);
+        var c = ce.dom == document.body ? { x: 0, y: 0,
+                width: YAHOO.util.Dom.getViewportWidth(),
+                height: YAHOO.util.Dom.getViewportHeight()} : ce.getBox(inContent || false);
+        var topSpace = b.y - c.y;
+        var leftSpace = b.x - c.x;
+
+        this.resetConstraints();
+        this.setXConstraint(leftSpace - (pad.left||0), 
+                c.width - leftSpace - b.width - (pad.right||0) 
+        );
+        this.setYConstraint(topSpace - (pad.top||0), 
+                c.height - topSpace - b.height - (pad.bottom||0) 
+        );
+    } 
+}
+
 YAHOO.ext.util.MixedCollection = function(allowFunctions){
     this.items = [];
     this.keys = [];
     this.events = {
+        
         'clear' : new YAHOO.util.CustomEvent('clear'),
+        
         'add' : new YAHOO.util.CustomEvent('add'),
+        
         'replace' : new YAHOO.util.CustomEvent('replace'),
+        
         'remove' : new YAHOO.util.CustomEvent('remove')
     }
     this.allowFunctions = allowFunctions === true;
@@ -300,6 +438,8 @@ YAHOO.ext.util.MixedCollection = function(allowFunctions){
 
 YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
     allowFunctions : false,
+   
+
     add : function(key, o){
         if(arguments.length == 1){
             o = arguments[0];
@@ -313,17 +453,23 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
         this.fireEvent('add', this.items.length-1, o, key);
         return o;
     },
-    
+   
+
     getKey : function(o){
-         return null;  
+         return null; 
     },
-    
+   
+
     replace : function(key, o){
+        if(arguments.length == 1){
+            o = arguments[0];
+            key = this.getKey(o);
+        }
         if(typeof this.items[key] == 'undefined'){
             return this.add(key, o);
         }
         var old = this.items[key];
-        if(typeof key == 'number'){ // array index key
+        if(typeof key == 'number'){ 
             this.items[key] = o;
         }else{
             var index = this.indexOfKey(key);
@@ -333,7 +479,8 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
         this.fireEvent('replace', key, old, o);
         return o;
     },
-    
+   
+
     addAll : function(objs){
         if(arguments.length > 1 || objs instanceof Array){
             var args = arguments.length > 1 ? arguments : objs;
@@ -348,19 +495,22 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
             }
         }
     },
-    
+   
+
     each : function(fn, scope){
         for(var i = 0, len = this.items.length; i < len; i++){
             fn.call(scope || window, this.items[i]);
         }
     },
-    
+   
+
     eachKey : function(fn, scope){
         for(var i = 0, len = this.keys.length; i < len; i++){
             fn.call(scope || window, this.keys[i], this.items[i]);
         }
     },
-    
+   
+
     find : function(fn, scope){
         for(var i = 0, len = this.items.length; i < len; i++){
             if(fn.call(scope || window, this.items[i])){
@@ -369,7 +519,8 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
         }
         return null;
     },
-    
+   
+
     insert : function(index, key, o){
         if(arguments.length == 2){
             o = arguments[1];
@@ -386,7 +537,8 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
         this.fireEvent('add', index, o, key);
         return o;
     },
-    
+   
+
     remove : function(o){
         var index = this.indexOf(o);
         this.items.splice(index, 1);
@@ -398,7 +550,8 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
         this.fireEvent('remove', o);
         return o;
     },
-    
+   
+
     removeAt : function(index){
         this.items.splice(index, 1);
         var key = this.keys[index];
@@ -408,7 +561,8 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
         }
         this.fireEvent('remove', o, key);
     },
-    
+   
+
     removeKey : function(key){
         var o = this.items[key];
         var index = this.indexOf(o);
@@ -417,11 +571,13 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
         delete this.items[key];
         this.fireEvent('remove', o, key);
     },
-    
+   
+
     getCount : function(){
-        return this.items.length;  
+        return this.items.length; 
     },
-    
+   
+
     indexOf : function(o){
         if(!this.items.indexOf){
             for(var i = 0, len = this.items.length; i < len; i++){
@@ -432,60 +588,59 @@ YAHOO.extendX(YAHOO.ext.util.MixedCollection, YAHOO.ext.util.Observable, {
             return this.items.indexOf(o);
         }
     },
-    
+   
+
     indexOfKey : function(key){
         if(!this.keys.indexOf){
-            for(var i = 0, len = this.key.length; i < len; i++){
-                if(this.key[i] == o) return i;
+            for(var i = 0, len = this.keys.length; i < len; i++){
+                if(this.keys[i] == key) return i;
             }
             return -1;
         }else{
-            return this.keys.indexOf(o);
+            return this.keys.indexOf(key);
         }
     },
-    
+   
+
     item : function(key){
         return this.items[key];
     },
-    
+   
+
     contains : function(o){
         return this.indexOf(o) != -1;
     },
-    
+   
+
     containsKey : function(key){
         return typeof this.items[key] != 'undefined';
     },
-    
+   
+
     clear : function(o){
         this.items = [];
         this.keys = [];
         this.fireEvent('clear');
     },
-    
+   
+
     first : function(){
-        return this.items[0];  
+        return this.items[0]; 
     },
-    
+   
+
     last : function(){
-        return this.items[this.items.length];    
+        return this.items[this.items.length];   
     }
 });
+
 YAHOO.ext.util.MixedCollection.prototype.get = YAHOO.ext.util.MixedCollection.prototype.item;
 
-/*
-------------------------------------------------------------------
-// File: \JSON.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * Modified version of Douglas Crockford's json.js that doesn't
- * mess with the Object prototype 
- * http://www.json.org/js.html
- */
 YAHOO.ext.util.JSON = new function(){
     var useHasOwn = {}.hasOwnProperty ? true : false;
-    var validRE = /^("(\\.|[^"\\\n\r])*?"|[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t])+?$/;
+    
+    
+    
     
     var pad = function(n) {
         return n < 10 ? '0' + n : n;
@@ -547,6 +702,7 @@ YAHOO.ext.util.JSON = new function(){
                 pad(o.getSeconds()) + '"';
     };
     
+    
     this.encode = function(o){
         if(typeof o == 'undefined' || o === null){
             return 'null';
@@ -585,25 +741,19 @@ YAHOO.ext.util.JSON = new function(){
         }
     };
     
+    
     this.decode = function(json){
-        try{
-            if(validRE.test(json)) {
+        
+        
+            
                 return eval('(' + json + ')');
-            }
-        }catch(e){
-        }
-        throw new SyntaxError("parseJSON");
+           
+       
+       
+       
     };
 }();
 
-/*
-------------------------------------------------------------------
-// File: \CSS.js
-------------------------------------------------------------------
-*/
-/**
- * @class Class for manipulating CSS Rules
- */
 YAHOO.ext.util.CSS = new function(){
 	var rules = null;
    	
@@ -618,9 +768,7 @@ YAHOO.ext.util.CSS = new function(){
       return property;
    };
    
-   /**
-    * Gets all css rules for the document
-    */
+   
    this.getRules = function(refreshCache){
    		if(rules == null || refreshCache){
    			rules = {};
@@ -632,15 +780,13 @@ YAHOO.ext.util.CSS = new function(){
     		        for(var j = ssRules.length-1; j >= 0; --j){
     		        	rules[ssRules[j].selectorText] = ssRules[j];
     		        }
-   			    }catch(e){} // try catch for cross domain access issue
+   			    }catch(e){} 
 	        }
    		}
    		return rules;
    	};
    	
-   	/**
-    * Searches for a rule by selector
-    */
+   	
    this.getRule = function(selector, refreshCache){
    		var rs = this.getRules(refreshCache);
    		if(!(selector instanceof Array)){
@@ -655,22 +801,14 @@ YAHOO.ext.util.CSS = new function(){
    	};
    	
    	
-   	/**
-    * Updates a rule property
-    * @param {String/Array} selector If it's an array it tries each selector until it finds one. Stops immediately once one is found.
-    */
+   	
    this.updateRule = function(selector, property, value){
    		if(!(selector instanceof Array)){
    			var rule = this.getRule(selector);
    			if(rule){
-   				rule.style[property] = value;
+   				rule.style[toCamel(property)] = value;
    				return true;
-   			}/*
-   			var camel = toCamel(property);
-   			if(rule && rule.style[camel]){
-   				rule.style[camel] = value;
-   				return true;
-   			}*/
+   			}
    		}else{
    			for(var i = 0; i < selector.length; i++){
    				if(this.updateRule(selector[i], property, value)){
@@ -681,10 +819,7 @@ YAHOO.ext.util.CSS = new function(){
    		return false;
    	};
    	
-   	/**
-    * Applies a rule to an element without adding the class
-    * @param {String/Array} selector If it's an array it tries each selector until it finds one. Stops immediately once one is found.
-    */
+   	
    this.apply = function(el, selector){
    		if(!(selector instanceof Array)){
    			var rule = this.getRule(selector);
@@ -746,17 +881,6 @@ YAHOO.ext.util.CSS = new function(){
    		return this.revert(el, selectors);
    	};
 }();
-
-/*
-------------------------------------------------------------------
-// File: \Bench.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * Very simple Benchmark class that supports multiple timers
- * @constructor
- */
 YAHOO.ext.util.Bench = function(){
    this.timers = {};
    this.lastKey = null;
@@ -796,28 +920,14 @@ YAHOO.ext.util.Bench.prototype = {
    }
 };
 
-/*
-------------------------------------------------------------------
-// File: \DomHelper.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * Utility class for working with DOM
- */
 YAHOO.ext.DomHelper = new function(){
-    /**@private*/
+    
     var d = document;
     var tempTableEl = null;
-    /** True to force the use of DOM instead of html fragments @type Boolean */
+    
     this.useDom = false;
     var emptyTags = /^(?:base|basefont|br|frame|hr|img|input|isindex|link|meta|nextid|range|spacer|wbr|audioscope|area|param|keygen|col|limittext|spot|tab|over|right|left|choose|atop|of)$/i;
-    /**
-     * Applies a style specification to an element
-     * @param el String/HTMLElement - the element to apply styles to
-     * @param styles - A style specification string eg "width:100px", or object in the form {width:"100px"}, or
-     * a function which returns such a specification.
-     */
+    
     this.applyStyles = function(el, styles){
         if(styles){
            var D = YAHOO.util.Dom;
@@ -827,19 +937,19 @@ YAHOO.ext.DomHelper = new function(){
                while ((matches = re.exec(styles)) != null){
                    D.setStyle(el, matches[1], matches[2]);
                }
-            }else if (typeof styles == "object"){
+           }else if (typeof styles == "object"){
                for (var style in styles){
                   D.setStyle(el, style, styles[style]);
                }
-            }else if (typeof styles == "function"){
+           }else if (typeof styles == "function"){
                 YAHOO.ext.DomHelper.applyStyles(el, styles.call());
-            }
+           }
         }
     }; 
     
-    // build as innerHTML where available
-    /** @ignore */
-    function createHtml(o){
+    
+    
+    var createHtml = function(o){
         var b = '';
         b += '<' + o.tag;
         for(var attr in o){
@@ -887,11 +997,11 @@ YAHOO.ext.DomHelper = new function(){
         return b;
     }
     
-    // build as dom
-    /** @ignore */
-    function createDom(o, parentNode){
+    
+    
+    var createDom = function(o, parentNode){
         var el = d.createElement(o.tag);
-        var useSet = el.setAttribute ? true : false; // In IE some elements don't have setAttribute
+        var useSet = el.setAttribute ? true : false; 
         for(var attr in o){
             if(attr == 'tag' || attr == 'children' || attr == 'html' || attr == 'style' || typeof o[attr] == 'function') continue;
             if(attr=='cls'){
@@ -901,7 +1011,7 @@ YAHOO.ext.DomHelper = new function(){
                 else el[attr] = o[attr];
             }
         }
-        this.applyStyles(el, o.style);
+        YAHOO.ext.DomHelper.applyStyles(el, o.style);
         if(o.children){
             for(var i = 0, len = o.children.length; i < len; i++) {
              	createDom(o.children[i], el);
@@ -916,11 +1026,8 @@ YAHOO.ext.DomHelper = new function(){
         return el;
     };
     
-    /**
-     * @ignore
-     * Nasty code for IE's broken table implementation 
-     */
-    function insertIntoTable(tag, where, el, html){
+    
+    var insertIntoTable = function(tag, where, el, html){
         if(!tempTableEl){
             tempTableEl = document.createElement('div');
         }
@@ -947,13 +1054,7 @@ YAHOO.ext.DomHelper = new function(){
         }
     } 
     
-    /**
-     * Inserts an HTML fragment into the Dom
-     * @param {String} where Where to insert the html in relation to el - beforeBegin, afterBegin, beforeEnd, afterEnd.
-     * @param {HTMLElement} el The context element
-     * @param {String} html The HTML fragmenet
-     * @return {HTMLElement} The new node
-     */
+    
     this.insertHtml = function(where, el, html){
         where = where.toLowerCase();
         if(el.insertAdjacentHTML){
@@ -961,57 +1062,60 @@ YAHOO.ext.DomHelper = new function(){
             if(tag == 'table' || tag == 'tbody' || tag == 'tr'){
                return insertIntoTable(tag, where, el, html);
             }
-            if(where == 'beforebegin'){
-                el.insertAdjacentHTML(where, html);
-                return el.previousSibling;
-            }else if(where == 'afterbegin'){
-                el.insertAdjacentHTML(where, html);
-                return el.firstChild;
-            }else if(where == 'beforeend'){
-                el.insertAdjacentHTML(where, html);
-                return el.lastChild;
-            }else if(where == 'afterend'){
-                el.insertAdjacentHTML(where, html);
-                return el.nextSibling;
+            switch(where){
+                case 'beforebegin':
+                    el.insertAdjacentHTML(where, html);
+                    return el.previousSibling;
+                case 'afterbegin':
+                    el.insertAdjacentHTML(where, html);
+                    return el.firstChild;
+                case 'beforeend':
+                    el.insertAdjacentHTML(where, html);
+                    return el.lastChild;
+                case 'afterend':
+                    el.insertAdjacentHTML(where, html);
+                    return el.nextSibling;
             }
             throw 'Illegal insertion point -> "' + where + '"';
         }
         var range = el.ownerDocument.createRange();
         var frag;
-        if(where == 'beforebegin'){
-            range.setStartBefore(el);
-            frag = range.createContextualFragment(html);
-            el.parentNode.insertBefore(frag, el);
-            return el.previousSibling;
-        }else if(where == 'afterbegin'){
-            range.selectNodeContents(el);
-            range.collapse(true);
-            frag = range.createContextualFragment(html);
-            el.insertBefore(frag, el.firstChild);
-            return el.firstChild;
-        }else if(where == 'beforeend'){
-            range.selectNodeContents(el);
-            range.collapse(false);
-            frag = range.createContextualFragment(html);
-            el.appendChild(frag);
-            return el.lastChild;
-        }else if(where == 'afterend'){
-            range.setStartAfter(el);
-            frag = range.createContextualFragment(html);
-            el.parentNode.insertBefore(frag, el.nextSibling);
-            return el.nextSibling;
-        }else{
+        switch(where){
+             case 'beforebegin':
+                range.setStartBefore(el);
+                frag = range.createContextualFragment(html);
+                el.parentNode.insertBefore(frag, el);
+                return el.previousSibling;
+             case 'afterbegin':
+                if(el.firstChild){ 
+                    range.setStartBefore(el.firstChild);
+                }else{
+                    range.selectNodeContents(el);
+                    range.collapse(true);
+                }
+                frag = range.createContextualFragment(html);
+                el.insertBefore(frag, el.firstChild);
+                return el.firstChild;
+            case 'beforeend':
+                if(el.lastChild){
+                    range.setStartAfter(el.lastChild); 
+                }else{
+                    range.selectNodeContents(el);
+                    range.collapse(false);
+                }
+                frag = range.createContextualFragment(html);
+                el.appendChild(frag);
+                return el.lastChild;
+            case 'afterend':
+                range.setStartAfter(el);
+                frag = range.createContextualFragment(html);
+                el.parentNode.insertBefore(frag, el.nextSibling);
+                return el.nextSibling;
+            }
             throw 'Illegal insertion point -> "' + where + '"';
-        } 
     };
     
-    /**
-     * Creates new Dom element(s) and inserts them before el
-     * @param {HTMLElement} el The context element
-     * @param {Object} o The Dom object spec (and children)
-     * @param {<i>Boolean</i>} returnElement (optional) true to return a YAHOO.ext.Element
-     * @return {HTMLElement} The new node
-     */
+    
     this.insertBefore = function(el, o, returnElement){
         el = YAHOO.util.Dom.get(el);
         var newNode;
@@ -1025,12 +1129,7 @@ YAHOO.ext.DomHelper = new function(){
         return returnElement ? YAHOO.ext.Element.get(newNode, true) : newNode;
     };
     
-    /**
-     * Creates new Dom element(s) and inserts them after el
-     * @param {HTMLElement} el The context element
-     * @param {Object} o The Dom object spec (and children)
-     * @return {HTMLElement} The new node
-     */
+    
     this.insertAfter = function(el, o, returnElement){
         el = YAHOO.util.Dom.get(el);
         var newNode;
@@ -1044,13 +1143,7 @@ YAHOO.ext.DomHelper = new function(){
         return returnElement ? YAHOO.ext.Element.get(newNode, true) : newNode;
     };
     
-    /**
-     * Creates new Dom element(s) and appends them to el
-     * @param {HTMLElement} el The context element
-     * @param {Object} o The Dom object spec (and children)
-     * @param {<i>Boolean</i>} returnElement (optional) true to return a YAHOO.ext.Element
-     * @return {HTMLElement} The new node
-     */
+    
     this.append = function(el, o, returnElement){
         el = YAHOO.util.Dom.get(el);
         var newNode;
@@ -1064,49 +1157,29 @@ YAHOO.ext.DomHelper = new function(){
         return returnElement ? YAHOO.ext.Element.get(newNode, true) : newNode;
     };
     
-    /**
-     * Creates new Dom element(s) and overwrites the contents of el with them
-     * @param {HTMLElement} el The context element
-     * @param {Object} o The Dom object spec (and children)
-     * @param {<i>Boolean</i>} returnElement (optional) true to return a YAHOO.ext.Element
-     * @return {HTMLElement} The new node
-     */
+    
     this.overwrite = function(el, o, returnElement){
         el = YAHOO.util.Dom.get(el);
         el.innerHTML = createHtml(o);
         return returnElement ? YAHOO.ext.Element.get(el.firstChild, true) : el.firstChild;
     };
     
-    /**
-     * Creates a new YAHOO.ext.DomHelper.Template from the Dom object spec 
-     * @param {Object} o The Dom object spec (and children)
-     * @param {<i>Boolean</i>} returnElement (optional) true to return a YAHOO.ext.Element
-     * @return {YAHOO.ext.DomHelper.Template} The new template
-     */
+    
     this.createTemplate = function(o){
         var html = createHtml(o);
         return new YAHOO.ext.DomHelper.Template(html);
     };
 }();
 
-/**
-* @class
-* Represents an HTML fragment template
-* @constructor
-* @param {String} html The HTML fragment
-*/
+
 YAHOO.ext.DomHelper.Template = function(html){
-    /**@private*/
+    
     this.html = html;
-    /**@private*/
+    
     this.re = /\{(\w+)\}/g;
 };
 YAHOO.ext.DomHelper.Template.prototype = {
-    /**
-     * Returns an HTML fragment of this template with the specified values applied
-     * @param {Object} values The template values. Can be an array if your params are numeric (i.e. {0}) or an object (i.e. {foo: 'bar'})
-     * @return {String}
-     */
+    
     applyTemplate : function(values){
         if(this.compiled){
             return this.compiled(values);
@@ -1122,71 +1195,45 @@ YAHOO.ext.DomHelper.Template.prototype = {
         return this.html.replace(this.re, fn);
     },
     
-    /**
-     * Compiles the template into an internal function, eliminating the RegEx overhead
-     */
+    
     compile : function(){
         var html = this.html;
         var re = /\{(\w+)\}/g;
         var body = [];
-        body.push("this.compiled = function(values){ return ");
+        body.push("this.compiled = function(values){ return [");
         var result;
         var lastMatchEnd = 0;
         while ((result = re.exec(html)) != null){
-            body.push("'", html.substring(lastMatchEnd, result.index), "' + ");
-            body.push("values['", html.substring(result.index+1,re.lastIndex-1), "'] + ");
+            body.push("'", html.substring(lastMatchEnd, result.index), "', ");
+            body.push("values['", html.substring(result.index+1,re.lastIndex-1), "'], ");
             lastMatchEnd = re.lastIndex;
         }
-        body.push("'", html.substr(lastMatchEnd), "';};");
+        body.push("'", html.substr(lastMatchEnd), "'].join('');};");
         eval(body.join(''));
     },
    
-    /**
-     * Applies the supplied values to the template and inserts the new node(s) before el
-     * @param {HTMLElement} el The context element
-     * @param {Object} values The template values. Can be an array if your params are numeric (i.e. {0}) or an object (i.e. {foo: 'bar'})
-     * @param {<i>Boolean</i>} returnElement (optional) true to return a YAHOO.ext.Element
-     * @return {HTMLElement} The new node
-     */
+    
     insertBefore: function(el, values, returnElement){
         el = YAHOO.util.Dom.get(el);
         var newNode = YAHOO.ext.DomHelper.insertHtml('beforeBegin', el, this.applyTemplate(values));
         return returnElement ? YAHOO.ext.Element.get(newNode, true) : newNode;
     },
     
-    /**
-     * Applies the supplied values to the template and inserts the new node(s) after el
-     * @param {HTMLElement} el The context element
-     * @param {Object} values The template values. Can be an array if your params are numeric (i.e. {0}) or an object (i.e. {foo: 'bar'})
-     * @param {<i>Boolean</i>} returnElement (optional) true to return a YAHOO.ext.Element
-     * @return {HTMLElement} The new node
-     */
+    
     insertAfter : function(el, values, returnElement){
         el = YAHOO.util.Dom.get(el);
         var newNode = YAHOO.ext.DomHelper.insertHtml('afterEnd', el, this.applyTemplate(values));
         return returnElement ? YAHOO.ext.Element.get(newNode, true) : newNode;
     },
     
-    /**
-     * Applies the supplied values to the template and append the new node(s) to el
-     * @param {HTMLElement} el The context element
-     * @param {Object} values The template values. Can be an array if your params are numeric (i.e. {0}) or an object (i.e. {foo: 'bar'})
-     * @param {<i>Boolean</i>} returnElement (optional) true to return a YAHOO.ext.Element
-     * @return {HTMLElement} The new node
-     */
+    
     append : function(el, values, returnElement){
         el = YAHOO.util.Dom.get(el);
         var newNode = YAHOO.ext.DomHelper.insertHtml('beforeEnd', el, this.applyTemplate(values));
         return returnElement ? YAHOO.ext.Element.get(newNode, true) : newNode;
     },
     
-    /**
-     * Applies the supplied values to the template and overwrites the content of el with the new node(s)
-     * @param {HTMLElement} el The context element
-     * @param {Object} values The template values. Can be an array if your params are numeric (i.e. {0}) or an object (i.e. {foo: 'bar'})
-     * @param {<i>Boolean</i>} returnElement (optional) true to return a YAHOO.ext.Element
-     * @return {HTMLElement} The new node
-     */
+    
     overwrite : function(el, values, returnElement){
         el = YAHOO.util.Dom.get(el);
         el.innerHTML = '';
@@ -1197,60 +1244,24 @@ YAHOO.ext.DomHelper.Template.prototype = {
 
 YAHOO.ext.Template = YAHOO.ext.DomHelper.Template;
 
-/*
-------------------------------------------------------------------
-// File: \Element.js
-------------------------------------------------------------------
-*/
-/**
- * @class Wraps around a DOM element and provides convenient access to Yahoo 
- * UI library functionality.<br><br>
- * Usage:<br>
- * <pre><code>
- * var el = YAHOO.ext.Element.get('myElementId');
- * // or the shorter
- * var el = getEl('myElementId');
- * </code></pre>
- * Using YAHOO.ext.Element.get() instead of calling the constructor directly ensures you get the same object 
- * each call instead of constructing a new one.<br>
- * @requires YAHOO.util.Dom
- * @requires YAHOO.util.Event
- * @requires YAHOO.util.CustomEvent 
- * @requires YAHOO.util.Anim (optional) to support animation
- * @requires YAHOO.util.Motion (optional) to support animation
- * @requires YAHOO.util.Easing (optional) to support animation
- * @constructor Create a new Element directly.
- * @param {String/HTMLElement} element
- * @param {<i>Boolean</i>} forceNew (optional) By default the constructor checks to see if there is already an instance of this element in the cache and if there is it returns the same instance. This will skip that check (useful for extending this class).
- */
 YAHOO.ext.Element = function(element, forceNew){
     var dom = YAHOO.util.Dom.get(element);
-    if(!dom){ // invalid id/element
+    if(!dom){ 
         return null;
     }
-    if(!forceNew && YAHOO.ext.Element.cache[dom.id]){ // element object already exists
+    if(!forceNew && YAHOO.ext.Element.cache[dom.id]){ 
         return YAHOO.ext.Element.cache[dom.id];
     }
-    /**
-     * The DOM element
-     * @type HTMLElement
-     */
+    
     this.dom = dom;
     
-    /**
-     * The DOM element ID
-     * @type String
-     */
+    
     this.id = this.dom.id;
-    /**
-     * @private the current visibility mode
-     */
+    
     this.visibilityMode = YAHOO.ext.Element.VISIBILITY;
     
     
-    /**
-     * @private the element's default display mode
-     */
+    
     this.originalDisplay = YAHOO.util.Dom.getStyle(this.dom, 'display') || '';
     if(this.autoDisplayMode){
         if(this.originalDisplay == 'none'){
@@ -1258,51 +1269,34 @@ YAHOO.ext.Element = function(element, forceNew){
         }
     }
     if(this.originalDisplay == 'none'){
-        this.originalDisplay = YAHOO.ext.Element.blockElements.test(this.dom.tagName) ? 'block' : 'inline';
+        this.originalDisplay = '';
     }
     
-    /**
-     * The default unit to append to CSS values where a unit isn't provided (Defaults to px).
-     * @type String
-     */
+    
     this.defaultUnit = 'px';
 }
 
 YAHOO.ext.Element.prototype = {    
-    /**
-     * Sets the elements visibility mode. When setVisible() is called it
-     * will use this to determine whether to set the visibility or the display property.
-     * @param visMode Element.VISIBILITY or Element.DISPLAY
-     */
+    
     setVisibilityMode : function(visMode){
         this.visibilityMode = visMode;
+        return this;
     },
     
-    /**
-     * Convenience method for setVisibilityMode(Element.DISPLAY)
-     * @param {String} display (optional) What to set display to when visible
-     */
+    
     enableDisplayMode : function(display){
         this.setVisibilityMode(YAHOO.ext.Element.DISPLAY);
         if(typeof display != 'undefined') this.originalDisplay = display;
+        return this;
     },
     
-    /**
-     * Perform Yahoo UI animation on this element. 
-     * @param {Object} args The YUI animation control args
-     * @param {<i>Float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     * @param {<i>Function</i>} animType (optional) YAHOO.util.Anim subclass to use. For example: YAHOO.util.Motion
-     */
+    
     animate : function(args, duration, onComplete, easing, animType){
         this.anim(args, duration, onComplete, easing, animType);
         return this;
     },
     
-    /**
-     * @private Internal animation call
-     */
+    
     anim : function(args, duration, onComplete, easing, animType){
         animType = animType || YAHOO.util.Anim;
         var anim = new animType(this.dom, args, duration || .35, 
@@ -1320,10 +1314,7 @@ YAHOO.ext.Element.prototype = {
         anim.animate();
     },
     
-    /**
-     * Scrolls this element into view. If the container element is static postioned it is changed to position relative.
-     * @param {<i>String/HTMLElement/Element</i>} container (optional) The container element to scroll (defaults to document.body)
-     */
+    
     scrollIntoView : function(container){
         var c = getEl(container || document.body, true);
         var cp = c.getStyle('position');
@@ -1335,7 +1326,7 @@ YAHOO.ext.Element.prototype = {
         var el = this.dom;
         var childTop = parseInt(el.offsetTop, 10);
         var childBottom = childTop + el.offsetHeight;
-        var containerTop = parseInt(c.scrollTop, 10); // parseInt for safari bug
+        var containerTop = parseInt(c.scrollTop, 10); 
         var containerBottom = containerTop + c.clientHeight;
         if(childTop < containerTop){
         	c.scrollTop = childTop;
@@ -1348,18 +1339,21 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
         
-    /** Measures the elements content height and updates height to match. */
+    
     autoHeight : function(animate, duration, onComplete, easing){
         var oldHeight = this.getHeight();
         this.clip();
-        this.setHeight(1); // force clipping
+        this.setHeight(1); 
         setTimeout(function(){
-            var height = parseInt(this.dom.scrollHeight, 10); // parseInt for Safari
+            var height = parseInt(this.dom.scrollHeight, 10); 
             if(!animate){
                 this.setHeight(height);
                 this.unclip();
+                if(typeof onComplete == 'function'){
+                    onComplete();
+                }
             }else{
-                this.setHeight(oldHeight); // restore original height
+                this.setHeight(oldHeight); 
                 this.setHeight(height, animate, duration, function(){
                     this.unclip();
                     if(typeof onComplete == 'function') onComplete();
@@ -1369,11 +1363,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Checks whether the element is currently visible using both visibility and display properties.
-     * @param {<i>Boolean</i>} deep True to walk the dom and see if parent elements are hidden
-     * @return {Boolean} Whether the element is currently visible 
-     */
+    
     isVisible : function(deep) {
         var vis = YAHOO.util.Dom.getStyle(this.dom, 'visibility') != 'hidden' 
                && YAHOO.util.Dom.getStyle(this.dom, 'display') != 'none';
@@ -1390,62 +1380,32 @@ YAHOO.ext.Element.prototype = {
         return true;
     },
     
-    /**
-     * Selects child nodes based on the passed CSS selector
-     * @param {String} selector The CSS selector
-     * @param {Boolean} unique true to create a unique YAHOO.ext.Element for each child (defaults to a shared flyweight object)
-     */
+    
     select : function(selector, unique){
         return YAHOO.ext.Element.select('#' + this.dom.id + ' ' + selector, unique);  
     },
     
-    /**
-     * Initializes a YAHOO.util.DD object for this element.
-     * @param {String} group The group the DD object is member of
-     * @param {Object} config The DD config object
-     * @param {Object} overrides An object containing methods to override/implement on the DD object
-     * @return The DD object
-     */
+    
     initDD : function(group, config, overrides){
         var dd = new YAHOO.util.DD(YAHOO.util.Dom.generateId(this.dom), group, config);
         return YAHOO.ext.util.Config.apply(dd, overrides);
     },
    
-    /**
-     * Initializes a YAHOO.util.DDProxy object for this element.
-     * @param {String} group The group the DDProxy object is member of
-     * @param {Object} config The DDProxy config object
-     * @param {Object} overrides An object containing methods to override/implement on the DDProxy object
-     * @return The DDProxy object
-     */
+    
     initDDProxy : function(group, config, overrides){
         var dd = new YAHOO.util.DDProxy(YAHOO.util.Dom.generateId(this.dom), group, config);
         return YAHOO.ext.util.Config.apply(dd, overrides);
     },
    
-    /**
-     * Initializes a YAHOO.util.DDTarget object for this element.
-     * @param {String} group The group the DDTarget object is member of
-     * @param {Object} config The DDTarget config object
-     * @param {Object} overrides An object containing methods to override/implement on the DDTarget object
-     * @return The DDTarget object
-     */
+    
     initDDTarget : function(group, config, overrides){
         var dd = new YAHOO.util.DDTarget(YAHOO.util.Dom.generateId(this.dom), group, config);
         return YAHOO.ext.util.Config.apply(dd, overrides);
     },
    
-    /**
-     * Sets the visibility of the element (see details). If the visibilityMode is set to Element.DISPLAY, it will use 
-     * the display property to hide the element, otherwise it uses visibility. The default is to hide and show using the visibility property.
-     * @param {Boolean} visible Whether the element is visible
-     * @param {<i>Boolean</i>} animate (optional) Fade the element in or out (Default is false)
-     * @param {<i>Float</i>} duration (optional) How long the fade effect lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeOut for hiding or YAHOO.util.Easing.easeIn for showing)
-     */
+    
      setVisible : function(visible, animate, duration, onComplete, easing){
-        //if(this.isVisible() == visible) return; // nothing to do
+        
         if(!animate || !YAHOO.util.Anim){
             if(this.visibilityMode == YAHOO.ext.Element.DISPLAY){
                 this.setDisplayed(visible);
@@ -1453,7 +1413,7 @@ YAHOO.ext.Element.prototype = {
                 YAHOO.util.Dom.setStyle(this.dom, 'visibility', visible ? 'visible' : 'hidden');
             }
         }else{
-            // make sure they can see the transition
+            
             this.setOpacity(visible?0:1);
             YAHOO.util.Dom.setStyle(this.dom, 'visibility', 'visible');
             if(this.visibilityMode == YAHOO.ext.Element.DISPLAY){
@@ -1477,36 +1437,27 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     *@private
-     */
+    
     isDisplayed : function() {
         return YAHOO.util.Dom.getStyle(this.dom, 'display') != 'none';
     },
     
-    /**
-     * Toggles the elements visibility or display, depending on visibility mode.
-     * @param {<i>Boolean</i>} animate (optional) Fade the element in or out (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the fade effect lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeOut for hiding or YAHOO.util.Easing.easeIn for showing)
-     */
+    
     toggle : function(animate, duration, onComplete, easing){
         this.setVisible(!this.isVisible(), animate, duration, onComplete, easing);
         return this;
     },
     
-    /**
-     *@private
-     */
+    
     setDisplayed : function(value) {
-        YAHOO.util.Dom.setStyle(this.dom, 'display', value ? this.originalDisplay : 'none');
+        if(typeof value == 'boolean'){
+           value = value ? this.originalDisplay : 'none';
+        }
+        YAHOO.util.Dom.setStyle(this.dom, 'display', value);
         return this;
     },
     
-    /**
-     * Tries to focus the element. Any exceptions are caught.
-     */
+    
     focus : function() {
         try{
             this.dom.focus();
@@ -1514,18 +1465,13 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Add a CSS class to the element.
-     * @param {String} className The CSS class to add
-     */
+    
     addClass : function(className){
         YAHOO.util.Dom.addClass(this.dom, className);
         return this;
     },
     
-    /**
-     * Adds the passed className to this element and removes the class from all siblings
-     */
+    
     radioClass : function(className){
         var siblings = this.dom.parentNode.childNodes;
         for(var i = 0; i < siblings.length; i++) {
@@ -1537,14 +1483,12 @@ YAHOO.ext.Element.prototype = {
         YAHOO.util.Dom.addClass(this.dom, className);
         return this;
     },
-    /**
-     * Removes a CSS class from the element.
-     * @param {String} className The CSS class to remove
-     */
+    
     removeClass : function(className){
         YAHOO.util.Dom.removeClass(this.dom, className);
         return this;
     },
+    
     
     toggleClass : function(className){
         if(YAHOO.util.Dom.hasClass(this.dom, className)){
@@ -1555,39 +1499,23 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Checks if a CSS class is in use by the element.
-     * @param {String} className The CSS class to check
-     * @return {Boolean} true or false
-     */
+    
     hasClass : function(className){
         return YAHOO.util.Dom.hasClass(this.dom, className);
     },
     
-    /**
-     * Replaces a CSS class on the element with another.
-     * @param {String} oldClassName The CSS class to replace
-     * @param {String} newClassName The replacement CSS class
-     */
+    
     replaceClass : function(oldClassName, newClassName){
         YAHOO.util.Dom.replaceClass(this.dom, oldClassName, newClassName);
         return this;
     },
     
-    /**
-       * Normalizes currentStyle and ComputedStyle.
-       * @param {String} property The style property whose value is returned.
-       * @return {String} The current value of the style property for this element.
-       */
+    
     getStyle : function(name){
         return YAHOO.util.Dom.getStyle(this.dom, name);
     },
     
-    /**
-       * Wrapper for setting style properties, also takes single object parameter of multiple styles
-       * @param {String} property The style property to be set.
-       * @param {String} val The value to apply to the given property.
-       */
+    
     setStyle : function(name, value){
         if(typeof name == 'string'){
             YAHOO.util.Dom.setStyle(this.dom, name, value);
@@ -1602,34 +1530,27 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-       * Gets the current X position of the element based on page coordinates.  Element must be part of the DOM tree to have page coordinates (display:none or elements not appended return false).
-       @ return {String} The X position of the element
-       */
+    
+    applyStyles : function(style){
+       YAHOO.ext.DomHelper.applyStyles(this.dom, style);
+    },
+    
+    
     getX : function(){
         return YAHOO.util.Dom.getX(this.dom);
     },
     
-    /**
-       * Gets the current Y position of the element based on page coordinates.  Element must be part of the DOM tree to have page coordinates (display:none or elements not appended return false).
-       @ return {String} The Y position of the element
-       */
+    
     getY : function(){
         return YAHOO.util.Dom.getY(this.dom);
     },
     
-    /**
-       * Gets the current position of the element based on page coordinates.  Element must be part of the DOM tree to have page coordinates (display:none or elements not appended return false).
-       @ return {Array} The XY position of the element
-       */
+    
     getXY : function(){
         return YAHOO.util.Dom.getXY(this.dom);
     },
     
-    /**
-       * Sets the X position of the element based on page coordinates.  Element must be part of the DOM tree to have page coordinates (display:none or elements not appended return false).
-       @param {String} The X position of the element
-       */
+    
     setX : function(x, animate, duration, onComplete, easing){
         if(!animate || !YAHOO.util.Anim){
             YAHOO.util.Dom.setX(this.dom, x);
@@ -1639,10 +1560,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-       * Sets the Y position of the element based on page coordinates.  Element must be part of the DOM tree to have page coordinates (display:none or elements not appended return false).
-       @param {String} The Y position of the element
-       */
+    
     setY : function(y, animate, duration, onComplete, easing){
         if(!animate || !YAHOO.util.Anim){
             YAHOO.util.Dom.setY(this.dom, y);
@@ -1652,51 +1570,31 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Set the element's X position directly using CSS style (instead of setX())
-     * @param {String} left The left CSS property value
-     */
+    
     setLeft : function(left){
         YAHOO.util.Dom.setStyle(this.dom, 'left', this.addUnits(left));
         return this;
     },
     
-    /**
-     * Set the element's Y position directly using CSS style (instead of setY())
-     * @param {String} top The top CSS property value
-     */
+    
     setTop : function(top){
         YAHOO.util.Dom.setStyle(this.dom, 'top', this.addUnits(top));
         return this;
     },
     
-    /**
-     * Set the element's css right style
-     * @param {String} left The right CSS property value
-     */
+    
     setRight : function(right){
         YAHOO.util.Dom.setStyle(this.dom, 'right', this.addUnits(right));
         return this;
     },
     
-    /**
-     * Set the element's css bottom style
-     * @param {String} top The bottom CSS property value
-     */
+    
     setBottom : function(bottom){
         YAHOO.util.Dom.setStyle(this.dom, 'bottom', this.addUnits(bottom));
         return this;
     },
     
-    /**
-     * Set the position of the element in page coordinates, regardless of how the element is positioned.
-     * The element must be part of the DOM tree to have page coordinates (display:none or elements not appended return false).
-     * @param {Array} pos Contains X & Y [x, y] values for new position (coordinates are page-based)
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-        */
+    
     setXY : function(pos, animate, duration, onComplete, easing){
         if(!animate || !YAHOO.util.Anim){
             YAHOO.util.Dom.setXY(this.dom, pos);
@@ -1706,77 +1604,43 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Set the position of the element in page coordinates, regardless of how the element is positioned.
-     * The element must be part of the DOM tree to have page coordinates (display:none or elements not appended return false).
-     * @param {Number} x X value for new position (coordinates are page-based)
-     * @param {Number} y Y value for new position (coordinates are page-based)
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     */
+    
     setLocation : function(x, y, animate, duration, onComplete, easing){
         this.setXY([x, y], animate, duration, onComplete, easing);
         return this;
     },
     
-    /**
-     * Set the position of the element in page coordinates, regardless of how the element is positioned.
-     * The element must be part of the DOM tree to have page coordinates (display:none or elements not appended return false).
-     * @param {Number} x X value for new position (coordinates are page-based)
-     * @param {Number} y Y value for new position (coordinates are page-based)
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     */
+    
     moveTo : function(x, y, animate, duration, onComplete, easing){
-        //YAHOO.util.Dom.setStyle(this.dom, 'left', this.addUnits(x));
-        //YAHOO.util.Dom.setStyle(this.dom, 'top', this.addUnits(y));
+        
+        
         this.setXY([x, y], animate, duration, onComplete, easing);
         return this;
     },
     
-    /**
-       * Returns the region position of the given element.
-       * The element must be part of the DOM tree to have a region (display:none or elements not appended return false).
-       * @return {Region} A YAHOO.util.Region containing "top, left, bottom, right" member data.
-       */
+    
     getRegion : function(){
         return YAHOO.util.Dom.getRegion(this.dom);
     },
     
-    /**
-     * Returns the offset height of the element
-     * @param {Boolean} contentHeight (optional) true to get the height minus borders and padding
-     * @return {Number} The element's height
-     */
+    
     getHeight : function(contentHeight){
         var h = this.dom.offsetHeight;
         return contentHeight !== true ? h : h-this.getBorderWidth('tb')-this.getPadding('tb');
     },
     
-    /**
-     * Returns the offset width of the element
-     * @param {Boolean} contentWidth (optional) true to get the width minus borders and padding
-     * @return {Number} The element's width
-     */
+    
     getWidth : function(contentWidth){
         var w = this.dom.offsetWidth;
         return contentWidth !== true ? w : w-this.getBorderWidth('lr')-this.getPadding('lr');
     },
     
-    /**
-     * Returns the size of the element
-     * @param {Boolean} contentSize (optional) true to get the width/size minus borders and padding
-     * @return {Object} An object containing the element's size {width: (element width), height: (element height)}
-     */
+    
     getSize : function(contentSize){
         return {width: this.getWidth(contentSize), height: this.getHeight(contentSize)};
     },
     
-    /** @private */
+    
     adjustWidth : function(width){
         if(typeof width == 'number'){
             if(this.autoBoxAdjust && !this.isBorderBox()){
@@ -1789,7 +1653,7 @@ YAHOO.ext.Element.prototype = {
         return width;
     },
     
-    /** @private */
+    
     adjustHeight : function(height){
         if(typeof height == 'number'){
            if(this.autoBoxAdjust && !this.isBorderBox()){
@@ -1802,14 +1666,7 @@ YAHOO.ext.Element.prototype = {
         return height;
     },
     
-    /**
-     * Set the width of the element
-     * @param {Number} width The new width
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeOut if width is larger or YAHOO.util.Easing.easeIn if it is smaller)
-     */
+    
     setWidth : function(width, animate, duration, onComplete, easing){
         width = this.adjustWidth(width);
         if(!animate || !YAHOO.util.Anim){
@@ -1821,14 +1678,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Set the height of the element
-     * @param {Number} height The new height
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeOut if height is larger or YAHOO.util.Easing.easeIn if it is smaller)
-     */
+    
      setHeight : function(height, animate, duration, onComplete, easing){
         height = this.adjustHeight(height);
         if(!animate || !YAHOO.util.Anim){
@@ -1840,15 +1690,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Set the size of the element. If animation is true, both width an height will be animated concurrently.
-     * @param {Number} width The new width
-     * @param {Number} height The new height
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     */
+    
      setSize : function(width, height, animate, duration, onComplete, easing){
         if(!animate || !YAHOO.util.Anim){
             this.setWidth(width);
@@ -1860,17 +1702,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Sets the element's position and size in one shot. If animation is true then width, height, x and y will be animated concurrently.
-     * @param {Number} x X value for new position (coordinates are page-based)
-     * @param {Number} y Y value for new position (coordinates are page-based)
-     * @param {Number} width The new width
-     * @param {Number} height The new height
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     */
+    
     setBounds : function(x, y, width, height, animate, duration, onComplete, easing){
         if(!animate || !YAHOO.util.Anim){
             this.setWidth(width);
@@ -1883,118 +1715,54 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Sets the element's position and size the the specified region. If animation is true then width, height, x and y will be animated concurrently.
-     * @param {YAHOO.util.Region} region The region to fill
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     */
+    
     setRegion : function(region, animate, duration, onComplete, easing){
         this.setBounds(region.left, region.top, region.right-region.left, region.bottom-region.top, animate, duration, onComplete, easing);
         return this;
     },
     
-    /**
-     * Appends an event handler to this element
-     * @param {String}   eventName     The type of event to listen for
-     * @param {Function} handler        The method the event invokes
-     * @param {<i>Object</i>}   scope  (optional)  An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {<i>boolean</i>}  override (optional) If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     */
+    
     addListener : function(eventName, handler, scope, override){
         YAHOO.util.Event.addListener(this.dom, eventName, handler, scope || this, true);
         return this;
     },
     
-    /**
-     * Appends an event handler to this element and automatically prevents the default action, and if set stops propagation (bubbling) as well
-     * @param {String}   eventName     The type of event to listen for
-     * @param {Boolean}   stopPropagation     Whether to also stopPropagation (bubbling) 
-     * @param {Function} handler        The method the event invokes
-     * @param {<i>Object</i>}   scope  (optional)  An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {<i>boolean</i>}  override (optional) If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     */
+    
     addHandler : function(eventName, stopPropagation, handler, scope, override){
         var fn = YAHOO.ext.Element.createStopHandler(stopPropagation, handler, scope || this, true);
         YAHOO.util.Event.addListener(this.dom, eventName, fn);
         return this;
     },
     
-    /** @private */
     
-    /**
-     * Appends an event handler to this element (Same as addListener)
-     * @param {String}   eventName     The type of event to listen for
-     * @param {Function} handler        The method the event invokes
-     * @param {<i>Object</i>}   scope (optional)   An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {<i>boolean</i>}  override (optional) If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     */
     on : function(eventName, handler, scope, override){
         YAHOO.util.Event.addListener(this.dom, eventName, handler, scope || this, true);
         return this;
     },
     
-    /**
-     * Append a managed listener - See {@link YAHOO.ext.EventObject} for more details.
-     * @param {String}   eventName     The type of event to listen for
-     * @param {Function} fn        The method the event invokes
-     * @param {<i>Object</i>}   scope  (optional)  An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {<i>boolean</i>}  override (optional) If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     */
+    
     addManagedListener : function(eventName, fn, scope, override){
         return YAHOO.ext.EventManager.on(this.dom, eventName, fn, scope || this, true);
     },
     
-    /** 
-     * Append a managed listener (shorthanded for {@link #addManagedListener}) 
-     * @param {String}   eventName     The type of event to listen for
-     * @param {Function} fn        The method the event invokes
-     * @param {<i>Object</i>}   scope  (optional)  An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {<i>boolean</i>}  override (optional) If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     */
+    
     mon : function(eventName, fn, scope, override){
         return YAHOO.ext.EventManager.on(this.dom, eventName, fn, scope || this, true);
     },
-    /**
-     * Removes an event handler from this element
-     * @param {String} sType the type of event to remove
-     * @param {Function} fn the method the event invokes
-     * @param {Object} scope
-     */
+    
     removeListener : function(eventName, handler, scope){
-        YAHOO.util.Event.removeListener(this.dom, eventName, handler, scope || this);
+        YAHOO.util.Event.removeListener(this.dom, eventName, handler);
         return this;
     },
     
-    /**
-     * Removes all previous added listeners from this element
-     */
+    
     removeAllListeners : function(){
         YAHOO.util.Event.purgeElement(this.dom);
         return this;
     },
     
     
-    /**
-     * Set the opacity of the element
-     * @param {Float} opacity The new opacity. 0 = transparent, .5 = 50% visibile, 1 = fully visible, etc
-     * @param {<i>Boolean</i>} animate (optional) Animate (fade) the transition (Default is false)
-     * @param {<i>Float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeOut if height is larger or YAHOO.util.Easing.easeIn if it is smaller)
-     */
+    
      setOpacity : function(opacity, animate, duration, onComplete, easing){
         if(!animate || !YAHOO.util.Anim){
             YAHOO.util.Dom.setStyle(this.dom, 'opacity', opacity);
@@ -2004,9 +1772,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Same as getX()
-     */
+    
     getLeft : function(local){
         if(!local){
             return this.getX();
@@ -2015,10 +1781,7 @@ YAHOO.ext.Element.prototype = {
         }
     },
     
-    /**
-     * Gets the right X coordinate of the element (element X position + element width)
-     * @return {String} The left position of the element
-     */
+    
     getRight : function(local){
         if(!local){
             return this.getX() + this.getWidth();
@@ -2027,9 +1790,7 @@ YAHOO.ext.Element.prototype = {
         }
     },
     
-    /**
-     * Same as getY()
-     */
+    
     getTop : function(local) {
         if(!local){
             return this.getY();
@@ -2038,10 +1799,7 @@ YAHOO.ext.Element.prototype = {
         }
     },
     
-    /**
-     * Gets the bottom Y coordinate of the element (element Y position + element height)
-     * @return {String} The bottom position of the element
-     */
+    
     getBottom : function(local){
         if(!local){
             return this.getY() + this.getHeight();
@@ -2050,10 +1808,7 @@ YAHOO.ext.Element.prototype = {
         }
     },
     
-    /**
-    * Set the element as absolute positioned with the specified z-index
-    * @param {<i>Number</i>} zIndex (optional)
-    */
+    
     setAbsolutePositioned : function(zIndex){
         this.setStyle('position', 'absolute');
         if(zIndex){
@@ -2062,10 +1817,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-    * Set the element as relative positioned with the specified z-index
-    * @param {<i>Number</i>} zIndex (optional)
-    */
+    
     setRelativePositioned : function(zIndex){
         this.setStyle('position', 'relative');
         if(zIndex){
@@ -2074,9 +1826,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-    * Clear positioning back to the default when the document was loaded
-    */
+    
     clearPositioning : function(){
         this.setStyle('position', '');
         this.setStyle('left', '');
@@ -2086,9 +1836,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-    * Gets an object with all CSS positioning properties. Useful along with {@link #setPositioning} to get snapshot before performing an update and then restoring the element.
-    */
+    
     getPositioning : function(){
         return {
             'position' : this.getStyle('position'),
@@ -2099,29 +1847,17 @@ YAHOO.ext.Element.prototype = {
         };
     },
     
-    /**
-     * Gets the width of the border(s) for the specified side(s)
-     * @param {String} side Can be t, l, r, b or any combination of those to add multiple values. For example, 
-     * passing lr would get the border (l)eft width + the border (r)ight width.
-     * @return {Number} The width of the sides passed added together
-     */
+    
     getBorderWidth : function(side){
         return this.addStyles(side, YAHOO.ext.Element.borders);
     },
     
-    /**
-     * Gets the width of the padding(s) for the specified side(s)
-     * @param {String} side Can be t, l, r, b or any combination of those to add multiple values. For example, 
-     * passing lr would get the padding (l)eft + the padding (r)ight.
-     * @return {Number} The padding of the sides passed added together
-     */
+    
     getPadding : function(side){
         return this.addStyles(side, YAHOO.ext.Element.paddings);
     },
     
-    /**
-    * Set positioning with an object returned by {@link #getPositioning}.
-    */
+    
     setPositioning : function(positionCfg){
         if(positionCfg.position)this.setStyle('position', positionCfg.position);
         if(positionCfg.left)this.setLeft(positionCfg.left);
@@ -2131,21 +1867,15 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    setLeftTop : function(left, top){
+    
+    
+     setLeftTop : function(left, top){
         this.dom.style.left = this.addUnits(left);
         this.dom.style.top = this.addUnits(top);
         return this;
     },
     
-    /**
-     * Move this element relative to it's current position.
-     * @param {String} direction Possible values are: 'left', 'right', 'up', 'down'.
-     * @param {Number} distance How far to move the element in pixels
-     * @param {<i>Boolean</i>} animate (optional) Animate the movement (Default is false)
-     * @param {<i>Float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. 
-     */
+    
      move : function(direction, distance, animate, duration, onComplete, easing){
         var xy = this.getXY();
         direction = direction.toLowerCase();
@@ -2172,43 +1902,39 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     *  Clip overflow on the element - use {@link #unclip} to remove
-     */
+    
     clip : function(){
         if(!this.isClipped){
            this.isClipped = true;
-           this.originalClip = this.getStyle('overflow');
+           this.originalClip = {
+               'o': this.getStyle('overflow'), 
+               'x': this.getStyle('overflow-x'),
+               'y': this.getStyle('overflow-y')
+           };
            this.setStyle('overflow', 'hidden');
+           this.setStyle('overflow-x', 'hidden');
+           this.setStyle('overflow-y', 'hidden');
         }
         return this;
     },
     
-    /**
-     *  Return clipping (overflow) to original clipping when the document loaded
-     */
+    
     unclip : function(){
         if(this.isClipped){
             this.isClipped = false;
-            this.setStyle('overflow', this.originalClip);
+            var o = this.originalClip;
+            if(o.o){this.setStyle('overflow', o.o);}
+            if(o.x){this.setStyle('overflow-x', o.x);}
+            if(o.y){this.setStyle('overflow-y', o.y);}
         }
         return this;
     },
     
-    /**
-     * Align this element with another element.
-     * @param {String/HTMLElement/YAHOO.ext.Element} element The element to align to.
-     * @param {String} position The position to align to. Possible values are 'tl' - top left, 'tr' - top right, 'bl' - bottom left, and 'br' - bottom right. 
-     * @param {<i>Array</i>} offsets (optional) Offset the positioning by [x, y]
-     * @param {<i>Boolean</i>} animate (optional) Animate the movement (Default is false)
-     * @param {<i>Float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. 
-     */
+    
      alignTo : function(element, position, offsets, animate, duration, onComplete, easing){
         var otherEl = getEl(element);
         if(!otherEl){
-            return this; // must not exist
+            return this; 
         }
         offsets = offsets || [0, 0];
         var r = otherEl.getRegion();
@@ -2234,9 +1960,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-    * Clears any opacity settings from this element. Required in some cases for IE.
-    */
+    
     clearOpacity : function(){
         if (window.ActiveXObject) {
             this.dom.style.filter = '';
@@ -2248,33 +1972,19 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-    * Hide this element - Uses display mode to determine whether to use "display" or "visibility". See {@link #setVisible}.
-    * @param {<i>Boolean</i>} animate (optional) Animate (fade) the transition (Default is false)
-     * @param {<i>Float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     */
+    
     hide : function(animate, duration, onComplete, easing){
         this.setVisible(false, animate, duration, onComplete, easing);
         return this;
     },
     
-    /**
-    * Show this element - Uses display mode to determine whether to use "display" or "visibility". See {@link #setVisible}.
-    * @param {<i>Boolean</i>} animate (optional) Animate (fade in) the transition (Default is false)
-     * @param {<i>Float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     */
+    
     show : function(animate, duration, onComplete, easing){
         this.setVisible(true, animate, duration, onComplete, easing);
         return this;
     },
     
-    /**
-     * @private Test if size has a unit, otherwise appends the default 
-     */
+    
     addUnits : function(size){
         if(size === '' || size == 'auto' || typeof size == 'undefined'){
             return size;
@@ -2285,13 +1995,14 @@ YAHOO.ext.Element.prototype = {
         return size;
     },
     
+    
     beginMeasure : function(){
         var el = this.dom;
         if(el.offsetWidth || el.offsetHeight){
-            return this; // offsets work already
+            return this; 
         }
         var changed = [];
-        var p = this.dom; // start with this element
+        var p = this.dom; 
         while((!el.offsetWidth && !el.offsetHeight) && p && p.tagName && p.tagName.toLowerCase() != 'body'){
             if(YAHOO.util.Dom.getStyle(p, 'display') == 'none'){
                 changed.push({el: p, visibility: YAHOO.util.Dom.getStyle(p, 'visibility')});
@@ -2304,6 +2015,7 @@ YAHOO.ext.Element.prototype = {
         return this;
                
     },
+    
     
     endMeasure : function(){
         var changed = this._measureChanged;
@@ -2318,65 +2030,56 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-    *   Update the innerHTML of this element, optionally searching for and processing scripts
-    * @param {String} html The new HTML
-    * @param {<i>Boolean</i>} loadScripts (optional) true to look for and process scripts
-    */
-    update : function(html, loadScripts){
-        this.dom.innerHTML = html;
-        if(!loadScripts) return this;
-        
-        var dom = this.dom;
-        var _parseScripts = function(){
-            var s = dom.getElementsByTagName("script");
-            var docHead = document.getElementsByTagName("head")[0];
-            
-            //   For browsers which discard scripts when inserting innerHTML, extract the scripts using a RegExp
-            if(s.length == 0){
-                var re = /(?:<script.*(?:src=[\"\'](.*)[\"\']).*>.*<\/script>)|(?:<script.*>([\S\s]*?)<\/script>)/ig; // assumes HTML well formed and then loop through it.
-                var match;
-                while(match = re.exec(html)){
-                     var s0 = document.createElement("script");
-                     if (match[1])
-                        s0.src = match[1];
-                     else if (match[2])
-                        s0.text = match[2];
-                     else
-                          continue;
-                     docHead.appendChild(s0);
-                }
-            }else {
-              for(var i = 0; i < s.length; i++){
-                 var s0 = document.createElement("script");
-                 s0.type = s[i].type;
-                 if (s[i].text) {
-                    s0.text = s[i].text;
-                 } else {
-                    s0.src = s[i].src;
-                 }
-                 docHead.appendChild(s0);
-              }
-            }
+    
+    update : function(html, loadScripts, callback){
+        if(typeof html == 'undefined'){
+            html = '';
         }
-        // set timeout to give DOM opportunity to catch up
-        setTimeout(_parseScripts, 10);
+        if(loadScripts !== true){
+            this.dom.innerHTML = html;
+            if(typeof callback == 'function'){
+                callback();
+            }
+            return this;
+        }
+        var id = YAHOO.util.Dom.generateId();
+        var dom = this.dom;
+        
+        html += '<span id="' + id + '"></span>';
+        
+        YAHOO.util.Event.onAvailable(id, function(){
+            var hd = document.getElementsByTagName("head")[0];
+            var re = /(?:<script.*?>)((\n|\r|.)*?)(?:<\/script>)/img; 
+            var srcRe = /\ssrc=([\'\"])(.*?)\1/i;
+            var match;
+            while(match = re.exec(html)){
+                var srcMatch = match[0].match(srcRe);
+                if(srcMatch && srcMatch[1]){
+                   var s0 = document.createElement("script");
+                   s0.src = srcMatch[1];
+                   hd.appendChild(s0);
+                }else if(match[1] && match[1].length > 0){
+                   eval(match[1]);
+                }                     
+            }
+            var el = document.getElementById(id);
+            if(el){el.parentNode.removeChild(el);}
+            if(typeof callback == 'function'){
+                callback();
+            }
+        });
+        dom.innerHTML = html.replace(/(?:<script.*?>)((\n|\r|.)*?)(?:<\/script>)/img, '');
         return this;
     },
     
-    /**
-     * Direct access to the UpdateManager update() method (takes the same parameters).
-     */
+    
     load : function(){
         var um = this.getUpdateManager();
         um.update.apply(um, arguments);
+        return this;
     },
     
-    /**
-    * Gets this elements UpdateManager
-    * @return The UpdateManager
-    * @type YAHOO.ext.UpdateManager 
-    */
+    
     getUpdateManager : function(){
         if(!this.updateManager){
             this.updateManager = new YAHOO.ext.UpdateManager(this);
@@ -2384,10 +2087,15 @@ YAHOO.ext.Element.prototype = {
         return this.updateManager;
     },
     
-    /**
-    * Calculates the x, y to center this element on the screen
-    * @return {Array} The x, y values [x, y]
-    */
+    
+    unselectable : function(){
+        this.dom.unselectable = 'on';
+        this.swallowEvent('selectstart', true);
+        this.applyStyles('-moz-user-select:none;-khtml-user-select:none;');
+        return this;
+    },
+    
+    
     getCenterXY : function(offsetScroll){
         var centerX = Math.round((YAHOO.util.Dom.getViewportWidth()-this.getWidth())/2);
         var centerY = Math.round((YAHOO.util.Dom.getViewportHeight()-this.getHeight())/2);
@@ -2399,11 +2107,20 @@ YAHOO.ext.Element.prototype = {
             return[centerX + scrollX, centerY + scrollY];
         }
     },
-    /**
-    * Gets an array of child YAHOO.ext.Element objects by tag name
-    * @param {String} tagName
-    * @return {Array} The children
-    */
+    
+    
+    center : function(centerIn) {
+        if(!centerIn){
+            this.setXY(this.getCenterXY(true));
+        }else{
+            var box = YAHOO.ext.Element.get(centerIn).getBox();
+            this.setXY([box.x + (box.width / 2) - (this.getWidth() / 2),
+                   box.y + (box.height / 2) - (this.getHeight() / 2)]);
+        }
+        return this;
+    },
+
+    
     getChildrenByTagName : function(tagName){
         var children = this.dom.getElementsByTagName(tagName);
         var len = children.length;
@@ -2414,12 +2131,7 @@ YAHOO.ext.Element.prototype = {
         return ce;
     },
     
-    /**
-    * Gets an array of child YAHOO.ext.Element objects by class name and optional tagName
-    * @param {String} className
-    * @param {<i>String</i>} tagName (optional)
-    * @return {Array} The children
-    */
+    
     getChildrenByClassName : function(className, tagName){
         var children = YAHOO.util.Dom.getElementsByClassName(className, tagName, this.dom);
         var len = children.length;
@@ -2430,9 +2142,7 @@ YAHOO.ext.Element.prototype = {
         return ce;
     },
     
-    /**
-     * Tests various css rules/browsers to determine if this element uses a border box
-     */
+    
     isBorderBox : function(){
         if(typeof this.bbox == 'undefined'){
             var el = this.dom;
@@ -2445,11 +2155,7 @@ YAHOO.ext.Element.prototype = {
         return this.bbox; 
     },
     
-    /**
-     * Return a box {x, y, width, height} that can be used to set another elements
-     * size to match this element. If contentBox is true, a box for the content 
-     * of the element is returned. If local is true, the element's left and top are returned instead of page x/y.
-     */
+    
     getBox : function(contentBox, local){
         var xy;
         if(!local){
@@ -2473,15 +2179,7 @@ YAHOO.ext.Element.prototype = {
         }
     },
     
-    /**
-     * Sets the element's box. Use getBox() on another element to get a box obj. If animate is true then width, height, x and y will be animated concurrently.
-     * @param {Object} box The box to fill {x, y, width, height}
-     * @param {<i>Boolean</i>} adjust (optional) Whether to adjust for box-model issues automatically
-     * @param {<i>Boolean</i>} animate (optional) Animate the transition (Default is false)
-     * @param {<i>float</i>} duration (optional) How long the animation lasts. (Defaults to .35 seconds)
-     * @param {<i>Function</i>} onComplete (optional) Function to call when animation completes.
-     * @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeBoth)
-     */
+    
     setBox : function(box, adjust, animate, duration, onComplete, easing){
         var w = box.width, h = box.height;
         if((adjust && !this.autoBoxAdjust) && !this.isBorderBox()){
@@ -2492,7 +2190,8 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    repaint : function(){
+    
+     repaint : function(){
         var dom = this.dom;
         YAHOO.util.Dom.addClass(dom, 'yui-ext-repaint');
         setTimeout(function(){
@@ -2501,10 +2200,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Returns an object with properties top, left, right and bottom representing the margins of this element unless sides is passed, 
-     * then it returns the calculated width of the sides (see getPadding)
-     */
+    
     getMargins : function(side){
         if(!side){
             return {
@@ -2527,38 +2223,43 @@ YAHOO.ext.Element.prototype = {
         return val;
     },
     
-    /**
-     * Creates a proxy element of this element
-     * @param {String} className The class name of the proxy element
-     * @param {<i>String/HTMLElement</i>} renderTo (optional) The element or element id to render the proxy to (defaults to document.body)
-     * @param {<i>Boolean</i>} matchBox (optional) True to align and size the proxy to this element now (defaults to false)
-     * @return {YAHOO.ext.Element} The new proxy element
-     */
-    createProxy : function(className, renderTo, matchBox){
+    
+    createProxy : function(config, renderTo, matchBox){
         if(renderTo){
             renderTo = YAHOO.util.Dom.get(renderTo);
         }else{
             renderTo = document.body;
         }
-        var proxy = YAHOO.ext.DomHelper.append(renderTo, 
-                {tag : 'div', cls: className, id: this.dom.id + '-proxy'}, true);
+        config = typeof config == 'object' ? 
+            config : {tag : 'div', cls: config};
+        var proxy = YAHOO.ext.DomHelper.append(renderTo, config, true);
         if(matchBox){
            proxy.setBox(this.getBox());
         }
         return proxy;
     },
     
-    /**
-     * Removes this element from the DOM and deletes it from the cache
-     */
+    
+    createShim : function(){
+        var config = {
+            tag : 'iframe', 
+            frameBorder:'no', 
+            cls: 'yiframe-shim', 
+            style: 'position:absolute;visibility:hidden;left:0;top:0;', 
+            src: YAHOO.ext.SSL_SECURE_URL
+        };
+        var shim = YAHOO.ext.DomHelper.append(this.dom.parentNode, config, true);
+        shim.setBox(this.getBox());
+        return shim;
+    },
+    
+    
     remove : function(){
         this.dom.parentNode.removeChild(this.dom);
         delete YAHOO.ext.Element.cache[this.dom.id];
     },
     
-    /**
-     * Adds and removes a css class when the mosue is over this element
-     */
+    
     addClassOnOver : function(className){
         this.on('mouseover', function(){
             this.addClass(className);
@@ -2569,9 +2270,7 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Stops the specified event from bubbling and optionally prevent's the default action
-     */
+    
     swallowEvent : function(eventName, preventDefault){
         var fn = function(e){
             e.stopPropagation();
@@ -2583,14 +2282,10 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Sizes this element to it's parent element's dimensions performing 
-     * neccessary box adjustments. 
-     * @param {Boolean} monitorResize (optional) If true maintains the fit when the browser window is resized.
-     */
+    
     fitToParent : function(monitorResize){
         var p = getEl(this.dom.parentNode, true);
-        p.beginMeasure(); // in case parent is display:none
+        p.beginMeasure(); 
         var box = p.getBox(true, true);
         p.endMeasure();
         this.setSize(box.width, box.height);
@@ -2600,21 +2295,33 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Appends the passed element(s) to this element
-     * @param {String/HTMLElement/Array/Element/CompositeElement} el
-     */
+    
+    getNextSibling : function(){
+        var n = this.dom.nextSibling;
+        while(n && n.nodeType != 1){
+            n = n.nextSibling;
+        }
+        return n;
+    },
+    
+    
+    getPrevSibling : function(){
+        var n = this.dom.previousSibling;
+        while(n && n.nodeType != 1){
+            n = n.previousSibling;
+        }
+        return n;
+    },
+    
+    
+    
     appendChild: function(el){
         el = getEl(el);
         el.appendTo(this);
         return this;
     },
     
-    /**
-     * Creates the passed DomHelper config and appends it to this element or optionally inserts it before the passed child element.
-     * @param {Object} config DomHelper element config object
-     * @param {<i>HTMLElement</i>} insertBefore (optional) a child element of this element
-     */
+    
     createChild: function(config, insertBefore){
         var c;
         if(insertBefore){
@@ -2625,41 +2332,28 @@ YAHOO.ext.Element.prototype = {
         return c;
     },
     
-    /**
-     * Appends this element to the passed element
-     * @param {String/HTMLElement/Element} el The new parent element
-     */
+    
     appendTo: function(el){
         var node = getEl(el).dom;
         node.appendChild(this.dom);
         return this;
     },
     
-    /**
-     * Inserts this element before the passed element in the DOM
-     * @param {String/HTMLElement/Element} el The element to insert before
-     */
+    
     insertBefore: function(el){
         var node = getEl(el).dom;
         node.parentNode.insertBefore(this.dom, node);
         return this;
     },
     
-    /**
-     * Inserts this element after the passed element in the DOM
-     * @param {String/HTMLElement/Element} el The element to insert after
-     */
+    
     insertAfter: function(el){
         var node = getEl(el).dom;
         node.parentNode.insertBefore(this.dom, node.nextSibling);
         return this;
     },
     
-    /**
-     * Creates and wraps this element with another element
-     * @param {Object} config DomHelper element config object for the wrapper element or null for an empty div
-     * @return {Element} The newly created wrapper element
-     */
+    
     wrap: function(config){
         if(!config){
             config = {tag: 'div'};
@@ -2669,10 +2363,7 @@ YAHOO.ext.Element.prototype = {
         return newEl;
     },
     
-    /**
-     * Replaces the passed element with this element
-     * @param {String/HTMLElement/Element} el The element to replace
-     */
+    
     replace: function(el){
         el = getEl(el);
         this.insertBefore(el);
@@ -2680,20 +2371,13 @@ YAHOO.ext.Element.prototype = {
         return this;
     },
     
-    /**
-     * Inserts an html fragment into this element
-     * @param {String} where Where to insert the html in relation to the this element - beforeBegin, afterBegin, beforeEnd, afterEnd.
-     * @param {String} html The HTML fragment
-     */
+    
     insertHtml : function(where, html){
         YAHOO.ext.DomHelper.insertHtml(where, this.dom, html);
         return this;
     },
     
-    /**
-     * Sets the passed attributes as attributes of this element (a style attribute can be a string, object or function)
-     * @param {Object} o The object with the attributes
-     */
+    
     set : function(o){
         var el = this.dom;
         var useSet = el.setAttribute ? true : false;
@@ -2708,41 +2392,54 @@ YAHOO.ext.Element.prototype = {
         }
         YAHOO.ext.DomHelper.applyStyles(el, o.style);
         return this;
+    },
+    
+    
+    addKeyListener : function(key, fn, scope){
+        var config;
+        if(typeof key != 'object' || key instanceof Array){
+            config = {
+                key: key,
+                fn: fn,
+                scope: scope 
+            };
+        }else{
+            config = {
+                key : key.key,
+                shift : key.shift,
+                ctrl : key.ctrl,
+                alt : key.alt,
+                fn: fn,
+                scope: scope
+            };
+        }
+        var map = new YAHOO.ext.KeyMap(this, config);
+        return map; 
+    },
+    
+    
+    addKeyMap : function(config){
+        return new YAHOO.ext.KeyMap(this, config);
     }
 };
 
-/**
- * Whether to automatically adjust width and height settings for box-model issues
- */
-YAHOO.ext.Element.prototype.autoBoxAdjust = true;
-YAHOO.ext.Element.prototype.autoDisplayMode = false;
 
-/**
- * @private Used to check if a value has a unit
- */
+YAHOO.ext.Element.prototype.autoBoxAdjust = true;
+
+YAHOO.ext.Element.prototype.autoDisplayMode = true;
+
 YAHOO.ext.Element.unitPattern = /\d+(px|em|%|en|ex|pt|in|cm|mm|pc)$/i;
-/**
- * Visibility mode constant - Use visibility to hide element
- * @type Number
- */
+
 YAHOO.ext.Element.VISIBILITY = 1;
-/**
- * Visibility mode constant - Use display to hide element
- * @type Number
- */
+
 YAHOO.ext.Element.DISPLAY = 2;
 
 YAHOO.ext.Element.blockElements = /^(?:address|blockquote|center|dir|div|dl|fieldset|form|h\d|hr|isindex|menu|ol|ul|p|pre|table|dd|dt|li|tbody|tr|td|thead|tfoot|iframe)$/i;
-
-/** @ignore */
 YAHOO.ext.Element.borders = {l: 'border-left-width', r: 'border-right-width', t: 'border-top-width', b: 'border-bottom-width'};
-/** @ignore */
 YAHOO.ext.Element.paddings = {l: 'padding-left', r: 'padding-right', t: 'padding-top', b: 'padding-bottom'};
 YAHOO.ext.Element.margins = {l: 'margin-left', r: 'margin-right', t: 'margin-top', b: 'margin-bottom'};
         
-/**
- * @private Call out to here so we make minimal closure
- */
+
 YAHOO.ext.Element.createStopHandler = function(stopPropagation, handler, scope, override){
     return function(e){
         if(e){
@@ -2756,32 +2453,34 @@ YAHOO.ext.Element.createStopHandler = function(stopPropagation, handler, scope, 
     };
 };
 
-/**
- * @private
- */
+
 YAHOO.ext.Element.cache = {};
 
-/**
- * Static method to retreive Element objects. Uses simple caching to consistently return the same object. 
- * Automatically fixes if an object was recreated with the same id via AJAX or DOM.
- * @param {String/HTMLElement/Element} el The id of the element or the element to wrap (must have an id). If you pass in an element, it is returned
- * @param {<i>Boolean</i>} autoGenerateId (optional) Set this flag to true if you are passing an element without an id (like document.body). It will auto generate an id if one isn't present. 
- * @return {Element} The element object
- */
+
 YAHOO.ext.Element.get = function(el, autoGenerateId){
     if(!el){ return null; }
-    autoGenerateId = true; // now generates id by default
+    autoGenerateId = true; 
     if(el instanceof YAHOO.ext.Element){
-        el.dom = YAHOO.util.Dom.get(el.id); // refresh dom element in case no longer valid
-        YAHOO.ext.Element.cache[el.id] = el; // in case it was created directly with Element(), let's cache it
+        el.dom = YAHOO.util.Dom.get(el.id); 
+        YAHOO.ext.Element.cache[el.id] = el; 
         return el;
     }else if(el.isComposite){
         return el;
     }else if(el instanceof Array){
         return YAHOO.ext.Element.select(el);
+    }else if(el === document){
+        
+        if(!YAHOO.ext.Element.cache['__ydocument']){
+            var docEl = function(){};
+            docEl.prototype = YAHOO.ext.Element.prototype;
+            var o = new docEl();
+            o.dom = document;
+            YAHOO.ext.Element.cache['__ydocument'] = o;
+        }
+        return YAHOO.ext.Element.cache['__ydocument'];
     }
     var key = el;
-    if(typeof el != 'string'){ // must be an element
+    if(typeof el != 'string'){ 
         if(!el.id && !autoGenerateId){ return null; }
         YAHOO.util.Dom.generateId(el, 'elgen-');
         key = el.id;
@@ -2797,22 +2496,16 @@ YAHOO.ext.Element.get = function(el, autoGenerateId){
     return element;
 };
 
-/**
- * Shorthand function for YAHOO.ext.Element.get()
- */
+
 var getEl = YAHOO.ext.Element.get;
 
-// clean up refs
-YAHOO.util.Event.addListener(window, 'unload', function(){ YAHOO.ext.Element.cache = null; });
 
-/*
-------------------------------------------------------------------
-// File: \CompositeElement.js
-------------------------------------------------------------------
-*/
-/**
- * Heavyweight composite class. Creates a YAHOO.ext.Element for every element.
- */
+YAHOO.util.Event.addListener(window, 'unload', function(){ 
+    YAHOO.ext.Element.cache = null;
+});
+
+
+
 YAHOO.ext.CompositeElement = function(els){
     this.elements = [];
     this.addElements(els);
@@ -2835,10 +2528,7 @@ YAHOO.ext.CompositeElement.prototype = {
         }
         return this;
     },
-    /**
-    * Adds elements to this composite
-    * @param {String} els A string CSS selector, an array of elements or an element
-    */
+    
     add : function(els){
         if(typeof els == 'string'){
             this.addElements(YAHOO.ext.Element.selectorFunction(string));
@@ -2849,9 +2539,7 @@ YAHOO.ext.CompositeElement.prototype = {
         }
         return this;
     },
-    /**
-    * Calls the passed function passing (el, this, index) for each element in this composite.
-    */
+    
     each : function(fn, scope){
         var els = this.elements;
         for(var i = 0, len = els.length; i < len; i++){
@@ -2860,9 +2548,7 @@ YAHOO.ext.CompositeElement.prototype = {
         return this;
     }
 };
-/**
- * Flyweight composite class. Reuses the same YAHOO.ext.Element for element operations.
- */
+
 YAHOO.ext.CompositeElementLite = function(els){
     YAHOO.ext.CompositeElementLite.superclass.constructor.call(this, els);
     this.el = YAHOO.ext.Element.get(this.elements[0], true);
@@ -2896,16 +2582,12 @@ for(var fnName in YAHOO.ext.Element.prototype){
         YAHOO.ext.CompositeElement.createCall(YAHOO.ext.CompositeElement.prototype, fnName);
     }
 }
-if(typeof cssQuery == 'function'){// Dean Edwards cssQuery
+if(typeof cssQuery == 'function'){
     YAHOO.ext.Element.selectorFunction = cssQuery;
-}else if(typeof document.getElementsBySelector == 'function'){ // Simon Willison's getElementsBySelector
+}else if(typeof document.getElementsBySelector == 'function'){ 
     YAHOO.ext.Element.selectorFunction = document.getElementsBySelector.createDelegate(document);
 }
-/**
-* Selects elements based on the passed CSS selector
-* @param {String} selector The CSS selector
-* @param {Boolean} unique true to create a unique YAHOO.ext.Element for each element (defaults to a shared flyweight object)
-*/
+
 YAHOO.ext.Element.select = function(selector, unique){
     var els;
     if(typeof selector == 'string'){
@@ -2923,41 +2605,40 @@ YAHOO.ext.Element.select = function(selector, unique){
 };
 
 var getEls = YAHOO.ext.Element.select;
-
-/*
-------------------------------------------------------------------
-// File: \State.js
-------------------------------------------------------------------
-*/
 YAHOO.namespace('ext.state');
 
 YAHOO.ext.state.Provider = function(){
     YAHOO.ext.state.Provider.superclass.constructor.call(this);
+    
     this.events = {
         'statechange': new YAHOO.util.CustomEvent('statechange')  
     };
     this.state = {};
 };
 YAHOO.extendX(YAHOO.ext.state.Provider, YAHOO.ext.util.Observable, {
+    
     get : function(name, defaultValue){
         return typeof this.state[name] == 'undefined' ?
             defaultValue : this.state[name];
     },
+    
     
     clear : function(name){
         delete this.state[name];
         this.fireEvent('statechange', this, name, null);
     },
     
+    
     set : function(name, value){
         this.state[name] = value;
         this.fireEvent('statechange', this, name, value);
     },
     
+    
     decodeValue : function(cookie){
         var re = /^(a|n|d|b|s|o)\:(.*)$/;
         var matches = re.exec(unescape(cookie));
-        if(!matches || !matches[1]) return; // non state cookie
+        if(!matches || !matches[1]) return; 
         var type = matches[1];
         var v = matches[2];
         switch(type){
@@ -2986,6 +2667,7 @@ YAHOO.extendX(YAHOO.ext.state.Provider, YAHOO.ext.util.Observable, {
                 return v;
         }
     },
+    
     
     encodeValue : function(v){
         var enc;
@@ -3017,25 +2699,31 @@ YAHOO.extendX(YAHOO.ext.state.Provider, YAHOO.ext.util.Observable, {
     }
 });
 
+
 YAHOO.ext.state.Manager = new function(){
     var provider = new YAHOO.ext.state.Provider();
     
     return {
+        
         setProvider : function(stateProvider){
             provider = stateProvider;
         },
+        
         
         get : function(key, defaultValue){
             return provider.get(key, defaultValue);
         },
         
-        set : function(key, value){
+        
+         set : function(key, value){
             provider.set(key, value);
         },
+        
         
         clear : function(key){
             provider.clear(key);
         },
+        
         
         getProvider : function(){
             return provider;
@@ -3043,10 +2731,11 @@ YAHOO.ext.state.Manager = new function(){
     };
 }();
 
+
 YAHOO.ext.state.CookieProvider = function(config){
     YAHOO.ext.state.CookieProvider.superclass.constructor.call(this);
     this.path = '/';
-    this.expires = new Date(new Date().getTime()+(1000*60*60*24*7)); //7 days
+    this.expires = new Date(new Date().getTime()+(1000*60*60*24*7)); 
     this.domain = null;
     this.secure = false;
     YAHOO.ext.util.Config.apply(this, config);
@@ -3100,17 +2789,7 @@ YAHOO.extendX(YAHOO.ext.state.CookieProvider, YAHOO.ext.state.Provider, {
 });
 
 
-/*
-------------------------------------------------------------------
-// File: \EventManager.js
-------------------------------------------------------------------
-*/
 
-/**
- * @class 
- * Registers event handlers that want to receive an EventObject instead of the standard browser event
- * See {@link YAHOO.ext.EventObject} for more details on the usage of this object.
- */
 YAHOO.ext.EventManager = new function(){
     var docReadyEvent;
     var docReadyProcId;
@@ -3136,7 +2815,7 @@ YAHOO.ext.EventManager = new function(){
         if(document.addEventListener) {
             YAHOO.util.Event.on(document, "DOMContentLoaded", fireDocReady);
         }else if(YAHOO.ext.util.Browser.isIE){
-            // inspired by  http://www.thefutureoftheweb.com/blog/2006/6/adddomloadevent
+            
             document.write('<s'+'cript id="ie-deferred-loader" defer="defer" src="' +
                         (YAHOO.ext.EventManager.ieDeferSrc || YAHOO.ext.SSL_SECURE_URL) + '"></s'+'cript>');
             YAHOO.util.Event.on('ie-deferred-loader', 'readystatechange', function(){
@@ -3152,13 +2831,10 @@ YAHOO.ext.EventManager = new function(){
                  }
             }, 10);
         }
-        // no matter what, make sure it fires on load
+        
         YAHOO.util.Event.on(window, 'load', fireDocReady);
     };
-    /** 
-     * Places a simple wrapper around an event handler to override the browser event 
-     * object with a YAHOO.ext.EventObject
-     */
+    
     this.wrap = function(fn, scope, override){
         var wrappedFn = function(e){
             YAHOO.ext.EventObject.setEvent(e);
@@ -3167,80 +2843,34 @@ YAHOO.ext.EventManager = new function(){
         return wrappedFn;
     };
     
-    /**
-     * Appends an event handler
-     *
-     * @param {Object}   element        The html element to assign the 
-     *                             event to
-     * @param {String}   eventName     The type of event to append
-     * @param {Function} fn        The method the event invokes
-     * @param {Object}   scope    An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {boolean}  override If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     * @return {Function} The wrapper function created (to be used to remove the listener if necessary)
-     */
+    
     this.addListener = function(element, eventName, fn, scope, override){
         var wrappedFn = this.wrap(fn, scope, override);
         YAHOO.util.Event.addListener(element, eventName, wrappedFn);
         return wrappedFn;
     };
     
-    /**
-     * Removes an event handler
-     *
-     * @param {Object}   element        The html element to remove the 
-     *                             event from
-     * @param {String}   eventName     The type of event to append
-     * @param {Function} wrappedFn        The wrapper method returned when adding the listener
-     * @return {Boolean} True if a listener was actually removed
-     */
+    
     this.removeListener = function(element, eventName, wrappedFn){
         return YAHOO.util.Event.removeListener(element, eventName, wrappedFn);
     };
     
-    /**
-     * Appends an event handler (shorthand for addListener)
-     *
-     * @param {Object}   element        The html element to assign the 
-     *                             event to
-     * @param {String}   eventName     The type of event to append
-     * @param {Function} fn        The method the event invokes
-     * @param {Object}   scope    An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {boolean}  override If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     * @return {Function} The wrapper function created (to be used to remove the listener if necessary)
-     */
-    this.on = function(element, eventName, fn, scope, override){
-        var wrappedFn = this.wrap(fn, scope, override);
-        YAHOO.util.Event.addListener(element, eventName, wrappedFn);
-        return wrappedFn;
-    };
     
-    /**
-     * Fires when the document is ready (before onload and before images are loaded)
-     * @param {Function} fn        The method the event invokes
-     * @param {Object}   scope    An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {boolean}  override If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     */
+    this.on = this.addListener;
+    
+    
     this.onDocumentReady = function(fn, scope, override){
+        if(docReadyState){ 
+            fn.call(override? scope || window : window, scope);
+            return;
+        }
         if(!docReadyEvent){
             initDocReady();
         }
         docReadyEvent.subscribe(fn, scope, override);
     }
     
-    /**
-     * Fires when the window is resized and provides resize event buffering (100 milliseconds), passes new viewport width and height to handlers.
-     * @param {Function} fn        The method the event invokes
-     * @param {Object}   scope    An arbitrary object that will be 
-     *                             passed as a parameter to the handler
-     * @param {boolean}  override If true, the obj passed in becomes
-     *                             the execution scope of the listener
-     */
+    
     this.onWindowResize = function(fn, scope, override){
         if(!resizeEvent){
             resizeEvent = new YAHOO.util.CustomEvent('windowresize');
@@ -3252,76 +2882,65 @@ YAHOO.ext.EventManager = new function(){
             });
         }
         resizeEvent.subscribe(fn, scope, override);
+    },
+    
+    
+    this.removeResizeListener = function(fn, scope){
+        if(resizeEvent){
+            resizeEvent.unsubscribe(fn, scope);
+        }
     }
 };
 
-/**
- * @class 
- * EventObject exposes the Yahoo! UI Event functionality directly on the object
- * passed to your event handler. It exists mostly for convenience. It also fixes the annoying null checks automatically to cleanup your code 
- * (All the YAHOO.util.Event methods throw javascript errors if the passed event is null).
- * To get an EventObject instead of the standard browser event,
- * your must register your listener thru the {@link YAHOO.ext.EventManager} or directly on an Element
- * with {@link YAHOO.ext.Element#addManagedListener} or the shorthanded equivalent {@link YAHOO.ext.Element#mon}.<br>
- * Example:
- * <pre><code>
- fu<>nction handleClick(e){ // e is not a standard event object, it is a YAHOO.ext.EventObject
-    e.preventDefault();
-    var target = e.getTarget();
-    ...
- }
- var myDiv = getEl('myDiv');
- myDiv.mon('click', handleClick);
- //or
- YAHOO.ext.EventManager.on('myDiv', 'click', handleClick);
- YAHOO.ext.EventManager.addListener('myDiv', 'click', handleClick);
- </code></pre>
- */
+
 YAHOO.ext.EventObject = new function(){
-    /** The normal browser event */ 
+     
     this.browserEvent = null;
-    /** The button pressed in a mouse event */ 
+     
     this.button = -1;
-    /** True if the shift key was down during the event */ 
+     
     this.shiftKey = false;
-    /** True if the control key was down during the event */ 
+     
     this.ctrlKey = false;
-    /** True if the alt key was down during the event */ 
+     
     this.altKey = false;
     
-    /** Key constant @type Number */
+    
     this.BACKSPACE = 8;
-    /** Key constant @type Number */
+    
     this.TAB = 9;
-    /** Key constant @type Number */
+    
     this.RETURN = 13;
-    /** Key constant @type Number */
+    
     this.ESC = 27;
-    /** Key constant @type Number */
+    
     this.SPACE = 32;
-    /** Key constant @type Number */
+    
     this.PAGEUP = 33;
-    /** Key constant @type Number */
+    
     this.PAGEDOWN = 34;
-    /** Key constant @type Number */
+    
     this.END = 35;
-    /** Key constant @type Number */
+    
     this.HOME = 36;
-    /** Key constant @type Number */
+    
     this.LEFT = 37;
-    /** Key constant @type Number */
+    
     this.UP = 38;
-    /** Key constant @type Number */
+    
     this.RIGHT = 39;
-    /** Key constant @type Number */
+    
     this.DOWN = 40;
-    /** Key constant @type Number */
+    
     this.DELETE = 46;
-    /** Key constant @type Number */
+    
     this.F5 = 116;
 
-       /** @private */ 
+        
     this.setEvent = function(e){
+        if(e == this){ 
+            return this;
+        }
         this.browserEvent = e;
         if(e){
             this.button = e.button;
@@ -3334,44 +2953,36 @@ YAHOO.ext.EventObject = new function(){
             this.ctrlKey = false;
             this.altKey = false;
         }
+        return this;
     };
     
-    /**
-     * Stop the event. Calls YAHOO.util.Event.stopEvent() if the event is not null.
-     */ 
+     
     this.stopEvent = function(){
         if(this.browserEvent){
             YAHOO.util.Event.stopEvent(this.browserEvent);
         }
     };
     
-    /**
-     * Prevents the browsers default handling of the event. Calls YAHOO.util.Event.preventDefault() if the event is not null.
-     */ 
+     
     this.preventDefault = function(){
         if(this.browserEvent){
             YAHOO.util.Event.preventDefault(this.browserEvent);
         }
     };
     
-    /** @private */
+    
     this.isNavKeyPress = function(){
         return (this.browserEvent.keyCode && this.browserEvent.keyCode >= 33 && this.browserEvent.keyCode <= 40);
     };
     
-    /**
-     * Cancels bubbling of the event. Calls YAHOO.util.Event.stopPropagation() if the event is not null.
-     */ 
+     
     this.stopPropagation = function(){
         if(this.browserEvent){
             YAHOO.util.Event.stopPropagation(this.browserEvent);
         }
     };
     
-    /**
-     * Gets the key code for the event. Returns value from YAHOO.util.Event.getCharCode() if the event is not null.
-     * @return {Number}
-     */ 
+     
     this.getCharCode = function(){
         if(this.browserEvent){
             return YAHOO.util.Event.getCharCode(this.browserEvent);
@@ -3379,9 +2990,7 @@ YAHOO.ext.EventObject = new function(){
         return null;
     };
     
-    /**
-     * Returns a browsers key for a keydown event
-     */
+    
     this.getKey = function(){
         if(this.browserEvent){
             return this.browserEvent.charCode || this.browserEvent.keyCode;
@@ -3389,10 +2998,7 @@ YAHOO.ext.EventObject = new function(){
         return null;
     };
     
-    /**
-     * Gets the x coordinate of the event. Returns value from YAHOO.util.Event.getPageX() if the event is not null.
-     * @return {Number}
-     */ 
+     
     this.getPageX = function(){
         if(this.browserEvent){
             return YAHOO.util.Event.getPageX(this.browserEvent);
@@ -3400,10 +3006,7 @@ YAHOO.ext.EventObject = new function(){
         return null;
     };
     
-    /**
-     * Gets the y coordinate of the event. Returns value from YAHOO.util.Event.getPageY() if the event is not null.
-     * @return {Number}
-     */ 
+     
     this.getPageY = function(){
         if(this.browserEvent){
             return YAHOO.util.Event.getPageY(this.browserEvent);
@@ -3411,10 +3014,7 @@ YAHOO.ext.EventObject = new function(){
         return null;
     };
     
-    /**
-     * Gets the time of the event. Returns value from YAHOO.util.Event.getTime() if the event is not null.
-     * @return {Number}
-     */ 
+     
     this.getTime = function(){
         if(this.browserEvent){
             return YAHOO.util.Event.getTime(this.browserEvent);
@@ -3422,10 +3022,7 @@ YAHOO.ext.EventObject = new function(){
         return null;
     };
     
-    /**
-     * Gets the page coordinates of the event. Returns value from YAHOO.util.Event.getXY() if the event is not null.
-     * @return {Array} The xy values like [x, y]
-     */ 
+     
     this.getXY = function(){
         if(this.browserEvent){
             return YAHOO.util.Event.getXY(this.browserEvent);
@@ -3433,10 +3030,7 @@ YAHOO.ext.EventObject = new function(){
         return [];
     };
     
-    /**
-     * Gets the target for the event. Returns value from YAHOO.util.Event.getTarget() if the event is not null.
-     * @return {HTMLelement}
-     */ 
+     
     this.getTarget = function(){
         if(this.browserEvent){
             return YAHOO.util.Event.getTarget(this.browserEvent);
@@ -3444,10 +3038,7 @@ YAHOO.ext.EventObject = new function(){
         return null;
     };
     
-    /**
-     * Walk up the DOM looking for a particular target - if the default target matches, it is returned.
-     * @return {HTMLelement}
-     */ 
+     
     this.findTarget = function(className, tagName){
         if(tagName) tagName = tagName.toLowerCase();
         if(this.browserEvent){
@@ -3479,10 +3070,7 @@ YAHOO.ext.EventObject = new function(){
     	}
         return null;
     };
-    /**
-     * Gets the related target. Returns value from YAHOO.util.Event.getRelatedTarget() if the event is not null.
-     * @return {HTMLelement}
-     */ 
+     
     this.getRelatedTarget = function(){
         if(this.browserEvent){
             return YAHOO.util.Event.getRelatedTarget(this.browserEvent);
@@ -3490,26 +3078,21 @@ YAHOO.ext.EventObject = new function(){
         return null;
     };
     
-    /**
-     * Normalizes mouse wheel delta across browsers
-     */
+    
     this.getWheelDelta = function(){
         var e = this.browserEvent;
         var delta = 0;
-        if(e.wheelDelta){ /* IE/Opera. */
+        if(e.wheelDelta){ 
             delta = e.wheelDelta/120;
-            /** In Opera 9, delta differs in sign as compared to IE. */
+            
             if(window.opera) delta = -delta;
-        }else if(e.detail){ /** Mozilla case. */
+        }else if(e.detail){ 
             delta = -e.detail/3;
         }
         return delta;
     };
     
-    /**
-     * Returns true if the control, shift or alt key was pressed during this event.
-     * @return {Boolean}
-     */ 
+     
     this.hasModifier = function(){
         return this.ctrlKey || this.altKey || this.shiftKey;
     };
@@ -3517,144 +3100,59 @@ YAHOO.ext.EventObject = new function(){
             
     
 
-/*
-------------------------------------------------------------------
-// File: \UpdateManager.js
-------------------------------------------------------------------
-*/
-/**
- * @class Provides AJAX-style update for Element object using Yahoo 
- * UI library YAHOO.util.Connect functionality.<br><br>
- * Usage:<br>
- * <pre><code>
- * // Get it from a YAHOO.ext.Element object
- * var mgr = myElement.getUpdateManager();
- * mgr.update('http://myserver.com/index.php', 'param1=1&amp;param2=2');
- * ...
- * mgr.formUpdate('myFormId', 'http://myserver.com/index.php');
- * <br>
- * // or directly (returns the same UpdateManager instance)
- * var mgr = new YAHOO.ext.UpdateManager('myElementId');
- * mgr.startAutoRefresh(60, 'http://myserver.com/index.php');
- * mgr.onUpdate.subscribe(myFcnNeedsToKnow);
- * <br>
- * </code></pre>
- * @requires YAHOO.ext.Element
- * @requires YAHOO.util.Dom
- * @requires YAHOO.util.Event
- * @requires YAHOO.util.CustomEvent 
- * @requires YAHOO.util.Connect
- * @constructor
- * Create new UpdateManager.
- * @param {String/HTMLElement/YAHOO.ext.Element} el The element to update 
- * @param {<i>Boolean</i>} forceNew (optional) By default the constructor checks to see if the passed element already has an UpdateManager and if it does it returns the same instance. This will skip that check (useful for extending this class).
- */
 YAHOO.ext.UpdateManager = function(el, forceNew){
     el = YAHOO.ext.Element.get(el);
     if(!forceNew && el.updateManager){
         return el.updateManager;
     }
-    /**
-     * The Element object
-     * @type YAHOO.ext.Element
-     */
+    
     this.el = el;
-    /**
-     * Cached url to use for refreshes. Overwritten every time update() is called unless 'discardUrl' param is set to true.
-     * @type String
-     */
+    
     this.defaultUrl = null;
-    /**
-     * fired before update is made, return false from your handler and the update is cancelled. 
-     * Uses fireDirect with signature: (oElement, url, params)
-     * @type YAHOO.util.CustomEvent
-     */
     this.beforeUpdate = new YAHOO.util.CustomEvent('UpdateManager.beforeUpdate');
-    /**
-     * Fired after successful update is made. Uses fireDirect with signature: (oElement, oResponseObject)
-     * @type YAHOO.util.CustomEvent
-     */
     this.onUpdate = new YAHOO.util.CustomEvent('UpdateManager.onUpdate');
-    /**
-     * Fired on update failure. Uses fireDirect with signature: (oElement, oResponseObject)
-     * @type YAHOO.util.CustomEvent
-     */
     this.onFailure = new YAHOO.util.CustomEvent('UpdateManager.onFailure');
     
     this.events = {
+        
         'beforeupdate': this.beforeUpdate,
+        
         'update': this.onUpdate,
+        
         'failure': this.onFailure 
     };
     
-    /**
-     * Blank page URL to use with SSL file uploads (Defaults to YAHOO.ext.UpdateManager.defaults.sslBlankUrl or 'about:blank'). 
-     * @type String
-     */
+    
     this.sslBlankUrl = YAHOO.ext.UpdateManager.defaults.sslBlankUrl;
-    /**
-     * Whether to append unique parameter on get request to disable caching (Defaults to YAHOO.ext.UpdateManager.defaults.disableCaching or false). 
-     * @type Boolean
-     */
+    
     this.disableCaching = YAHOO.ext.UpdateManager.defaults.disableCaching;
-    /**
-     * Text for loading indicator (Defaults to YAHOO.ext.UpdateManager.defaults.indicatorText or '&lt;div class="loading-indicator"&gt;Loading...&lt;/div&gt;'). 
-     * @type String
-     */
+    
     this.indicatorText = YAHOO.ext.UpdateManager.defaults.indicatorText;
-    /**
-     * Whether to show indicatorText when loading (Defaults to YAHOO.ext.UpdateManager.defaults.showLoadIndicator or true). 
-     * @type String
-     */
+    
     this.showLoadIndicator = YAHOO.ext.UpdateManager.defaults.showLoadIndicator;
-    /**
-     * Timeout for requests or form posts in seconds (Defaults to YAHOO.ext.UpdateManager.defaults.timeout or 30 seconds). 
-     * @type Number
-     */
+    
     this.timeout = YAHOO.ext.UpdateManager.defaults.timeout;
     
-    /**
-     * True to process scripts in the output (Defaults to YAHOO.ext.UpdateManager.defaults.loadScripts (false)). 
-     * @type Number
-     */
+    
     this.loadScripts = YAHOO.ext.UpdateManager.defaults.loadScripts;
     
-    /**
-     * YAHOO.util.Connect transaction object of current executing transaction
-     */
+    
     this.transaction = null;
     
-    /**
-     * @private
-     */
+    
     this.autoRefreshProcId = null;
-    /**
-     * Delegate for refresh() prebound to 'this', use myUpdater.refreshDelegate.createCallback(arg1, arg2) to bind arguments
-     * @type Function
-     */
+    
     this.refreshDelegate = this.refresh.createDelegate(this);
-    /**
-     * Delegate for update() prebound to 'this', use myUpdater.updateDelegate.createCallback(arg1, arg2) to bind arguments
-     * @type Function
-     */
+    
     this.updateDelegate = this.update.createDelegate(this);
-    /**
-     * Delegate for formUpdate() prebound to 'this', use myUpdater.formUpdateDelegate.createCallback(arg1, arg2) to bind arguments
-     * @type Function
-     */
+    
     this.formUpdateDelegate = this.formUpdate.createDelegate(this);
-    /**
-     * @private
-     */
+    
     this.successDelegate = this.processSuccess.createDelegate(this);
-    /**
-     * @private
-     */
+    
      this.failureDelegate = this.processFailure.createDelegate(this);
      
-     /**
-      * The renderer for this UpdateManager. Defaults to {@link YAHOO.ext.UpdateManager.BasicRenderer}. 
-      */
+     
       this.renderer = new YAHOO.ext.UpdateManager.BasicRenderer();
 };
 
@@ -3664,23 +3162,29 @@ YAHOO.ext.UpdateManager.prototype = {
     addListener : YAHOO.ext.util.Observable.prototype.addListener,
     delayedListener : YAHOO.ext.util.Observable.prototype.delayedListener,
     removeListener : YAHOO.ext.util.Observable.prototype.removeListener,
-    /**
-     * Get the Element this UpdateManager is bound to
-     * @return {YAHOO.ext.Element} The element
-     */
+    purgeListeners : YAHOO.ext.util.Observable.prototype.purgeListeners,
+    
     getEl : function(){
         return this.el;
     },
     
-    /**
-     * Performs an async request, updating this element with the response. If params are specified it uses POST, otherwise it uses GET.
-     * @param {String/Function} url The url for this request or a function to call to get the url
-     * @param {<i>String/Object</i>} params (optional) The parameters to pass as either a url encoded string "param1=1&amp;param2=2" or as an object {param1: 1, param2: 2}
-     * @param {<i>Function</i>} callback (optional) Callback when transaction is complete - called with signature (oElement, bSuccess)
-     * @param {<i>Boolean</i>} discardUrl (optional) By default when you execute an update the defaultUrl is changed to the last used url. If true, it will not store the url.
-     */
+    
     update : function(url, params, callback, discardUrl){
         if(this.beforeUpdate.fireDirect(this.el, url, params) !== false){
+            if(typeof url == 'object'){ 
+                var cfg = url;
+                url = cfg.url;
+                params = params || cfg.params;
+                callback = callback || cfg.callback;
+                discardUrl = discardUrl || cfg.discardUrl;
+                if(callback && cfg.scope){
+                    callback = callback.createDelegate(cfg.scope);
+                }
+                if(typeof cfg.nocache != 'undefined'){this.disableCaching = cfg.nocache};
+                if(typeof cfg.text != 'undefined'){this.indicatorText = '<div class="loading-indicator">'+cfg.text+'</div>'};
+                if(typeof cfg.scripts != 'undefined'){this.loadScripts = cfg.scripts};
+                if(typeof cfg.timeout != 'undefined'){this.timeout = cfg.timeout};
+            }
             this.showLoading();
             if(!discardUrl){
                 this.defaultUrl = url;
@@ -3688,7 +3192,10 @@ YAHOO.ext.UpdateManager.prototype = {
             if(typeof url == 'function'){
                 url = url();
             }
-            if(params && typeof params != 'string'){ // must be object
+            if(typeof params == 'function'){
+                params = params();
+            }
+            if(params && typeof params != 'string'){ 
                 var buf = [];
                 for(var key in params){
                     if(typeof params[key] != 'function'){
@@ -3712,20 +3219,16 @@ YAHOO.ext.UpdateManager.prototype = {
         }
     },
     
-    /**
-     * Performs an async form post, updating this element with the response. If the form has the attribute enctype="multipart/form-data", it assumes it's a file upload.
-     * Uses this.sslBlankUrl for SSL file uploads to prevent IE security warning. See YUI docs for more info. 
-     * @param {String/HTMLElement} form The form Id or form element
-     * @param {<i>String</i>} url (optional) The url to pass the form to. If omitted the action attribute on the form will be used.
-     * @param {<i>Boolean</i>} reset (optional) Whether to try to reset the form after the update
-     * @param {<i>Function</i>} callback (optional) Callback when transaction is complete - called with signature (oElement, bSuccess)
-     */
+    
     formUpdate : function(form, url, reset, callback){
         if(this.beforeUpdate.fireDirect(this.el, form, url) !== false){
             this.showLoading();
             formEl = YAHOO.util.Dom.get(form);
             if(typeof url == 'function'){
                 url = url();
+            }
+            if(typeof params == 'function'){
+                params = params();
             }
             url = url || formEl.action;
             var callback = {
@@ -3744,10 +3247,7 @@ YAHOO.ext.UpdateManager.prototype = {
         }
     },
     
-    /**
-     * Refresh the element with the last used url or defaultUrl. If there is no url, it returns immediately
-     * @param {Function} callback (optional) Callback when transaction is complete - called with signature (oElement, bSuccess)
-     */
+    
     refresh : function(callback){
         if(this.defaultUrl == null){
             return;
@@ -3755,14 +3255,7 @@ YAHOO.ext.UpdateManager.prototype = {
         this.update(this.defaultUrl, null, callback, true);
     },
     
-    /**
-     * Set this element to auto refresh.
-     * @param {Number} interval How often to update (in seconds).
-     * @param {<i>String/Function</i>} url (optional) The url for this request or a function to call to get the url (Defaults to the last used url)
-     * @param {<i>String/Object</i>} params (optional) The parameters to pass as either a url encoded string "&param1=1&param2=2" or as an object {param1: 1, param2: 2}
-     * @param {<i>Function</i>} callback (optional) Callback when transaction is complete - called with signature (oElement, bSuccess)
-     * @param {<i>Boolean</i>} refreshNow (optional) Whether to execute the refresh now, or wait the interval
-     */
+    
     startAutoRefresh : function(interval, url, params, callback, refreshNow){
         if(refreshNow){
             this.update(url || this.defaultUrl, params, callback, true);
@@ -3773,28 +3266,21 @@ YAHOO.ext.UpdateManager.prototype = {
         this.autoRefreshProcId = setInterval(this.update.createDelegate(this, [url || this.defaultUrl, params, callback, true]), interval*1000);
     },
     
-    /**
-     * Stop auto refresh on this element.
-     */
+    
      stopAutoRefresh : function(){
         if(this.autoRefreshProcId){
             clearInterval(this.autoRefreshProcId);
         }
     },
     
-    /**
-     * Called to update the element to "Loading" state. Override to perform custom action.
-     */
+    
     showLoading : function(){
         if(this.showLoadIndicator){
             this.el.update(this.indicatorText);
         }
     },
     
-    /**
-     * Adds unique parameter to query string if disableCaching = true
-     * @private
-     */
+    
     prepareUrl : function(url){
         if(this.disableCaching){
             var append = '_dc=' + (new Date().getTime());
@@ -3807,26 +3293,31 @@ YAHOO.ext.UpdateManager.prototype = {
         return url;
     },
     
-    /**
-     * @private
-     */
+    
     processSuccess : function(response){
         this.transaction = null;
-        this.renderer.render(this.el, response, this);
         if(response.argument.form && response.argument.reset){
-            try{ // put in try/catch since some older FF releases had problems with this
+            try{ 
                 response.argument.form.reset();
             }catch(e){}
         }
-        this.onUpdate.fireDirect(this.el, response);
+        if(this.loadScripts){
+            this.renderer.render(this.el, response, this, 
+                this.updateComplete.createDelegate(this, [response]));
+        }else{
+            this.renderer.render(this.el, response, this);
+            this.updateComplete(response);
+        }
+    },
+    
+    updateComplete : function(response){
+        this.fireEvent('update', this.el, response);
         if(typeof response.argument.callback == 'function'){
             response.argument.callback(this.el, true);
         }
     },
     
-    /**
-     * @private
-     */
+    
     processFailure : function(response){
         this.transaction = null;
         this.onFailure.fireDirect(this.el, response);
@@ -3835,10 +3326,7 @@ YAHOO.ext.UpdateManager.prototype = {
         }
     },
     
-    /**
-     * Set the content renderer for this UpdateManager. See {@link YAHOO.ext.UpdateManager.BasicRenderer#render} for more details.
-     * @param {Object} renderer The object implementing the render() method
-     */
+    
     setRenderer : function(renderer){
         this.renderer = renderer;
     },
@@ -3847,26 +3335,19 @@ YAHOO.ext.UpdateManager.prototype = {
        return this.renderer;  
     },
     
-    /**
-     * Set the defaultUrl used for updates
-     * @param {String/Function} defaultUrl The url or a function to call to get the url
-     */
+    
     setDefaultUrl : function(defaultUrl){
         this.defaultUrl = defaultUrl;
     },
     
-    /**
-     * Aborts the executing transaction
-     */
+    
     abort : function(){
         if(this.transaction){
             YAHOO.util.Connect.abort(this.transaction);
         }
     },
     
-    /**
-     * Returns true if an update is in progress
-     */
+    
     isUpdating : function(){
         if(this.transaction){
             return YAHOO.util.Connect.isCallInProgress(this.transaction);
@@ -3875,96 +3356,51 @@ YAHOO.ext.UpdateManager.prototype = {
     }
 };
 
-/**
- * Static convenience method, Usage:
- * YAHOO.ext.UpdateManager.update('my-div', 'stuff.php');
- * @param {String/HTMLElement/YAHOO.ext.Element} el The element to update
- * @param {String} url The url
- * @param {<i>String/Object</i>} params (optional) Url encoded param string or an object of name/value pairs
- * @param {<i>Object</i>} options (optional) A config object with any of the UpdateManager properties you want to set - for example: {disableCaching:true, indicatorText: 'Loading data...'}
- */
-YAHOO.ext.UpdateManager.update = function(el, url, params, options){
+
+   YAHOO.ext.UpdateManager.defaults = {
+       
+         timeout : 30,
+         
+         
+        loadScripts : false,
+         
+        
+        sslBlankUrl : (YAHOO.ext.SSL_SECURE_URL || 'javascript:false'),
+        
+        disableCaching : false,
+        
+        showLoadIndicator : true,
+        
+        indicatorText : '<div class="loading-indicator">Loading...</div>'
+   };
+
+
+YAHOO.ext.UpdateManager.updateElement = function(el, url, params, options){
     var um = getEl(el, true).getUpdateManager();
     YAHOO.ext.util.Config.apply(um, options);
     um.update(url, params, options.callback);
 }
 
-/**
- * @class
- * Default Content renderer. Updates the elements innerHTML with the responseText.
- */ 
+YAHOO.ext.UpdateManager.update = YAHOO.ext.UpdateManager.updateElement;
+ 
 YAHOO.ext.UpdateManager.BasicRenderer = function(){};
 
 YAHOO.ext.UpdateManager.BasicRenderer.prototype = {
-    /**
-     * This is called when the transaction is completed and it's time to update the element - The BasicRenderer 
-     * updates the elements innerHTML with the responseText - To perform a custom render (i.e. XML or JSON processing), 
-     * create an object with a "render(el, response)" method and pass it to setRenderer on the UpdateManager.
-     * @param {YAHOO.ext.Element} el The element being rendered
-     * @param {Object} response The YUI Connect response object
-     */
-     render : function(el, response, updateManager){
-        el.update(response.responseText, updateManager.loadScripts);
+    
+     render : function(el, response, updateManager, callback){
+        el.update(response.responseText, updateManager.loadScripts, callback);
     }
 };
 
-/**
- * The defaults collection enables customizing the default behavior of UpdateManager
- */
-YAHOO.ext.UpdateManager.defaults = {};
-/**
- * Timeout for requests or form posts in seconds (Defaults 30 seconds). 
- * @type Number
- */
- YAHOO.ext.UpdateManager.defaults.timeout = 30;
- 
- /**
- * True to process scripts by default (Defaults to false). 
- * @type Number
- */
- YAHOO.ext.UpdateManager.defaults.loadScripts = false;
- 
-/**
-* Blank page URL to use with SSL file uploads (Defaults to 'about:blank'). 
-* @type String
-*/
-YAHOO.ext.UpdateManager.defaults.sslBlankUrl = YAHOO.ext.SSL_SECURE_URL;
-/**
- * Whether to append unique parameter on get request to disable caching (Defaults to false). 
- * @type Boolean
- */
-YAHOO.ext.UpdateManager.defaults.disableCaching = false;
-/**
- * Whether to show indicatorText when loading (Defaults to true). 
- * @type String
- */
-YAHOO.ext.UpdateManager.defaults.showLoadIndicator = true;
-/**
- * Text for loading indicator (Defaults to '&lt;div class="loading-indicator"&gt;Loading...&lt;/div&gt;'). 
- * @type String
- */
-YAHOO.ext.UpdateManager.defaults.indicatorText = '<div class="loading-indicator">Loading...</div>';
 
-/*
-------------------------------------------------------------------
-// File: \Date.js
-------------------------------------------------------------------
-*/
-/*
- * All the Date functions below are the excellent work of Baron Schwartz
- * They generate precompiled functions from date formats instead of parsing and processing
- * the format everytime you do something with a date.
- */
-/** @ignore */
+
 Date.parseFunctions = {count:0};
-/** @ignore */
+
 Date.parseRegexes = [];
-/** @ignore */
+
 Date.formatFunctions = {count:0};
 
-/**
- * Formats a date given to the supplied format - the format syntax is the same as <a href="http://www.php.net/date">PHP's date() function</a>.
- */
+
 Date.prototype.dateFormat = function(format) {
     if (Date.formatFunctions[format] == null) {
         Date.createNewFormat(format);
@@ -3973,12 +3409,10 @@ Date.prototype.dateFormat = function(format) {
     return this[func]();
 };
 
-/**
- * Same as {@link #dateFormat}
- */
+
 Date.prototype.format = Date.prototype.dateFormat;
 
-/** @ignore */
+
 Date.createNewFormat = function(format) {
     var funcName = "format" + Date.formatFunctions.count++;
     Date.formatFunctions[format] = funcName;
@@ -4001,7 +3435,7 @@ Date.createNewFormat = function(format) {
     eval(code.substring(0, code.length - 3) + ";}");
 };
 
-/** @ignore */
+
 Date.getFormatCode = function(character) {
     switch (character) {
     case "d":
@@ -4063,9 +3497,7 @@ Date.getFormatCode = function(character) {
     };
 };
 
-/**
- * Parses a date given the supplied format - the format syntax is the same as <a href="http://www.php.net/date">PHP's date() function</a>.
- */
+
 Date.parseDate = function(input, format) {
     if (Date.parseFunctions[format] == null) {
         Date.createParser(format);
@@ -4074,7 +3506,7 @@ Date.parseDate = function(input, format) {
     return Date[func](input);
 };
 
-/** @ignore */
+
 Date.createParser = function(format) {
     var funcName = "parse" + Date.parseFunctions.count++;
     var regexNum = Date.parseRegexes.length;
@@ -4130,7 +3562,7 @@ Date.createParser = function(format) {
     eval(code);
 };
 
-/** @ignore */
+
 Date.formatCodeToRegex = function(character, currentGroup) {
     switch (character) {
     case "D":
@@ -4260,9 +3692,9 @@ Date.prototype.getDayOfYear = function() {
 };
 
 Date.prototype.getWeekOfYear = function() {
-    // Skip to Thursday of this week
+    
     var now = this.getDayOfYear() + (4 - this.getDay());
-    // Find the first Thursday of the year
+    
     var jan1 = new Date(this.getFullYear(), 0, 1);
     var then = (7 - jan1.getDay() + 4);
     document.write(then);
@@ -4289,7 +3721,7 @@ Date.prototype.getDaysInMonth = function() {
     return Date.daysInMonth[this.getMonth()];
 };
 
-/** @ignore */
+
 Date.prototype.getSuffix = function() {
     switch (this.getDate()) {
         case 1:
@@ -4307,13 +3739,10 @@ Date.prototype.getSuffix = function() {
     }
 };
 
-/** @ignore */
+
 Date.daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
 
-/**
- * Override these values for international dates, for example...
- * Date.monthNames = ['JanInYourLang', 'FebInYourLang', ...];
- */
+
 Date.monthNames =
    ["January",
     "February",
@@ -4328,10 +3757,7 @@ Date.monthNames =
     "November",
     "December"];
     
-/**
- * Override these values for international dates, for example...
- * Date.dayNames = ['SundayInYourLang', 'MondayInYourLang', ...];
- */
+
 Date.dayNames =
    ["Sunday",
     "Monday",
@@ -4341,10 +3767,10 @@ Date.dayNames =
     "Friday",
     "Saturday"];
 
-/** @ignore */
+
 Date.y2kYear = 50;
 
-/** @ignore */
+
 Date.monthNumbers = {
     Jan:0,
     Feb:1,
@@ -4359,86 +3785,50 @@ Date.monthNumbers = {
     Nov:10,
     Dec:11};
 
-/*
-------------------------------------------------------------------
-// File: widgets\TabPanel.js
-------------------------------------------------------------------
-*/
-/*
-	tabpanel.js, version .1
-	Copyright(c) 2006, Jack Slocum.
-	Code licensed under the BSD License
-*/
-
-/**
- * @class Creates a lightweight TabPanel component using Yahoo! UI.
- * <br><br>
- * Usage:
- * <pre><code>
-    <font color="#008000">// basic tabs 1, built from existing content</font>
-    var tabs = new YAHOO.ext.TabPanel('tabs1');
-    tabs.addTab('script', "View Script");
-    tabs.addTab('markup', "View Markup");
-    tabs.activate('script');
+YAHOO.ext.TabPanel = function(container, config){
     
-    <font color="#008000">// more advanced tabs, built from javascript</font>
-    var jtabs = new YAHOO.ext.TabPanel('jtabs');
-    jtabs.addTab('jtabs-1', "Normal Tab", "My content was added during construction.");
-    
-    <font color="#008000">// set up the UpdateManager</font>
-    var tab2 = jtabs.addTab('jtabs-2', "Ajax Tab 1");
-    var updater = tab2.getUpdateManager();
-    updater.setDefaultUrl('ajax1.htm');
-    tab2.onActivate.subscribe(updater.refresh, updater, true);
-    
-    <font color="#008000">// Use setUrl for Ajax loading</font>
-    var tab3 = jtabs.addTab('jtabs-3', "Ajax Tab 2");
-    tab3.setUrl('ajax2.htm', null, true);
-    
-    <font color="#008000">// Disabled tab</font>
-    var tab4 = jtabs.addTab('tabs1-5', "Disabled Tab", "Can't see me cause I'm disabled");
-    tab4.disable();
-    
-    jtabs.activate('jtabs-1');
-}
- * </code></pre>
- * @requires YAHOO.ext.Element
- * @requires YAHOO.ext.UpdateManager
- * @requires YAHOO.util.Dom
- * @requires YAHOO.util.Event
- * @requires YAHOO.util.CustomEvent 
- * @requires YAHOO.util.Connect (optional)
- * @constructor
- * Create new TabPanel.
- * @param {String/HTMLElement/Element} container The id, DOM element or YAHOO.ext.Element container where this TabPanel is to be rendered. 
- */
-YAHOO.ext.TabPanel = function(container, onBottom){
-    /**
-    * The container element for this TabPanel.
-    * @type YAHOO.ext.Element
-    */
     this.el = getEl(container, true);
     
-    if(onBottom){
+    this.tabPosition = 'top';
+    this.currentTabWidth = 0;
+    
+    this.minTabWidth = 40;
+    
+    this.maxTabWidth = 250;
+    
+    this.preferredTabWidth = 175;
+    
+    this.resizeTabs = false;
+    
+    this.monitorResize = true;
+    
+    if(config){
+        if(typeof config == 'boolean'){
+            this.tabPosition = config ? 'bottom' : 'top';
+        }else{
+            YAHOO.ext.util.Config.apply(this, config);
+        }
+    }
+    if(this.tabPosition == 'bottom'){
         this.bodyEl = getEl(this.createBody(this.el.dom));
         this.el.addClass('ytabs-bottom');
     }
-    /** @private */
     this.stripWrap = getEl(this.createStrip(this.el.dom), true);
-    /** @private */
     this.stripEl = getEl(this.createStripList(this.stripWrap.dom), true);
     this.stripBody = getEl(this.stripWrap.dom.firstChild.firstChild, true);
-    /** The body element that contains TabPaneItem bodies. 
-     * @type YAHOO.ext.Element
-     */
-    if(!onBottom){
+    if(YAHOO.ext.util.Browser.isIE){
+        YAHOO.util.Dom.setStyle(this.stripWrap.dom.firstChild, 'overflow-x', 'hidden');
+    }
+    if(this.tabPosition != 'bottom'){
+    
       this.bodyEl = getEl(this.createBody(this.el.dom));
       this.el.addClass('ytabs-top');
     }
-    /** @private */
     this.items = [];
     
-    // add indexOf to array if it isn't present
+    this.bodyEl.setStyle('position', 'relative');
+    
+    
     if(!this.items.indexOf){
         this.items.indexOf = function(o){
             for(var i = 0, len = this.length; i < len; i++){
@@ -4447,26 +3837,17 @@ YAHOO.ext.TabPanel = function(container, onBottom){
             return -1;
         }
     }
-    /** @private */
     this.active = null;
-    /**
-     * Fires when the active TabPanelItem changes. Uses fireDirect with signature: (TabPanel this, TabPanelItem activedTab).
-     * @type CustomEvent
-     */
     this.onTabChange = new YAHOO.util.CustomEvent('TabItem.onTabChange');
-    /** @private */
     this.activateDelegate = this.activate.createDelegate(this);
     
     this.events = {
-        'tabchange': this.onTabChange  
+        
+        'tabchange': this.onTabChange,
+        
+        'beforetabchange' : new YAHOO.util.CustomEvent('beforechange')
     };
     
-    this.currentTabWidth = 0;
-    this.minTabWidth = 40;
-    this.maxTabWidth = 250;
-    this.preferredTabWidth = 175;
-    this.resizeTabs = false;
-    this.monitorResize = true;
     YAHOO.ext.EventManager.onWindowResize(this.onResize, this, true);
     this.cpad = this.el.getPadding('lr');
     this.hiddenCount = 0;
@@ -4478,13 +3859,8 @@ YAHOO.ext.TabPanel.prototype = {
     addListener : YAHOO.ext.util.Observable.prototype.addListener,
     delayedListener : YAHOO.ext.util.Observable.prototype.delayedListener,
     removeListener : YAHOO.ext.util.Observable.prototype.removeListener,
-    /**
-     * Creates a new TabPanelItem by looking for an existing element with the provided id - if it's not found it creates one.
-     * @param {String} id The id of the div to use or create
-     * @param {String} text The text for the tab
-     * @param {<i>String</i>} content (optional) Content to put in the TabPanelItem body
-     * @return {YAHOO.ext.TabPanelItem} The created TabPanelItem
-     */
+    purgeListeners : YAHOO.ext.util.Observable.prototype.purgeListeners,
+    
     addTab : function(id, text, content, closable){
         var item = new YAHOO.ext.TabPanelItem(this, id, text, closable);
         this.addTabItem(item);
@@ -4494,14 +3870,11 @@ YAHOO.ext.TabPanel.prototype = {
         return item;
     },
     
-    /**
-     * Returns the TabPanelItem with the specified id
-     * @param {String} id The id of the TabPanelItem to fetch.
-     * @return {YAHOO.ext.TabPanelItem}
-     */
+    
     getTab : function(id){
         return this.items[id];
     },
+    
     
     hideTab : function(id){
         var t = this.items[id];
@@ -4512,6 +3885,7 @@ YAHOO.ext.TabPanel.prototype = {
         }
     },
     
+    
     unhideTab : function(id){
         var t = this.items[id];
         if(t.isHidden()){
@@ -4521,13 +3895,10 @@ YAHOO.ext.TabPanel.prototype = {
         }
     },
     
-    /**
-     * Add an existing TabPanelItem.
-     * @param {YAHOO.ext.TabPanelItem} item The TabPanelItem to add
-     */
+    
     addTabItem : function(item){
         this.items[item.id] = item;
-        this.items[this.items.length] = item;
+        this.items.push(item);
         if(this.resizeTabs){
            item.setWidth(this.currentTabWidth || this.preferredTabWidth)
            this.autoSizeTabs();
@@ -4536,10 +3907,7 @@ YAHOO.ext.TabPanel.prototype = {
         }
     },
         
-    /**
-     * Remove a TabPanelItem.
-     * @param {String} id The id of the TabPanelItem to remove.
-     */
+    
     removeTab : function(id){
         var items = this.items;
         var tab = items[id];
@@ -4550,24 +3918,28 @@ YAHOO.ext.TabPanel.prototype = {
             if(newTab)newTab.activate();
         }
         this.stripEl.dom.removeChild(tab.pnode.dom);
-        this.bodyEl.dom.removeChild(tab.bodyEl.dom);
+        if(tab.bodyEl.dom.parentNode == this.bodyEl.dom){ 
+            this.bodyEl.dom.removeChild(tab.bodyEl.dom);
+        }
         items.splice(index, 1);
-        delete items[tab.id];
+        delete this.items[tab.id];
+        tab.fireEvent('close', tab);
+        tab.purgeListeners();
         this.autoSizeTabs();
     },
     
     getNextAvailable : function(start){
         var items = this.items;
         var index = start;
-        // look for a next tab that will slide over to
-        // replace the one being removed
+        
+        
         while(index < items.length){
             var item = items[++index];
             if(item && !item.isHidden()){
                 return item;
             }
         }
-        // if one isn't found select the previous tab (on the left)
+        
         var index = start;
         while(index >= 0){
             var item = items[--index];
@@ -4578,10 +3950,7 @@ YAHOO.ext.TabPanel.prototype = {
         return null;
     },
     
-    /**
-     * Disable a TabPanelItem. <b>It cannot be the active tab, if it is this call is ignored.</b>. 
-     * @param {String} id The id of the TabPanelItem to disable.
-     */
+    
     disableTab : function(id){
         var tab = this.items[id];
         if(tab && this.active != tab){
@@ -4589,25 +3958,21 @@ YAHOO.ext.TabPanel.prototype = {
         }
     },
     
-    /**
-     * Enable a TabPanelItem that is disabled.
-     * @param {String} id The id of the TabPanelItem to enable.
-     */
+    
     enableTab : function(id){
         var tab = this.items[id];
         tab.enable();
     },
     
-    /**
-     * Activate a TabPanelItem. The currently active will be deactivated. 
-     * @param {String} id The id of the TabPanelItem to activate.
-     */
+    
     activate : function(id){
         var tab = this.items[id];
         if(tab == this.active){
-            return;
+            return tab;
         } 
-        if(!tab.disabled){
+        var e = {};
+        this.fireEvent('beforetabchange', this, e, tab);
+        if(e.cancel !== true && !tab.disabled){
             if(this.active){
                 this.active.hide();
             }
@@ -4615,25 +3980,19 @@ YAHOO.ext.TabPanel.prototype = {
             this.active.show();
             this.onTabChange.fireDirect(this, this.active);
         }
+        return tab;
     },
     
-    /**
-     * Get the active TabPanelItem
-     * @return {YAHOO.ext.TabPanelItem} The active TabPanelItem or null if none are active.
-     */
+    
     getActiveTab : function(){
         return this.active;
     },
     
-    /**
-     * Updates the tab body element to fit the height of the container element
-     * for scrolling
-     * @param {Number} targetHeight (optional) Override the starting height from the elements height
-     */
+    
     syncHeight : function(targetHeight){
         var height = (targetHeight || this.el.getHeight())-this.el.getBorderWidth('tb')-this.el.getPadding('tb');
         var bm = this.bodyEl.getMargins();
-        var newHeight = height-(this.stripWrap.getHeight())-(bm.top+bm.bottom);
+        var newHeight = height-(this.stripWrap.getHeight()||0)-(bm.top+bm.bottom);
         this.bodyEl.setHeight(newHeight);
         return newHeight; 
     },
@@ -4644,14 +4003,17 @@ YAHOO.ext.TabPanel.prototype = {
         }
     },
 
+    
     beginUpdate : function(){
         this.updating = true;    
     },
+    
     
     endUpdate : function(){
         this.updating = false;
         this.autoSizeTabs();  
     },
+    
     
     autoSizeTabs : function(){
         var count = this.items.length;
@@ -4664,11 +4026,7 @@ YAHOO.ext.TabPanel.prototype = {
             var tabs = this.items;
             this.setTabWidth(Math.max(availWidth, this.minTabWidth));
             if(availWidth < this.minTabWidth){
-                /*if(!this.sleft){    // incomplete scrolling code
-                    this.createScrollButtons();
-                }
-                this.showScroll();
-                this.stripClip.setWidth(w - (this.sleft.getWidth()+this.sright.getWidth()));*/
+                
             }
         }else{
             if(this.currentTabWidth < this.preferredTabWidth){
@@ -4677,50 +4035,61 @@ YAHOO.ext.TabPanel.prototype = {
         }
     },
     
+    
+     getCount : function(){
+         return this.items.length;  
+     },
+    
+    
     setTabWidth : function(width){
         this.currentTabWidth = width;
         for(var i = 0, len = this.items.length; i < len; i++) {
         	if(!this.items[i].isHidden())this.items[i].setWidth(width);
         }
+    },
+    
+    
+    destroy : function(removeEl){
+        YAHOO.ext.EventManager.removeResizeListener(this.onResize, this);
+        for(var i = 0, len = this.items.length; i < len; i++){
+            this.items[i].purgeListeners();
+        }
+        if(removeEl === true){
+            this.el.update('');
+            this.el.remove();
+        }
     }
 };
 
+ 
 YAHOO.ext.TabPanelItem = function(tabPanel, id, text, closable){
-    /**
-     * The TabPanel this TabPanelItem belongs to
-     * @type YAHOO.ext.TabPanel
-     */
+    
     this.tabPanel = tabPanel;
-    /**
-     * The id for this TabPanelItem
-     * @type String
-     */
+    
     this.id = id;
-    /** @private */
+    
     this.disabled = false;
-    /** @private */
+    
     this.text = text;
-    /** @private */
+    
     this.loaded = false;
     this.closable = closable;
     
-    /** 
-     * The body element for this TabPanelItem
-     * @type YAHOO.ext.Element
-     */
+    
     this.bodyEl = getEl(tabPanel.createItemBody(tabPanel.bodyEl.dom, id));
-    this.bodyEl.originalDisplay = 'block';
-    this.bodyEl.setStyle('display', 'none');
-    this.bodyEl.enableDisplayMode();
+    this.bodyEl.setVisibilityMode(YAHOO.ext.Element.VISIBILITY);
+    this.bodyEl.setStyle('display', 'block');
+    this.bodyEl.setStyle('zoom', '1');
+    this.hideAction();
     
     var els = tabPanel.createStripElements(tabPanel.stripEl.dom, text, closable);
-    /** @private */
+    
     this.el = getEl(els.el, true);
     this.inner = getEl(els.inner, true);
     this.textEl = getEl(this.el.dom.firstChild.firstChild.firstChild, true);
     this.pnode = getEl(els.el.parentNode, true);
     this.el.mon('click', this.onTabClick, this, true);
-    /** @private */
+    
     if(closable){
         var c = getEl(els.close, true);
         c.dom.title = this.closeText;
@@ -4728,21 +4097,18 @@ YAHOO.ext.TabPanelItem = function(tabPanel, id, text, closable){
         c.mon('click', this.closeClick, this, true);
      }
     
-    /**
-     * Fires when this TabPanelItem is activated. Uses fireDirect with signature: (TabPanel tabPanel, TabPanelItem this).
-     * @type CustomEvent
-     */
+    
     this.onActivate = new YAHOO.util.CustomEvent('TabItem.onActivate');
-    /**
-     * Fires when this TabPanelItem is deactivated. Uses fireDirect with signature: (TabPanel tabPanel, TabPanelItem this).
-     * @type CustomEvent
-     */
     this.onDeactivate = new YAHOO.util.CustomEvent('TabItem.onDeactivate');
     
     this.events = {
-         'activate': this.onActivate,
-         'beforeclose': new YAHOO.util.CustomEvent('beforeclose'),
+         
+        'activate': this.onActivate,
+        
+        'beforeclose': new YAHOO.util.CustomEvent('beforeclose'),
+        
          'close': new YAHOO.util.CustomEvent('close'),
+        
          'deactivate' : this.onDeactivate  
     };
     this.hidden = false;
@@ -4754,20 +4120,50 @@ YAHOO.ext.TabPanelItem.prototype = {
     addListener : YAHOO.ext.util.Observable.prototype.addListener,
     delayedListener : YAHOO.ext.util.Observable.prototype.delayedListener,
     removeListener : YAHOO.ext.util.Observable.prototype.removeListener,
-    /**
-     * Show this TabPanelItem - this <b>does not</b> deactivate the currently active TabPanelItem.
-     */
+    purgeListeners : function(){
+       YAHOO.ext.util.Observable.prototype.purgeListeners.call(this);
+       this.el.removeAllListeners(); 
+    },
+    
     show : function(){
         this.pnode.addClass('on');
-        this.bodyEl.show();
+        this.showAction();
         if(YAHOO.ext.util.Browser.isOpera){
             this.tabPanel.stripWrap.repaint();
         }
         this.onActivate.fireDirect(this.tabPanel, this); 
     },
     
+    
+    isActive : function(){
+        return this.tabPanel.getActiveTab() == this;  
+    },
+    
+    
+    hide : function(){
+        this.pnode.removeClass('on');
+        this.hideAction();
+        this.onDeactivate.fireDirect(this.tabPanel, this); 
+    },
+    
+    hideAction : function(){
+        this.bodyEl.setStyle('position', 'absolute');
+        this.bodyEl.setLeft('-20000px');
+        this.bodyEl.setTop('-20000px');
+        this.bodyEl.hide();
+    },
+    
+    showAction : function(){
+        this.bodyEl.setStyle('position', 'relative');
+        this.bodyEl.setTop('');
+        this.bodyEl.setLeft('');
+        this.bodyEl.show();
+        this.tabPanel.el.repaint.defer(1);
+    },
+    
+    
     setTooltip : function(text){
-        this.titleEl.dom.title = text;
+        this.textEl.dom.title = text;
     },
     
     onTabClick : function(e){
@@ -4791,9 +4187,11 @@ YAHOO.ext.TabPanelItem.prototype = {
         this.pnode.setStyle('display', hidden ? 'none' : 'block');  
     },
     
+    
     isHidden : function(){
         return this.hidden;  
     },
+    
     
     getText : function(){
         return this.text;
@@ -4806,6 +4204,7 @@ YAHOO.ext.TabPanelItem.prototype = {
         this.el.endMeasure();
     },
     
+    
     setText : function(text){
         this.text = text;
         this.textEl.update(text);
@@ -4814,25 +4213,12 @@ YAHOO.ext.TabPanelItem.prototype = {
             this.autoSize();
         }
     },
-    /**
-     * Activate this TabPanelItem - this <b>does</b> deactivate the currently active TabPanelItem.
-     */
+    
     activate : function(){
         this.tabPanel.activate(this.id);
     },
     
-    /**
-     * Hide this TabPanelItem - if you don't activate another TabPanelItem this could look odd.
-     */
-    hide : function(){
-        this.pnode.removeClass('on');
-        this.bodyEl.hide();
-        this.onDeactivate.fireDirect(this.tabPanel, this); 
-    },
     
-    /**
-     * Disable this TabPanelItem - this call is ignore if this is the active TabPanelItem.
-     */
     disable : function(){
         if(this.tabPanel.active != this){
             this.disabled = true;
@@ -4840,46 +4226,33 @@ YAHOO.ext.TabPanelItem.prototype = {
         }
     },
     
-    /**
-     * Enable this TabPanelItem if it was previously disabled.
-     */
+    
     enable : function(){
         this.disabled = false;
         this.pnode.removeClass('disabled');
     },
     
-    /**
-     * Set the content for this TabPanelItem.
-     * @param {String} content The content
-     */
-    setContent : function(content){
-        this.bodyEl.update(content);
+    
+    setContent : function(content, loadScripts){
+        this.bodyEl.update(content, loadScripts);
     },
     
-    /**
-     * Get the {@link YAHOO.ext.UpdateManager} for the body of this TabPanelItem. Enables you to perform Ajax updates.
-     * @return {YAHOO.ext.UpdateManager} The UpdateManager
-     */
+    
     getUpdateManager : function(){
         return this.bodyEl.getUpdateManager();
     },
     
-    /**
-     * Set a URL to be used to load the content for this TabPanelItem.
-     * @param {String/Function} url The url to load the content from or a function to call to get the url
-     * @param {<i>String/Object</i>} params (optional) The string params for the update call or an object of the params. See {@link YAHOO.ext.UpdateManager#update} for more details. (Defaults to null)
-     * @param {<i>Boolean</i>} loadOnce (optional) Whether to only load the content once. If this is false it makes the Ajax call every time this TabPanelItem is activated. (Defaults to false)
-     * @return {YAHOO.ext.UpdateManager} The UpdateManager
-     */
+    
     setUrl : function(url, params, loadOnce){
         if(this.refreshDelegate){
             this.onActivate.unsubscribe(this.refreshDelegate);
         }
         this.refreshDelegate = this._handleRefresh.createDelegate(this, [url, params, loadOnce]);
         this.onActivate.subscribe(this.refreshDelegate);
+        return this.bodyEl.getUpdateManager();
     },
     
-    /** @private */
+    
     _handleRefresh : function(url, params, loadOnce){
         if(!loadOnce || !this.loaded){
             var updater = this.bodyEl.getUpdateManager();
@@ -4887,38 +4260,45 @@ YAHOO.ext.TabPanelItem.prototype = {
         }
     },
     
-    /** @private */
+    
+    refresh : function(){
+        if(this.refreshDelegate){
+           this.loaded = false;
+           this.refreshDelegate();
+        }
+    }, 
+    
+    
     _setLoaded : function(){
         this.loaded = true;
     },
     
-    /** @private */
+    
     closeClick : function(e){
-        var cancel = {};
-        this.fireEvent('beforeclose', this, cancel);
-        if(!cancel.cancel){
+        var e = {};
+        this.fireEvent('beforeclose', this, e);
+        if(e.cancel !== true){
             this.tabPanel.removeTab(this.id);
-            this.fireEvent('close', this);
         }
     },
     
     closeText : 'Close this tab'
 };
 
-/** @private */
+
 YAHOO.ext.TabPanel.prototype.createStrip = function(container){
     var strip = document.createElement('div');
     strip.className = 'ytab-wrap';
     container.appendChild(strip);
     return strip;
 };
-/** @private */
+
 YAHOO.ext.TabPanel.prototype.createStripList = function(strip){
-    // div wrapper for retard IE
+    
     strip.innerHTML = '<div class="ytab-strip-wrap"><table class="ytab-strip" cellspacing="0" cellpadding="0" border="0"><tbody><tr></tr></tbody></table></div>';
     return strip.firstChild.firstChild.firstChild.firstChild;
 };
-/** @private */
+
 YAHOO.ext.TabPanel.prototype.createBody = function(container){
     var body = document.createElement('div');
     YAHOO.util.Dom.generateId(body, 'tab-body');
@@ -4926,7 +4306,7 @@ YAHOO.ext.TabPanel.prototype.createBody = function(container){
     container.appendChild(body);
     return body;
 };
-/** @private */
+
 YAHOO.ext.TabPanel.prototype.createItemBody = function(bodyEl, id){
     var body = YAHOO.util.Dom.get(id);
     if(!body){
@@ -4934,10 +4314,10 @@ YAHOO.ext.TabPanel.prototype.createItemBody = function(bodyEl, id){
         body.id = id;
     }
     YAHOO.util.Dom.addClass(body, 'yui-ext-tabitembody');
-    bodyEl.appendChild(body);
+    bodyEl.insertBefore(body, bodyEl.firstChild);
     return body;
 };
-/** @private */
+
 YAHOO.ext.TabPanel.prototype.createStripElements = function(stripEl, text, closable){
     var td = document.createElement('td');
     stripEl.appendChild(td);
@@ -4947,7 +4327,7 @@ YAHOO.ext.TabPanel.prototype.createStripElements = function(stripEl, text, closa
             this.closeTpl = new YAHOO.ext.Template(
                '<a href="#" class="ytab-right"><span class="ytab-left"><em class="ytab-inner">' +
                '<span unselectable="on" title="{text}" class="ytab-text">{text}</span>' +
-               '<div unselectable="on" class="close-icon">&nbsp;</div></em></span></a>'
+               '<div unselectable="on" class="close-icon">&#160;</div></em></span></a>'
             );
         }
         var el = this.closeTpl.overwrite(td, {'text': text});
@@ -4967,71 +4347,23 @@ YAHOO.ext.TabPanel.prototype.createStripElements = function(stripEl, text, closa
     }
 };
 
-/*
-------------------------------------------------------------------
-// File: anim\Actor.js
-------------------------------------------------------------------
-*/
 
-/**
- * @class
- * Provides support for syncing and chaining of Element Yahoo! UI based animation and some common effects. Actors support "self-play" without an Animator.<br><br>
- * <b>Note: Along with the animation methods defined below, this class inherits and captures all of the "set" or animation methods of {@link YAHOO.ext.Element}. "get" methods are not captured and execute immediately.</b>
- * <br><br>Usage:<br>
- * <pre><code>
- * var actor = new YAHOO.ext.Actor('myElementId');
- * actor.startCapture(true);
- * actor.moveTo(100, 100, true);
- * actor.squish();
- * actor.play();
- * <br>
- * // or to start capturing immediately, with no Animator (the null second param)
- * <br>
- * var actor = new YAHOO.ext.Actor('myElementId', null, true);
- * actor.moveTo(100, 100, true);
- * actor.squish();
- * actor.play();
- * </code></pre>
- * @extends YAHOO.ext.Element
- * @requires YAHOO.ext.Element
- * @requires YAHOO.util.Dom
- * @requires YAHOO.util.Event
- * @requires YAHOO.util.CustomEvent 
- * @requires YAHOO.util.Anim
- * @requires YAHOO.util.ColorAnim
- * @requires YAHOO.util.Motion
- * @className YAHOO.ext.Actor
- * @constructor
- * Create new Actor.
- * @param {String/HTMLElement} el The dom element or element id 
- * @param {<i>YAHOO.ext.Animator</i>} animator (optional) The Animator that will capture this Actor's actions
- * @param {<i>Boolean</i>} selfCapture (optional) Whether this actor should capture it's own actions to support self playback without an animator (defaults to false)
- */
 YAHOO.ext.Actor = function(element, animator, selfCapture){
-    this.el = YAHOO.ext.Element.get(element, true); // cache el object for playback
+    this.el = YAHOO.ext.Element.get(element, true); 
     YAHOO.ext.Actor.superclass.constructor.call(this, element, true);
     this.onCapture = new YAHOO.util.CustomEvent('Actor.onCapture');
     if(animator){
-        /**
-        * The animator used to sync this actor with other actors
-        * @member YAHOO.ext.Actor
-        */
+        
         animator.addActor(this);
     }
-    /**
-    * Whether this actor is currently capturing
-    * @member YAHOO.ext.Actor
-    */
+    
     this.capturing = selfCapture;
     this.playlist = selfCapture ? new YAHOO.ext.Animator.AnimSequence() : null;
 };
 
 YAHOO.extendX(YAHOO.ext.Actor, YAHOO.ext.Element);
 
-/**
- * Captures an action for this actor. Generally called internally but can be called directly.
- # @param {YAHOO.ext.Actor.Action} action
- */
+
 YAHOO.ext.Actor.prototype.capture = function(action){
     if(this.playlist != null){
         this.playlist.add(action);
@@ -5040,7 +4372,7 @@ YAHOO.ext.Actor.prototype.capture = function(action){
     return action;
 };
 
-/** @ignore */
+
 YAHOO.ext.Actor.overrideAnimation = function(method, animParam, onParam){
     return function(){
         if(!this.capturing){
@@ -5055,7 +4387,7 @@ YAHOO.ext.Actor.overrideAnimation = function(method, animParam, onParam){
     };
 }
 
-/** @ignore */
+
 YAHOO.ext.Actor.overrideBasic = function(method){
     return function(){
         if(!this.capturing){
@@ -5066,60 +4398,42 @@ YAHOO.ext.Actor.overrideBasic = function(method){
     };
 }
 
-// All of these methods below are marked "ignore" because JSDoc treats them as fields, not function. How brilliant. The Element methods are documented anyway though.
-/** Capturing override - See {@link YAHOO.ext.Element#setVisibilityMode} for method details.
- * @type Function */
+
+
 YAHOO.ext.Actor.prototype.setVisibilityMode = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.setVisibilityMode);
-/** Capturing override - See {@link YAHOO.ext.Element#enableDisplayMode} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.enableDisplayMode = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.enableDisplayMode);
-/** Capturing override - See {@link YAHOO.ext.Element#focus} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.focus = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.focus);
-/** Capturing override - See {@link YAHOO.ext.Element#addClass} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.addClass = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.addClass);
-/** Capturing override - See {@link YAHOO.ext.Element#removeClass} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.removeClass = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.removeClass);
-/** Capturing override - See {@link YAHOO.ext.Element#replaceClass} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.replaceClass = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.replaceClass);
-/** Capturing override - See {@link YAHOO.ext.Element#setStyle} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setStyle = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.setStyle);
-/** Capturing override - See {@link YAHOO.ext.Element#setLeft} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setLeft = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.setLeft);
-/** Capturing override - See {@link YAHOO.ext.Element#setTop} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setTop = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.setTop);
-/** Capturing override - See {@link YAHOO.ext.Element#setAbsolutePositioned} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setAbsolutePositioned = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.setAbsolutePositioned);
-/** Capturing override - See {@link YAHOO.ext.Element#setRelativePositioned} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setRelativePositioned = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.setRelativePositioned);
-/** Capturing override - See {@link YAHOO.ext.Element#clearPositioning} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.clearPositioning = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.clearPositioning);
-/** Capturing override - See {@link YAHOO.ext.Element#setPositioning} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setPositioning = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.setPositioning);
-/** Capturing override - See {@link YAHOO.ext.Element#clip} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.clip = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.clip);
-/** Capturing override - See {@link YAHOO.ext.Element#unclip} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.unclip = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.unclip);
-/** Capturing override - See {@link YAHOO.ext.Element#clearOpacity} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.clearOpacity = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.clearOpacity);
-/** Capturing override - See {@link YAHOO.ext.Element#update} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.update = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.update);
-/** Capturing override - See {@link YAHOO.ext.Element#remove} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.remove = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.remove);
 YAHOO.ext.Actor.prototype.fitToParent = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.fitToParent);
 YAHOO.ext.Actor.prototype.appendChild = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.appendChild);
@@ -5132,8 +4446,7 @@ YAHOO.ext.Actor.prototype.replace = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Acto
 YAHOO.ext.Actor.prototype.insertHtml = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.insertHtml);
 YAHOO.ext.Actor.prototype.set = YAHOO.ext.Actor.overrideBasic(YAHOO.ext.Actor.superclass.set);
 
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#load} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.load = function(){
    if(!this.capturing){
         return YAHOO.ext.Actor.superclass.load.apply(this, arguments);
@@ -5143,8 +4456,7 @@ YAHOO.ext.Actor.prototype.load = function(){
         args, 2));
 };
 
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#animate} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.animate = function(args, duration, onComplete, easing, animType){
     if(!this.capturing){
         return YAHOO.ext.Actor.superclass.animate.apply(this, arguments);
@@ -5153,89 +4465,62 @@ YAHOO.ext.Actor.prototype.animate = function(args, duration, onComplete, easing,
         [args, duration, onComplete, easing, animType], 2));
 };
 
-/** Capturing and animation syncing override - See {@link YAHOO.ext.Element#setVisible} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setVisible = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setVisible, 1, 3);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#toggle} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.toggle = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.toggle, 0, 2);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#setXY} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setXY = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setXY, 1, 3);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#setLocation} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setLocation = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setLocation, 2, 4);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#setWidth} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setWidth = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setWidth, 1, 3);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#setHeight} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setHeight = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setHeight, 1, 3);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#setSize} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setSize = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setSize, 2, 4);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#setBounds} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setBounds = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setBounds, 4, 6);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#setOpacity} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setOpacity = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setOpacity, 1, 3);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#moveTo} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.moveTo = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.moveTo, 2, 4);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#move} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.move = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.move, 2, 4);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#alignTo} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.alignTo = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.alignTo, 3, 5);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#hide} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.hide = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.hide, 0, 2);
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#show} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.show = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.show, 0, 2);
 
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#setBox} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setBox = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setBox, 2, 4);
 
-/**Capturing and animation syncing override - See {@link YAHOO.ext.Element#autoHeight} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.autoHeight = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.autoHeight, 0, 2);
-/** Capturing override - See {@link YAHOO.ext.Element#setX} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setX = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setX, 1, 3);
-/** Capturing override - See {@link YAHOO.ext.Element#setY} for method details.
- * @type Function */
+
 YAHOO.ext.Actor.prototype.setY = YAHOO.ext.Actor.overrideAnimation(YAHOO.ext.Actor.superclass.setY, 1, 3);
 
-/**
- * Start self capturing calls on this Actor. All subsequent calls are captured and executed when play() is called.
- */
+
 YAHOO.ext.Actor.prototype.startCapture = function(){
     this.capturing = true;
     this.playlist = new YAHOO.ext.Animator.AnimSequence();
  };
  
- /**
- * Stop self capturing calls on this Actor.
- */
+ 
  YAHOO.ext.Actor.prototype.stopCapture = function(){
      this.capturing = false;
  };
 
-/**
- * Clears any calls that have been self captured.
- */
+
 YAHOO.ext.Actor.prototype.clear = function(){
     this.playlist = new YAHOO.ext.Animator.AnimSequence();
 };
 
-/**
- * Starts playback of self captured calls.
- * @param {<i>Function</i>} oncomplete (optional) Callback to execute when playback has completed
- */
+
 YAHOO.ext.Actor.prototype.play = function(oncomplete){
     this.capturing = false;
     if(this.playlist){
@@ -5243,38 +4528,30 @@ YAHOO.ext.Actor.prototype.play = function(oncomplete){
     }
  };
 
-/**
- * Capture a function call.
- * @param {Function} fcn The function to call
- * @param {<i>Array</i>} args (optional) The arguments to call the function with
- * @param {<i>Object</i>} scope (optional) The scope of the function
- */
+
 YAHOO.ext.Actor.prototype.addCall = function(fcn, args, scope){
-    this.capture(new YAHOO.ext.Actor.Action(scope, fcn, args || []));
+    if(!this.capturing){
+        fcn.apply(scope || this, args || []);
+    }else{
+        this.capture(new YAHOO.ext.Actor.Action(scope, fcn, args || []));
+    }
 };
 
-/**
- * Capture an async function call.
- * @param {Function} fcn The function to call
- * @param {Number} callbackIndex The index of the callback parameter on the passed function. A CALLBACK IS REQUIRED.
- * @param {<i>Array</i>} args The arguments to call the function with
- * @param {<i>Object</i>} scope (optional) The scope of the function
- */
+
 YAHOO.ext.Actor.prototype.addAsyncCall = function(fcn, callbackIndex, args, scope){
-    this.capture(new YAHOO.ext.Actor.AsyncAction(scope, fcn, args || [], callbackIndex));
+    if(!this.capturing){
+        fcn.apply(scope || this, args || []);
+    }else{
+       this.capture(new YAHOO.ext.Actor.AsyncAction(scope, fcn, args || [], callbackIndex));
+    }
  },
  
-/**
- * Capture a pause (in seconds).
- * @param {Number} seconds The seconds to pause
- */
+
 YAHOO.ext.Actor.prototype.pause = function(seconds){
     this.capture(new YAHOO.ext.Actor.PauseAction(seconds));
  };
  
-/**
-* Shake this element from side to side
-*/
+
 YAHOO.ext.Actor.prototype.shake = function(){
     this.move('left', 20, true, .05);
     this.move('right', 40, true, .05);
@@ -5282,9 +4559,7 @@ YAHOO.ext.Actor.prototype.shake = function(){
     this.move('right', 20, true, .05);
 };
 
-/**
-* Bounce this element from up and down
-*/
+
 YAHOO.ext.Actor.prototype.bounce = function(){
     this.move('up', 20, true, .05);
     this.move('down', 40, true, .05);
@@ -5292,14 +4567,7 @@ YAHOO.ext.Actor.prototype.bounce = function(){
     this.move('down', 20, true, .05);
 };
 
-/**
-* Show the element using a "blinds" effect
-* @param {String} anchor The part of the element that it should appear to exapand from. 
-                        The short/long options currently are t/top, l/left
-* @param {<i>Number</i>} newSize (optional) The size to animate to. (Default to current size)
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-* @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeOut)
-*/
+
 YAHOO.ext.Actor.prototype.blindShow = function(anchor, newSize, duration, easing){
     var size = newSize || this.getSize();
     this.clip();
@@ -5321,13 +4589,7 @@ YAHOO.ext.Actor.prototype.blindShow = function(anchor, newSize, duration, easing
     return size;
 };
 
-/**
-* Hide the element using a "blinds" effect
-* @param {String} anchor The part of the element that it should appear to collapse to.
-                        The short/long options are t/top, l/left, b/bottom, r/right.
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-* @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeIn)
-*/
+
 YAHOO.ext.Actor.prototype.blindHide = function(anchor, duration, easing){
     var size = this.getSize();
     this.clip();
@@ -5359,19 +4621,12 @@ YAHOO.ext.Actor.prototype.blindHide = function(anchor, duration, easing){
     return size;
 };
 
-/**
-* Show the element using a "slide in" effect - In order for this effect to work the element MUST have a child element container that can be "slid" otherwise a blindShow effect is rendered. 
-* @param {String} anchor The part of the element that it should appear to slide from. 
-                        The short/long options currently are t/top, l/left
-* @param {<i>Number</i>} newSize (optional) The size to animate to. (Default to current size)
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-* @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeOuth)
-*/
+
 YAHOO.ext.Actor.prototype.slideShow = function(anchor, newSize, duration, easing, clearPositioning){
     var size = newSize || this.getSize();
     this.clip();
     var firstChild = this.dom.firstChild;
-    if(!firstChild || (firstChild.nodeName && "#TEXT" == firstChild.nodeName.toUpperCase())) { // can't do a slide with only a textnode
+    if(!firstChild || (firstChild.nodeName && "#TEXT" == firstChild.nodeName.toUpperCase())) { 
         this.blindShow(anchor, newSize, duration, easing);
         return;
     }
@@ -5425,18 +4680,12 @@ YAHOO.ext.Actor.prototype.slideShow = function(anchor, newSize, duration, easing
     return size;
 };
 
-/**
-* Hide the element using a "slide in" effect - In order for this effect to work the element MUST have a child element container that can be "slid" otherwise a blindHide effect is rendered. 
-* @param {String} anchor The part of the element that it should appear to slide to.
-                        The short/long options are t/top, l/left, b/bottom, r/right.
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-* @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeIn)
-*/
+
 YAHOO.ext.Actor.prototype.slideHide = function(anchor, duration, easing){
     var size = this.getSize();
     this.clip();
     var firstChild = this.dom.firstChild;
-    if(!firstChild || (firstChild.nodeName && "#TEXT" == firstChild.nodeName.toUpperCase())) { // can't do a slide with only a textnode
+    if(!firstChild || (firstChild.nodeName && "#TEXT" == firstChild.nodeName.toUpperCase())) { 
         this.blindHide(anchor, duration, easing);
         return;
     }
@@ -5486,10 +4735,7 @@ YAHOO.ext.Actor.prototype.slideHide = function(anchor, duration, easing){
     return size;
 };
 
-/**
-* Hide the element by "squishing" it into the corner
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-*/
+
 YAHOO.ext.Actor.prototype.squish = function(duration){
     var size = this.getSize();
     this.clip();
@@ -5498,26 +4744,17 @@ YAHOO.ext.Actor.prototype.squish = function(duration){
     return size;
 };
 
-/**
-* Fade an element in
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-*/
+
 YAHOO.ext.Actor.prototype.appear = function(duration){
     this.setVisible(true, true, duration);
 };
 
-/**
-* Fade an element out
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-*/
+
 YAHOO.ext.Actor.prototype.fade = function(duration){
     this.setVisible(false, true, duration);
 };
 
-/**
-* Blink the element as if it was clicked and then collapse on it's center
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-*/
+
 YAHOO.ext.Actor.prototype.switchOff = function(duration){
     this.clip();
     this.setVisible(false, true, .1);
@@ -5528,13 +4765,7 @@ YAHOO.ext.Actor.prototype.switchOff = function(duration){
     this.setVisible(false);
 };
 
-/**
-* Highlight the element using a background color (or passed attribute) animation
-* @param {String} color (optional) The color to use for the highlight
-* @param {<i>String</i>} fromColor (optional) If the element does not currently have a background color, you will need to pass in a color to animate from
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-* @param {<i>String</i>} attribute (optional) Specify a CSS attribute to use other than background color - camelCase
-*/
+
 YAHOO.ext.Actor.prototype.highlight = function(color, fromColor, duration, attribute){
     attribute = attribute || 'background-color';
     var original = this.getStyle(attribute);
@@ -5546,11 +4777,7 @@ YAHOO.ext.Actor.prototype.highlight = function(color, fromColor, duration, attri
     this.setStyle(attribute, original);
 };
 
-/**
-* Fade the element in and out the specified amount of times
-* @param {<i>Number</i>} count (optional) How many times to pulse (Defaults to 3)
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-*/
+
 YAHOO.ext.Actor.prototype.pulsate = function(count, duration){
     count = count || 3;
     for(var i = 0; i < count; i++){
@@ -5559,24 +4786,14 @@ YAHOO.ext.Actor.prototype.pulsate = function(count, duration){
     }
 };
 
-/**
-* Fade the element as it is falling from it's current position
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-*/
+
 YAHOO.ext.Actor.prototype.dropOut = function(duration){
     this.animate({opacity: {to: 0}, points: {by: [0, this.getHeight()]}}, 
             duration || .5, null, YAHOO.util.Easing.easeIn, YAHOO.util.Motion);
     this.setVisible(false);
 };
 
-/**
-* Hide the element in a way that it appears as if it is flying off the screen
-* @param {String} anchor The part of the page that the element should appear to move to. 
-                        The short/long options are t/top, l/left, b/bottom, r/right, tl/top-left, 
-                        tr/top-right, bl/bottom-left or br/bottom-right.
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-* @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeIn)
-*/
+
 YAHOO.ext.Actor.prototype.moveOut = function(anchor, duration, easing){
     var Y = YAHOO.util;
     var vw = Y.Dom.getViewportWidth();
@@ -5624,15 +4841,7 @@ YAHOO.ext.Actor.prototype.moveOut = function(anchor, duration, easing){
     this.setVisible(false);
 };
 
-/**
-* Show the element in a way that it appears as if it is flying onto the screen
-* @param {String} anchor The part of the page that the element should appear to move from. 
-                        The short/long options are t/top, l/left, b/bottom, r/right, tl/top-left, 
-                        tr/top-right, bl/bottom-left or br/bottom-right.
-* @param {<i>Array</i>} to (optional) Array of x and y position to move to like [x, y] (Defaults to center screen)
-* @param {<i>Float</i>} duration (optional) How long the effect lasts (in seconds)
-* @param {<i>Function</i>} easing (optional) YAHOO.util.Easing method to use. (Defaults to YAHOO.util.Easing.easeOut)
-*/
+
 YAHOO.ext.Actor.prototype.moveIn = function(anchor, to, duration, easing){
     to = to || this.getCenterXY();
     this.moveOut(anchor, .01);
@@ -5640,14 +4849,50 @@ YAHOO.ext.Actor.prototype.moveIn = function(anchor, to, duration, easing){
     this.setXY(to, true, duration || .35, null, easing || YAHOO.util.Easing.easeOut);
 };
 
-/**
- * @class Used by {@link YAHOO.ext.Actor} to queue standard calls. Generally used internally. Documentation to come.<br><br>
- */
+YAHOO.ext.Actor.prototype.frame = function(color, count, duration){
+    color = color || "red";
+    count = count || 3;
+    duration = duration || .5;
+    var frameFn = function(callback){
+        var box = this.getBox();
+        var animFn = function(){ 
+            var proxy = this.createProxy({
+                 tag:"div",
+                 style:{
+                    visbility:"hidden",
+                    position:"absolute",
+                    zIndex:this.getStyle("zIndex"),
+                    border:"0px solid " + color
+                 }
+              });
+            var scale = proxy.isBorderBox() ? 2 : 1;
+            proxy.animate({
+                top:{from:box.y, to:box.y - 20},
+                left:{from:box.x, to:box.x - 20},
+                borderWidth:{from:0, to:10},
+                opacity:{from:1, to:0},
+                height:{from:box.height, to:(box.height + (20*scale))},
+                width:{from:box.width, to:(box.width + (20*scale))}
+            }, duration, function(){
+                proxy.remove();
+            });
+            if(--count > 0){
+                 animFn.defer((duration/2)*1000, this);
+            }else{
+                if(typeof callback == 'function'){
+                    callback();
+                }
+            }
+       }
+       animFn.call(this);
+   }
+   this.addAsyncCall(frameFn, 0, null, this);
+};
+
 YAHOO.ext.Actor.Action = function(actor, method, args){
       this.actor = actor;
       this.method = method;
       this.args = args;
-      //alert('queueing ' + actor.id + ' ' + method.toString());
   }
   
 YAHOO.ext.Actor.Action.prototype = {
@@ -5658,9 +4903,6 @@ YAHOO.ext.Actor.Action.prototype = {
 };
 
 
-/**
- * @class Used by {@link YAHOO.ext.Actor} to queue animations. Generally used internally. Documentation to come.<br><br>
- */
 YAHOO.ext.Actor.AsyncAction = function(actor, method, args, onIndex){
     YAHOO.ext.Actor.AsyncAction.superclass.constructor.call(this, actor, method, args);
     this.onIndex = onIndex;
@@ -5676,9 +4918,6 @@ YAHOO.ext.Actor.AsyncAction.prototype.play = function(onComplete){
 };
 
 
-/**
- * @class Used by {@link YAHOO.ext.Actor} to perform pauses. Generally used internally. Documentation to come.<br><br>
- */
 YAHOO.ext.Actor.PauseAction = function(seconds){
     this.seconds = seconds;
 };
@@ -5687,79 +4926,14 @@ YAHOO.ext.Actor.PauseAction.prototype = {
         setTimeout(onComplete, this.seconds * 1000);
     }
 };
-
-/*
-------------------------------------------------------------------
-// File: anim\Animator.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * Provides support for syncing animations for multiple {@link YAHOO.ext.Actor}s.<br><br>
-* <br><br>This example can be seen in action <a href="http://jackslocum.blogspot.com/2006/08/splitbar-component-for-yahoo-ui.html" target="_new">here</a> by clicking on "Click here and I will point it out".<br>
- * <pre><code>
-var animator = new YAHOO.ext.Animator();
-var cursor = new YAHOO.ext.Actor('cursor-img', animator);
-var click = new YAHOO.ext.Actor('click-img', animator);
-var resize = new YAHOO.ext.Actor('resize-img', animator);
-
-// start capturing
-animator.startCapture();
-
-// these animations will be run in sequence
-cursor.show();
-cursor.moveTo(500,400);
-cursor.moveTo(20, getEl('navbar').getY()+10, true, .75);
-click.show();
-click.alignTo(cursor, 'tl', [-4, -4]);
-
-// Add an async function call, pass callback to argument 1
-animator.addAsyncCall(Blog.navbar.undockDelegate, 1);
-
-// pause .5 seconds
-animator.pause(.5);
-
-// again, these animations will be run in sequence
-click.hide(true, .7);
-cursor.alignTo('splitter', 'tr', [0, +100], true, 1);
-resize.alignTo('splitter', 'tr', [-12, +100]);
-
-// start sync block: these animations will run at the same time
-animator.beginSync();
-cursor.hide();
-resize.show();
-animator.endSync();
-
-// play the captured animation sequences, call myCallback when done
-animator.play(myCallback);
- * </code></pre>
- * @extends YAHOO.ext.Element
- * @requires YAHOO.ext.Element
- * @requires YAHOO.util.Dom
- * @requires YAHOO.util.Event
- * @requires YAHOO.util.CustomEvent 
- * @requires YAHOO.util.Anim
- * @requires YAHOO.util.ColorAnim
- * @requires YAHOO.util.Motion
- * @constructor
- * @param {String/HTMLElement} el The dom element or element id 
- * @param {<i>YAHOO.ext.Animator</i>} animator (optional) The Animator that will capture this Actor's actions
- * @param {<i>Boolean</i>} selfCapture (optional) Whether this actor should capture it's own actions to support self playback without an animator (defaults to false)
- */ 
-  YAHOO.ext.Animator = function(/*Actors...*/){
-    /** @private */
+ 
+ YAHOO.ext.Animator = function(){
     this.actors = [];
-    /** @private */
     this.playlist = new YAHOO.ext.Animator.AnimSequence();
-    /** @private */
     this.captureDelegate = this.capture.createDelegate(this);
-    /** @private */
     this.playDelegate = this.play.createDelegate(this);
-    /** @private */
     this.syncing = false;
-    /** @private */
     this.stopping = false;
-    /** @private */
     this.playing = false;
     for(var i = 0; i < arguments.length; i++){
         this.addActor(arguments[i]);
@@ -5768,9 +4942,6 @@ animator.play(myCallback);
  
  YAHOO.ext.Animator.prototype = {
  
-    /**
-      * @private
-      */
      capture : function(actor, action){
         if(this.syncing){
             if(!this.syncMap[actor.id]){
@@ -5782,20 +4953,14 @@ animator.play(myCallback);
         }
     },
     
-    /**
-      * Add an actor. The actor is also set to capturing = true.
-      * @param {YAHOO.ext.Actor} actor
-      */
+    
      addActor : function(actor){
         actor.onCapture.subscribe(this.captureDelegate);
         this.actors.push(actor);
     },
     
     
-    /**
-      * Start capturing actions on the added actors. 
-      * @param {<i>Boolean</i>} clearPlaylist Whether to also create a new playlist
-      */
+    
      startCapture : function(clearPlaylist){
         for(var i = 0; i < this.actors.length; i++){
             var a = this.actors[i];
@@ -5809,10 +4974,7 @@ animator.play(myCallback);
         }
      },
      
-     /**
-      * Checks whether this animator is listening to a specific actor.
-      * @param {YAHOO.ext.Actor} actor
-      */
+     
      isCapturing : function(actor){
         var subscribers = actor.onCapture.subscribers;
         if(subscribers){
@@ -5825,9 +4987,7 @@ animator.play(myCallback);
         return false;
      },
      
-     /**
-      * Stop capturing on all added actors.
-      */
+     
      stopCapture : function(){
          for(var i = 0; i < this.actors.length; i++){
             var a = this.actors[i];
@@ -5836,18 +4996,13 @@ animator.play(myCallback);
          }
      },
      
-     /**
-     * Start a multi-actor sync block. By default all animations are run in sequence. While in the sync block
-     * each actor's own animations will still be sequenced, but all actors will animate at the same time. 
-     */
+     
     beginSync : function(){
         this.syncing = true;
         this.syncMap = {};
      },
      
-     /**
-     * End the multi-actor sync block
-     */
+     
     endSync : function(){
          this.syncing = false;
          var composite = new YAHOO.ext.Animator.CompositeSequence();
@@ -5860,70 +5015,58 @@ animator.play(myCallback);
          this.syncMap = null;
      },
      
-    /**
-     * Starts playback of the playlist, also stops any capturing. To start capturing again call {@link #startCapture}.
-     * @param {<i>Function</i>} oncomplete (optional) Callback to execute when playback has completed
-     */
+    
     play : function(oncomplete){
-        if(this.playing) return; // can't play the same animation twice at once
+        if(this.playing) return; 
         this.stopCapture();
         this.playlist.play(oncomplete);
     },
     
-    /**
-     * Stop at the next available stopping point
-     */
+    
     stop : function(){
         this.playlist.stop();
     },
     
-    /**
-     * Check if this animator is currently playing
-     */
+    
     isPlaying : function(){
         return this.playlist.isPlaying();
     },
-    /**
-     * Clear the playlist
-     */
+    
     clear : function(){
         this.playlist = new YAHOO.ext.Animator.AnimSequence();
      },
      
-    /**
-     * Add a function call to the playlist.
-     * @param {Function} fcn The function to call
-     * @param {<i>Array</i>} args The arguments to call the function with
-     * @param {<i>Object</i>} scope (optional) The scope of the function
-     */
+    
      addCall : function(fcn, args, scope){
         this.playlist.add(new YAHOO.ext.Actor.Action(scope, fcn, args || []));
      },
      
-     /**
-     * Add an async function call to the playlist.
-     * @param {Function} fcn The function to call
-     * @param {Number} callbackIndex The index of the callback parameter on the passed function. A CALLBACK IS REQUIRED.
-     * @param {<i>Array</i>} args The arguments to call the function with
-     * @param {<i>Object</i>} scope (optional) The scope of the function
-     */
+     
     addAsyncCall : function(fcn, callbackIndex, args, scope){
         this.playlist.add(new YAHOO.ext.Actor.AsyncAction(scope, fcn, args || [], callbackIndex));
      },
      
-     /**
-     * Add a pause to the playlist (in seconds)
-     * @param {Number} seconds The number of seconds to pause.
-     */
+     
     pause : function(seconds){
         this.playlist.add(new YAHOO.ext.Actor.PauseAction(seconds));
      }
      
   };
 
-/**
- * Composite class with synchronized animations.
- */
+YAHOO.ext.Animator.select = function(selector){
+    var els;
+    if(typeof selector == 'string'){
+        els = YAHOO.ext.Element.selectorFunction(selector);
+    }else if(selector instanceof Array){
+        els = selector;
+    }else{
+        throw 'Invalid selector';
+    }
+    return new YAHOO.ext.AnimatorComposite(els);
+};
+var getActors = YAHOO.ext.Animator.select;
+
+
 YAHOO.ext.AnimatorComposite = function(els){
     this.animator = new YAHOO.ext.Animator();
     this.addElements(els);
@@ -5931,6 +5074,7 @@ YAHOO.ext.AnimatorComposite = function(els){
 };
 YAHOO.ext.AnimatorComposite.prototype = {
     isComposite: true,
+    
     addElements : function(els){
         if(!els) return this;
         var anim = this.animator;
@@ -5940,10 +5084,12 @@ YAHOO.ext.AnimatorComposite.prototype = {
         anim.startCapture();
         return this;
     },
+    
     sequence : function(){
         this.syncAnims = false;
         return this;
     },
+    
     sync : function(){
         this.syncAnims = true;
         return this;
@@ -5957,21 +5103,26 @@ YAHOO.ext.AnimatorComposite.prototype = {
         if(this.syncAnims) this.animator.endSync();
         return this;
     },
+    
     play : function(callback){
         this.animator.play(callback);
         return this;
     },
+    
     reset : function(callback){
         this.animator.startCapture(true);
         return this;
     },
+    
     pause : function(seconds){
         this.animator.pause(seconds);
         return this;
     },
+    
     getAnimator : function(){
         return this.animator;
     },
+    
     each : function(fn, scope){
         var els = this.animator.actors;
         if(this.syncAnims) this.animator.beginSync();
@@ -5981,10 +5132,12 @@ YAHOO.ext.AnimatorComposite.prototype = {
         if(this.syncAnims) this.animator.endSync();
         return this;
     },
-    addCall : function(fcn, args, scope){
+    
+     addCall : function(fcn, args, scope){
         this.animator.addCall(fcn, args, scope);
         return this;
     },
+    
     addAsyncCall : function(fcn, callbackIndex, args, scope){
         this.animator.addAsyncCall(fcn, callbackIndex, args, scope);
         return this;
@@ -5995,22 +5148,8 @@ for(var fnName in YAHOO.ext.Actor.prototype){
         YAHOO.ext.CompositeElement.createCall(YAHOO.ext.AnimatorComposite.prototype, fnName);
     }
 }
-YAHOO.ext.Animator.select = function(selector){
-    var els;
-    if(typeof selector == 'string'){
-        els = YAHOO.ext.Element.selectorFunction(selector);
-    }else if(els instanceof Array){
-        els = selector;
-    }else{
-        throw 'Invalid selector';
-    }
-    return new YAHOO.ext.AnimatorComposite(els);
-};
-var getActors = YAHOO.ext.Animator.select;
 
-/**
- * @class Used by {@link YAHOO.ext.Animator} to sequence animations. Generally used internally. Documentation to come.<br><br>
- */
+
 YAHOO.ext.Animator.AnimSequence = function(){
     this.actions = [];
     this.nextDelegate = this.next.createDelegate(this);
@@ -6047,7 +5186,7 @@ YAHOO.ext.Animator.AnimSequence = function(){
     },
     
     play : function(oncomplete){
-        if(this.playing) return; // can't play the same sequence twice at once
+        if(this.playing) return; 
         this.oncomplete = oncomplete;
         this.stopping = false;
         this.playing = true;
@@ -6071,14 +5210,7 @@ YAHOO.ext.Animator.AnimSequence = function(){
         this.actions.push(new YAHOO.ext.Actor.Action(scope, fcn, args || []));
      },
      
-     /**
-     * Add an async function call to the capture queue.
-     * @param {Function} fcn The function to call
-     * @param {Number} callbackIndex The index of the callback parameter on the passed function. A CALLBACK IS REQUIRED.
-     * @param {<i>Array</i>} args The arguments to call the function with
-     * @param {<i>Object</i>} scope (optional) The scope of the function
-     */
-    addAsyncCall : function(fcn, callbackIndex, args, scope){
+     addAsyncCall : function(fcn, callbackIndex, args, scope){
         this.actions.push(new YAHOO.ext.Actor.AsyncAction(scope, fcn, args || [], callbackIndex));
      },
      
@@ -6088,9 +5220,6 @@ YAHOO.ext.Animator.AnimSequence = function(){
      
   };
 
-/**
- * @class Used by {@link YAHOO.ext.Animator} to run multiple animation sequences at once. Generally used internally. Documentation to come.<br><br>
- */
 YAHOO.ext.Animator.CompositeSequence = function(){
     this.sequences = [];
     this.completed = 0;
@@ -6139,24 +5268,14 @@ YAHOO.ext.Animator.CompositeSequence.prototype = {
 
 
 
-
-/*
-------------------------------------------------------------------
-// File: widgets\Toolbar.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * Basic Toolbar used by the Grid to create the paging toolbar. This class is reusable but functionality
- * is limited. Look for more functionality in a future version. 
- */
- YAHOO.ext.Toolbar = function(container){
+ 
+ YAHOO.ext.Toolbar = function(container, buttons){
     this.el = getEl(container, true);
     var div = document.createElement('div');
     div.className = 'ytoolbar';
     var tb = document.createElement('table');
     tb.border = 0;
-    tb.cellPadding = 0;
+    tb.cellPadding = 0; 
     tb.cellSpacing = 0;
     div.appendChild(tb);
     var tbody = document.createElement('tbody');
@@ -6165,16 +5284,13 @@ YAHOO.ext.Animator.CompositeSequence.prototype = {
     tbody.appendChild(tr);
     this.el.dom.appendChild(div);
     this.tr = tr;
+    if(buttons){
+        this.add.apply(this, buttons);
+    }
 };
 
 YAHOO.ext.Toolbar.prototype = {
-    /**
-     * Adds element(s) to the toolbar - this function takes a variable number of 
-     * arguments of mixed type and adds them to the toolbar...
-     * If an argument is a ToolbarButton, it is added. If the element is a string, it is wrapped 
-     * in a ytb-text element and added unless the text is "separator" in which case a separator
-     * is added. Otherwise, it is assumed the element is an HTMLElement and it is added directly.
-     */
+    
     add : function(){
         for(var i = 0; i < arguments.length; i++){
             var el = arguments[i];
@@ -6193,15 +5309,19 @@ YAHOO.ext.Toolbar.prototype = {
                     span.className = 'ytb-text';
                 }
                 td.appendChild(span);
-            }else if(typeof el == 'object'){ // must be element?
+            }else if(typeof el == 'object' && el.nodeType){ 
                 td.appendChild(el);
+            }else if(typeof el == 'object'){ 
+                this.addButton(el);
             }
         }
     },
     
+    
     getEl : function(){
         return this.el;  
     },
+    
     
     addSeparator : function(){
         var td = document.createElement('td');
@@ -6211,11 +5331,7 @@ YAHOO.ext.Toolbar.prototype = {
         td.appendChild(span);
     },
     
-    /**
-     * Add a button (or buttons), see {@link YAHOO.ext.ToolbarButton} for more info on the config
-     * @param {Object/Array} config A button config or array of configs
-     * @return {YAHOO.ext.ToolbarButton}
-     */
+    
     addButton : function(config){
         if(config instanceof Array){
             var buttons = [];
@@ -6224,10 +5340,14 @@ YAHOO.ext.Toolbar.prototype = {
             }
             return buttons;
         }
-        var b = new YAHOO.ext.ToolbarButton(config);
+        var b = config;
+        if(!(config instanceof YAHOO.ext.ToolbarButton)){
+             b = new YAHOO.ext.ToolbarButton(config);
+        }
         this.add(b);
         return b;
     },
+    
     
     addText : function(text){
         var td = document.createElement('td');
@@ -6238,6 +5358,7 @@ YAHOO.ext.Toolbar.prototype = {
         td.appendChild(span);
         return span;
     },
+    
     
     insertButton : function(index, config){
         if(config instanceof Array){
@@ -6256,33 +5377,19 @@ YAHOO.ext.Toolbar.prototype = {
            this.tr.appendChild(td);
         b.init(td);
         return b;
-    } 
+    }
 };
 
-/**
- * @class
- * A toolbar button. The config has the following options:
- * <ul>
- * <li>className - The CSS class for the button. Use this to attach a background image for an icon.</li>
- * <li>text - The button's text</li>
- * <li>tooltip - The buttons tooltip text</li>
- * <li>click - function to call when the button is clicked</li>
- * <li>mouseover - function to call when the mouse moves over the button</li>
- * <li>mouseout - function to call when the mouse moves off the button</li>
- * <li>scope - The scope of the above event handlers</li>
- * <li></li>
- * <li></li>
- */
+
 YAHOO.ext.ToolbarButton = function(config){
     YAHOO.ext.util.Config.apply(this, config);
 };
 
 YAHOO.ext.ToolbarButton.prototype = {
-    /** @private */
+    
     init : function(appendTo){
         var element = document.createElement('span');
         element.className = 'ytb-button';
-        element.unselectable = 'on';
         if(this.id){
             element.id = this.id;
         }
@@ -6299,11 +5406,40 @@ YAHOO.ext.ToolbarButton.prototype = {
         element.appendChild(inner);
         appendTo.appendChild(element);
         this.el = getEl(element, true);
-        inner.innerHTML = (this.text ? this.text : '&nbsp;');
+        this.el.unselectable();
+        inner.innerHTML = (this.text ? this.text : '&#160;');
+        this.inner = inner;
         this.el.mon('click', this.onClick, this, true);    
         this.el.mon('mouseover', this.onMouseOver, this, true);    
         this.el.mon('mouseout', this.onMouseOut, this, true);
     },
+    
+    
+    setHandler : function(click, scope){
+        this.click = click;
+        this.scope = scope;  
+    },
+    
+    
+    setText : function(text){
+        this.inner.innerHTML = text;    
+    },
+    
+    
+    setTooltip : function(text){
+        this.el.dom.title = text;    
+    },
+    
+    
+    show: function(){
+        this.el.dom.parentNode.style.display = '';
+    },
+    
+    
+    hide: function(){
+        this.el.dom.parentNode.style.display = 'none';  
+    },
+    
     
     disable : function(){
         this.disabled = true;
@@ -6312,12 +5448,14 @@ YAHOO.ext.ToolbarButton.prototype = {
         }
     },
     
+    
     enable : function(){
         this.disabled = false;
         if(this.el){
             this.el.removeClass('ytb-button-disabled');
         }
     },
+    
     
     isDisabled : function(){
         return this.disabled === true;
@@ -6331,14 +5469,14 @@ YAHOO.ext.ToolbarButton.prototype = {
         }
     },
     
-    /** @private */
+    
     onClick : function(){
         if(!this.disabled && this.click){
             this.click.call(this.scope || window, this);
         }
     },
     
-    /** @private */
+    
     onMouseOver : function(){
         if(!this.disabled){
             this.el.addClass('ytb-button-over');
@@ -6348,7 +5486,7 @@ YAHOO.ext.ToolbarButton.prototype = {
         }
     },
     
-    /** @private */
+    
     onMouseOut : function(){
         this.el.removeClass('ytb-button-over');
         if(!this.disabled){
@@ -6359,69 +5497,117 @@ YAHOO.ext.ToolbarButton.prototype = {
     }
 };
 
-/*
-------------------------------------------------------------------
-// File: widgets\Resizable.js
-------------------------------------------------------------------
-*/
-/**
- * @class 
- * Makes an element resizable.
- */
 YAHOO.ext.Resizable = function(el, config){
-    // in case global fcn not defined
-    var getEl = YAHOO.ext.Element.get;
+    this.el = getEl(el);
     
-    this.el = getEl(el, true);
-    this.el.autoBoxAdjust = true;
-    // if the element isn't positioned, make it relative
+    if(config && config.wrap){
+        config.resizeChild = this.el;
+        this.el = this.el.wrap(typeof config.wrap == 'object' ? config.wrap : null);
+        this.el.id = this.el.dom.id = config.resizeChild.id + '-rzwrap';
+        this.el.setStyle('overflow', 'hidden');
+        this.el.setPositioning(config.resizeChild.getPositioning());
+        config.resizeChild.clearPositioning();
+        if(!config.width || !config.height){
+            var csize = config.resizeChild.getSize();
+            
+            
+            this.el.setSize(csize.width, csize.height);
+        }
+        if(config.pinned && !config.adjustments){
+            config.adjustments = 'auto';
+        }
+    }
+    
+    this.proxy = this.el.createProxy({tag: 'div', cls: 'yresizable-proxy', id: this.el.id + '-rzproxy'})
+    this.proxy.unselectable();
+    
+    
+    this.overlay = this.el.createProxy({tag: 'div', cls: 'yresizable-overlay', html: '&#160;'});
+    this.overlay.unselectable();
+    this.overlay.enableDisplayMode('block');
+    this.overlay.mon('mousemove', this.onMouseMove, this, true);
+    this.overlay.mon('mouseup', this.onMouseUp, this, true);
+    
+    YAHOO.ext.util.Config.apply(this, config, {
+        
+        resizeChild : false,
+        
+        adjustments : [0, 0],
+        
+        minWidth : 5,
+        
+        minHeight : 5,
+        
+        maxWidth : 10000,
+        
+        maxHeight : 10000,
+        
+        enabled : true,
+        
+        animate : false,
+        
+        duration : .35,
+        
+        dynamic : false,
+        
+        
+        handles : false,
+        multiDirectional : false,
+        
+        disableTrackOver : false,
+        
+        easing : YAHOO.util.Easing ? YAHOO.util.Easing.easeOutStrong : null,
+        
+        widthIncrement : 0,
+        
+        heightIncrement : 0,
+        
+        pinned : false,
+        
+        width : null,
+        
+        height : null,
+        
+        preserveRatio : false,
+        
+        transparent: false,
+        
+        minX: 0,
+        
+        minY: 0,
+        
+        draggable: false
+    });
+    
+    if(this.pinned){
+        this.disableTrackOver = true;
+        this.el.addClass('yresizable-pinned');    
+    }
+    
     if(this.el.getStyle('position') != 'absolute'){
         this.el.setStyle('position', 'relative');
     }
-    
-    // create the handles and proxy
-    var dh = YAHOO.ext.DomHelper;
-    var tpl = dh.createTemplate({tag: 'div', cls: 'yresizable-handle yresizable-handle-{0}', html: '&nbsp;'});
-    this.east = getEl(tpl.append(this.el.dom, ['east']), true);
-    this.south = getEl(tpl.append(this.el.dom, ['south']), true);
-    if(config && config.multiDirectional){
-        this.west = getEl(tpl.append(this.el.dom, ['west']), true);
-        this.north = getEl(tpl.append(this.el.dom, ['north']), true);
+    if(!this.handles){ 
+        this.handles = 's,e,se';
+        if(this.multiDirectional){
+            this.handles += ',n,w';
+        }
     }
-    this.corner = getEl(tpl.append(this.el.dom, ['southeast']), true);
-    this.proxy = getEl(dh.insertBefore(document.body.firstChild, {tag: 'div', cls: 'yresizable-proxy', id: this.el.id + '-rzproxy'}), true);
-    this.proxy.autoBoxAdjust = true;
+    if(this.handles == 'all'){
+        this.handles = 'n s e w ne nw se sw';
+    }
+    var hs = this.handles.split(/\s*?[,;]\s*?| /);
+    var ps = YAHOO.ext.Resizable.positions;
+    for(var i = 0, len = hs.length; i < len; i++){
+        if(hs[i] && ps[hs[i]]){
+            var pos = ps[hs[i]];
+            this[pos] = new YAHOO.ext.Resizable.Handle(this, pos, this.disableTrackOver, this.transparent);
+        }
+    }
     
-    // wrapped event handlers to add and remove when sizing
-    this.moveHandler = YAHOO.ext.EventManager.wrap(this.onMouseMove, this, true);
-    this.upHandler = YAHOO.ext.EventManager.wrap(this.onMouseUp, this, true);
-    this.selHandler = YAHOO.ext.EventManager.wrap(this.cancelSelection, this, true);
+    this.corner = this.southeast;
     
-    // public events
-    this.events = {
-        'beforeresize' : new YAHOO.util.CustomEvent(),
-        'resize' : new YAHOO.util.CustomEvent()
-    };
-    
-    /** @private */
-    this.dir = null;
-    
-    // properties
-    this.resizeChild = false;
-    this.adjustments = [0, 0];
-    this.minWidth = 5;
-    this.minHeight = 5;
-    this.maxWidth = 10000;
-    this.maxHeight = 10000;
-    this.enabled = true;
-    this.animate = false;
-    this.duration = .35;
-    this.dynamic = false;
-    this.multiDirectional = false;
-    this.disableTrackOver = false;
-    this.easing = YAHOO.util.Easing ? YAHOO.util.Easing.easeOutStrong : null;
-    
-    YAHOO.ext.util.Config.apply(this, config);
+    this.activeHandle = null;
     
     if(this.resizeChild){
         if(typeof this.resizeChild == 'boolean'){
@@ -6431,114 +5617,110 @@ YAHOO.ext.Resizable = function(el, config){
         }
     }
     
-    // listen for mouse down on the handles
-    var mdown = this.onMouseDown.createDelegate(this);
-    this.east.mon('mousedown', mdown);
-    this.south.mon('mousedown', mdown);
-    if(this.multiDirectional){
-        this.west.mon('mousedown', mdown);
-        this.north.mon('mousedown', mdown);
-    }
-    this.corner.mon('mousedown', mdown);
-    
-    if(!this.disableTrackOver){
-        // track mouse overs
-        var mover = this.onMouseOver.createDelegate(this);
-        // track mouse outs
-        var mout = this.onMouseOut.createDelegate(this);
-        
-        this.east.mon('mouseover', mover);
-        this.east.mon('mouseout', mout);
-        this.south.mon('mouseover', mover);
-        this.south.mon('mouseout', mout);
-        if(this.multiDirectional){
-            this.west.mon('mouseover', mover);
-            this.west.mon('mouseout', mout);
-            this.north.mon('mouseover', mover);
-            this.north.mon('mouseout', mout);
+    if(this.adjustments == 'auto'){
+        var rc = this.resizeChild;
+        var hw = this.west, he = this.east, hn = this.north, hs = this.south;
+        if(rc && (hw || hn)){
+            rc.setRelativePositioned();
+            rc.setLeft(hw ? hw.el.getWidth() : 0);
+            rc.setTop(hn ? hn.el.getHeight() : 0);
         }
-        this.corner.mon('mouseover', mover);
-        this.corner.mon('mouseout', mout);
+        this.adjustments = [
+            (he ? -he.el.getWidth() : 0) + (hw ? -hw.el.getWidth() : 0),
+            (hn ? -hn.el.getHeight() : 0) + (hs ? -hs.el.getHeight() : 0) -1 
+        ];
     }
-    this.updateChildSize();
+    
+    if(this.draggable){
+        this.dd = this.dynamic ? 
+            this.el.initDD(null) : this.el.initDDProxy(null, {dragElId: this.proxy.id});
+        this.dd.setHandleElId(this.resizeChild ? this.resizeChild.id : this.el.id);
+    }
+    
+    
+    this.events = {
+        
+        'beforeresize' : new YAHOO.util.CustomEvent(),
+        
+        'resize' : new YAHOO.util.CustomEvent()
+    };
+    
+    if(this.width !== null && this.height !== null){
+        this.resizeTo(this.width, this.height);
+    }else{
+        this.updateChildSize();
+    }
 };
 
 YAHOO.extendX(YAHOO.ext.Resizable, YAHOO.ext.util.Observable, {
+    
     resizeTo : function(width, height){
         this.el.setSize(width, height);
+        this.updateChildSize();
         this.fireEvent('resize', this, width, height, null);
-    },
-    
-    cancelSelection : function(e){
-        e.preventDefault();
     },
     
     startSizing : function(e){
         this.fireEvent('beforeresize', this, e);
-        if(this.enabled){ // 2nd enabled check in case disabled before beforeresize handler
-            e.preventDefault();
+        if(this.enabled){ 
+            this.resizing = true;
             this.startBox = this.el.getBox();
             this.startPoint = e.getXY();
             this.offsets = [(this.startBox.x + this.startBox.width) - this.startPoint[0],
                             (this.startBox.y + this.startBox.height) - this.startPoint[1]];
             this.proxy.setBox(this.startBox);
+            
+            this.overlay.setSize(YAHOO.util.Dom.getDocumentWidth(), YAHOO.util.Dom.getDocumentHeight());
+            this.overlay.show();
+            
             if(!this.dynamic){
                 this.proxy.show();
             }
-            YAHOO.util.Event.on(document.body, 'selectstart', this.selHandler);
-            YAHOO.util.Event.on(document.body, 'mousemove', this.moveHandler);
-            YAHOO.util.Event.on(document.body, 'mouseup', this.upHandler);
         }
     },
     
-    onMouseDown : function(e){
+    onMouseDown : function(handle, e){
         if(this.enabled){
-            var t = e.getTarget();
-            if(t == this.corner.dom){
-                this.dir = 'both';
-                this.proxy.setStyle('cursor', this.corner.getStyle('cursor'));
-                this.startSizing(e);
-            }else if(t == this.east.dom){
-                this.dir = 'east';
-                this.proxy.setStyle('cursor', this.east.getStyle('cursor'));
-                this.startSizing(e);
-            }else if(t == this.south.dom){
-                this.dir = 'south';
-                this.proxy.setStyle('cursor', this.south.getStyle('cursor'));
-                this.startSizing(e);
-            }else if(t == this.west.dom){
-                this.dir = 'west';
-                this.proxy.setStyle('cursor', this.west.getStyle('cursor'));
-                this.startSizing(e);
-            }else if(t == this.north.dom){
-                this.dir = 'north';
-                this.proxy.setStyle('cursor', this.north.getStyle('cursor'));
-                this.startSizing(e);
-            }
+            e.stopEvent();
+            this.activeHandle = handle;
+            this.overlay.setStyle('cursor', handle.el.getStyle('cursor'));
+            this.startSizing(e);
         }          
     },
     
     onMouseUp : function(e){
-        YAHOO.util.Event.removeListener(document.body, 'selectstart', this.selHandler);
-        YAHOO.util.Event.removeListener(document.body, 'mousemove', this.moveHandler);
-        YAHOO.util.Event.removeListener(document.body, 'mouseup', this.upHandler);
         var size = this.resizeElement();
+        this.resizing = false;
+        this.handleOut();
+        this.overlay.hide();
         this.fireEvent('resize', this, size.width, size.height, e);
     },
     
     updateChildSize : function(){
-        if(this.resizeChild && this.el.dom.offsetWidth){
+        if(this.resizeChild){
             var el = this.el;
             var child = this.resizeChild;
             var adj = this.adjustments;
-            setTimeout(function(){
-                var b = el.getBox(true);
+            if(el.dom.offsetWidth){
+                var b = el.getSize(true);
                 child.setSize(b.width+adj[0], b.height+adj[1]);
-            }, 1);
+            }
+            
+            
+            
+            
+            if(YAHOO.ext.util.Browser.isIE){
+                setTimeout(function(){
+                    if(el.dom.offsetWidth){
+                        var b = el.getSize(true);
+                        child.setSize(b.width+adj[0], b.height+adj[1]);
+                    }
+                }, 10);
+            }
         }
     },
     
-    snap : function(value, inc){
+    snap : function(value, inc, min){
         if(!inc || !value) return value;
         var newValue = value;
         var m = value % inc;
@@ -6549,201 +5731,333 @@ YAHOO.extendX(YAHOO.ext.Resizable, YAHOO.ext.util.Observable, {
                 newValue = value - m;
             }
         }
-        return newValue;
+        return Math.max(min, newValue);
     },
     
     resizeElement : function(){
         var box = this.proxy.getBox();
-        box.width = this.snap(box.width, this.widthIncrement);
-        box.height = this.snap(box.height, this.heightIncrement);
-        if(this.multiDirectional){
+        
+        
+        
             this.el.setBox(box, false, this.animate, this.duration, null, this.easing);
-        }else{
-            this.el.setSize(box.width, box.height, this.animate, this.duration, null, this.easing);
-        }
+        
+        
+        
         this.updateChildSize();
         this.proxy.hide();
         return box;
     },
     
+    constrain : function(v, diff, m, mx){
+        if(v - diff < m){
+            diff = v - m;    
+        }else if(v - diff > mx){
+            diff = mx - v; 
+        }
+        return diff;                
+    },
+    
     onMouseMove : function(e){
         if(this.enabled){
-            var xy = e.getXY();
-            if(this.dir == 'both' || this.dir == 'east' || this.dir == 'south'){
-                var w = Math.min(Math.max(this.minWidth, xy[0]-this.startBox.x+this.offsets[0]),this.maxWidth);
-                var h = Math.min(Math.max(this.minHeight, xy[1]-this.startBox.y+this.offsets[1]), this.maxHeight);
-                if(this.dir == 'both'){
-                    this.proxy.setSize(w, h);
-                }else if(this.dir == 'east'){
-                    this.proxy.setWidth(w);
-                }else if(this.dir == 'south'){
-                    this.proxy.setHeight(h);
+            try{
+            
+            
+            var curSize = this.curSize || this.startBox;
+            var x = this.startBox.x, y = this.startBox.y;
+            var ox = x, oy = y;
+            var w = curSize.width, h = curSize.height;
+            var ow = w, oh = h;
+            var mw = this.minWidth, mh = this.minHeight;
+            var mxw = this.maxWidth, mxh = this.maxHeight;
+            var wi = this.widthIncrement;
+            var hi = this.heightIncrement;
+            
+            var eventXY = e.getXY();
+            var diffX = -(this.startPoint[0] - Math.max(this.minX, eventXY[0]));
+            var diffY = -(this.startPoint[1] - Math.max(this.minY, eventXY[1]));
+            
+            var pos = this.activeHandle.position;
+            
+            switch(pos){
+                case 'east':
+                    w += diffX; 
+                    w = Math.min(Math.max(mw, w), mxw);
+                    break;
+                case 'south':
+                    h += diffY;
+                    h = Math.min(Math.max(mh, h), mxh);
+                    break;
+                case 'southeast':
+                    w += diffX; 
+                    h += diffY;
+                    w = Math.min(Math.max(mw, w), mxw);
+                    h = Math.min(Math.max(mh, h), mxh);
+                    break;
+                case 'north':
+                    diffY = this.constrain(h, diffY, mh, mxh);
+                    y += diffY;
+                    h -= diffY;
+                    break;
+                case 'west':
+                    diffX = this.constrain(w, diffX, mw, mxw);
+                    x += diffX;
+                    w -= diffX;
+                    break;
+                case 'northeast':
+                    w += diffX; 
+                    w = Math.min(Math.max(mw, w), mxw);
+                    diffY = this.constrain(h, diffY, mh, mxh);
+                    y += diffY;
+                    h -= diffY;
+                    break;
+                case 'northwest':
+                    diffX = this.constrain(w, diffX, mw, mxw);
+                    diffY = this.constrain(h, diffY, mh, mxh);
+                    y += diffY;
+                    h -= diffY;
+                    x += diffX;
+                    w -= diffX;
+                    break;
+               case 'southwest':
+                    diffX = this.constrain(w, diffX, mw, mxw);
+                    h += diffY;
+                    h = Math.min(Math.max(mh, h), mxh);
+                    x += diffX;
+                    w -= diffX;
+                    break;
+            }
+            
+            var sw = this.snap(w, wi, mw);
+            var sh = this.snap(h, hi, mh);
+            if(sw != w || sh != h){
+                switch(pos){
+                    case 'northeast':
+                        y -= sh - h;
+                    break;
+                    case 'north':
+                        y -= sh - h;
+                        break;
+                    case 'southwest':
+                        x -= sw - w;
+                    break;
+                    case 'west':
+                        x -= sw - w;
+                        break;
+                    case 'northwest':
+                        x -= sw - w;
+                        y -= sh - h;
+                    break;
                 }
-            }else{
-                var x = this.startBox.x + (xy[0]-this.startPoint[0]);
-                var y = this.startBox.y + (xy[1]-this.startPoint[1]);
-                var w = this.startBox.width+(this.startBox.x-x);
-                var h = this.startBox.height+(this.startBox.y-y);
-                if(this.dir == 'west' && w <= this.maxWidth && w >= this.minWidth){
-                    this.proxy.setX(x);
-                    this.proxy.setWidth(w);
-                }else if(this.dir == 'north' && h <= this.maxHeight && h >= this.minHeight){
-                    this.proxy.setY(y);
-                    this.proxy.setHeight(h);
+                w = sw;
+                h = sh;
+            }
+            
+            if(this.preserveRatio){
+                switch(pos){
+                    case 'southeast':
+                    case 'east':
+                        h = oh * (w/ow);
+                        h = Math.min(Math.max(mh, h), mxh);
+                        w = ow * (h/oh);
+                       break;
+                    case 'south':
+                        w = ow * (h/oh);
+                        w = Math.min(Math.max(mw, w), mxw);
+                        h = oh * (w/ow);
+                        break;
+                    case 'northeast':
+                        w = ow * (h/oh);
+                        w = Math.min(Math.max(mw, w), mxw);
+                        h = oh * (w/ow);
+                    break;
+                    case 'north':
+                        var tw = w;
+                        w = ow * (h/oh);
+                        w = Math.min(Math.max(mw, w), mxw);
+                        h = oh * (w/ow);
+                        x += (tw - w) / 2;
+                        break;
+                    case 'southwest':
+                        h = oh * (w/ow);
+                        h = Math.min(Math.max(mh, h), mxh);
+                        var tw = w;
+                        w = ow * (h/oh);
+                        x += tw - w;
+                        break;
+                    case 'west':
+                        var th = h;
+                        h = oh * (w/ow);
+                        h = Math.min(Math.max(mh, h), mxh);
+                        y += (th - h) / 2;
+                        var tw = w;
+                        w = ow * (h/oh);
+                        x += tw - w;
+                       break;
+                    case 'northwest':
+                        var tw = w;
+                        var th = h;
+                        h = oh * (w/ow);
+                        h = Math.min(Math.max(mh, h), mxh);
+                        w = ow * (h/oh);
+                        y += th - h;
+                         x += tw - w;
+                       break;
+                        
                 }
             }
+            this.proxy.setBounds(x, y, w, h);
             if(this.dynamic){
                 this.resizeElement();
             }
+            }catch(e){}
         }
     },
     
-    onMouseOver : function(){
-        if(this.enabled) this.el.addClass('yresizable-over');
+    handleOver : function(){
+        if(this.enabled){
+            this.el.addClass('yresizable-over');
+        }
     },
     
-    onMouseOut : function(){
-        this.el.removeClass('yresizable-over');
+    handleOut : function(){
+        if(!this.resizing){
+            this.el.removeClass('yresizable-over');
+        }
+    },
+    
+    
+    getEl : function(){
+        return this.el;
+    },
+    
+    
+    getResizeChild : function(){
+        return this.resizeChild;
     }
 });
 
-/*
-------------------------------------------------------------------
-// File: widgets\SplitBar.js
-------------------------------------------------------------------
-*/
-/*
- * splitbar.js, version .7
- * Copyright(c) 2006, Jack Slocum.
- * Code licensed under the BSD License
- */
 
-YAHOO.util.DragDropMgr.clickTimeThresh = 350;
+YAHOO.ext.Resizable.positions = {
+    n: 'north', s: 'south', e: 'east', w: 'west', se: 'southeast', sw: 'southwest', nw: 'northwest', ne: 'northeast' 
+};
 
-/**
- * @class Creates draggable splitter bar functionality from two elements.
- * <br><br>
- * Usage:
- * <pre><code>
- * var split = new YAHOO.ext.SplitBar('elementToDrag', 'elementToSize', 
- *                   YAHOO.ext.SplitBar.HORIZONTAL, YAHOO.ext.SplitBar.LEFT);
- * split.setAdapter(new YAHOO.ext.SplitBar.AbsoluteLayoutAdapter("container"));
- * split.minSize = 100;
- * split.maxSize = 600;
- * split.animate = true;
- * split.onMoved.subscribe(splitterMoved);
- * </code></pre>
- * @requires YAHOO.ext.Element
- * @requires YAHOO.util.Dom
- * @requires YAHOO.util.Event
- * @requires YAHOO.util.CustomEvent 
- * @requires YAHOO.util.DDProxy
- * @requires YAHOO.util.Anim (optional) to support animation
- * @requires YAHOO.util.Easing (optional) to support animation
- * @constructor
- * @param {String/HTMLElement/Element} dragElement The element to be dragged and act as the SplitBar. 
- * @param {String/HTMLElement/Element} resizingElement The element to be resized based on where the SplitBar element is dragged 
- * @param {Number} orientation (optional) Either YAHOO.ext.SplitBar.HORIZONTAL or YAHOO.ext.SplitBar.VERTICAL. (Defaults to HORIZONTAL)
- * @param {Number} placement (optional) Either YAHOO.ext.SplitBar.LEFT or YAHOO.ext.SplitBar.RIGHT for horizontal or  
-                        YAHOO.ext.SplitBar.TOP or YAHOO.ext.SplitBar.BOTTOM for vertical. (By default, this is determined automatically by the intial position 
-                        position of the SplitBar).
- */
+
+YAHOO.ext.Resizable.Handle = function(rz, pos, disableTrackOver, transparent){
+    if(!this.tpl){
+        
+        var tpl = YAHOO.ext.DomHelper.createTemplate(
+            {tag: 'div', cls: 'yresizable-handle yresizable-handle-{0}', html: '&#160;'}
+        );
+        tpl.compile();
+        YAHOO.ext.Resizable.Handle.prototype.tpl = tpl;
+    }
+    this.position = pos;
+    this.rz = rz;
+    this.el = this.tpl.append(rz.el.dom, [this.position], true);
+    this.el.unselectable();
+    if(transparent){
+        this.el.setOpacity(0);
+    }
+    this.el.mon('mousedown', this.onMouseDown, this, true);
+    if(!disableTrackOver){
+        this.el.mon('mouseover', this.onMouseOver, this, true);
+        this.el.mon('mouseout', this.onMouseOut, this, true);
+    }
+};
+
+YAHOO.ext.Resizable.Handle.prototype = {
+    afterResize : function(rz){
+        
+    },
+    
+    onMouseDown : function(e){
+        this.rz.onMouseDown(this, e);
+    },
+    
+    onMouseOver : function(e){
+        this.rz.handleOver(this, e);
+    },
+    
+    onMouseOut : function(e){
+        this.rz.handleOut(this, e);
+    }  
+};
+
+
+
+
+if(YAHOO.util.DragDropMgr){
+  YAHOO.util.DragDropMgr.clickTimeThresh = 350;
+}
+
 YAHOO.ext.SplitBar = function(dragElement, resizingElement, orientation, placement){
     
-    /** @private */
+    
     this.el = YAHOO.ext.Element.get(dragElement, true);
     this.el.dom.unselectable = 'on';
-    /** @private */
+    
     this.resizingEl = YAHOO.ext.Element.get(resizingElement, true);
     
-    /**
-     * @private
-     * The orientation of the split. Either YAHOO.ext.SplitBar.HORIZONTAL or YAHOO.ext.SplitBar.VERTICAL. (Defaults to HORIZONTAL)
-     * Note: If this is changed after creating the SplitBar, the placement property must be manually updated
-     * @type Number
-     */
+    
     this.orientation = orientation || YAHOO.ext.SplitBar.HORIZONTAL;
     
-    /**
-     * The minimum size of the resizing element. (Defaults to 0)
-     * @type Number
-     */
+    
     this.minSize = 0;
     
-    /**
-     * The maximum size of the resizing element. (Defaults to 2000)
-     * @type Number
-     */
+    
     this.maxSize = 2000;
     
-    /**
-     * Fires when the SplitBar is moved. Uses fireDirect with signature: (this, newSize)
-     * @type CustomEvent
-     */
     this.onMoved = new YAHOO.util.CustomEvent("SplitBarMoved", this);
     
-    /**
-     * Whether to animate the transition to the new size
-     * @type Boolean
-     */
+    
     this.animate = false;
     
-    /**
-     * Whether to create a transparent shim that overlays the page when dragging, enables dragging across iframes.
-     * @type Boolean
-     */
+    
     this.useShim = false;
     
-    /** @private */
+    
     this.shim = null;
     
-    /** @private */
+    
     this.proxy = YAHOO.ext.SplitBar.createProxy(this.orientation);
     
-    /** @private */
+    
     this.dd = new YAHOO.util.DDProxy(this.el.dom.id, "SplitBars", {dragElId : this.proxy.id});
     
-    /** @private */
+    
     this.dd.b4StartDrag = this.onStartProxyDrag.createDelegate(this);
     
-    /** @private */
+    
     this.dd.endDrag = this.onEndProxyDrag.createDelegate(this);
     
-    /** @private */
+    
     this.dragSpecs = {};
     
-    /**
-     * @private The adapter to use to positon and resize elements
-     */
+    
     this.adapter = new YAHOO.ext.SplitBar.BasicLayoutAdapter();
     this.adapter.init(this);
     
     if(this.orientation == YAHOO.ext.SplitBar.HORIZONTAL){
-        /** @private */
+        
         this.placement = placement || (this.el.getX() > this.resizingEl.getX() ? YAHOO.ext.SplitBar.LEFT : YAHOO.ext.SplitBar.RIGHT);
         this.el.setStyle('cursor', 'e-resize');
     }else{
-        /** @private */
+        
         this.placement = placement || (this.el.getY() > this.resizingEl.getY() ? YAHOO.ext.SplitBar.TOP : YAHOO.ext.SplitBar.BOTTOM);
         this.el.setStyle('cursor', 'n-resize');
     }
     
     this.events = {
+        
         'resize' : this.onMoved,
+        
         'moved' : this.onMoved,
+        
         'beforeresize' : new YAHOO.util.CustomEvent('beforeresize')
     }
 }
 
-YAHOO.ext.SplitBar.prototype = {
-    fireEvent : YAHOO.ext.util.Observable.prototype.fireEvent,
-    on : YAHOO.ext.util.Observable.prototype.on,
-    addListener : YAHOO.ext.util.Observable.prototype.addListener,
-    delayedListener : YAHOO.ext.util.Observable.prototype.delayedListener,
-    removeListener : YAHOO.ext.util.Observable.prototype.removeListener,
-    /** 
-     * @private Called before drag operation begins by the DDProxy
-     */
+YAHOO.extendX(YAHOO.ext.SplitBar, YAHOO.ext.util.Observable, {
     onStartProxyDrag : function(x, y){
         this.fireEvent('beforeresize', this);
         if(this.useShim){
@@ -6779,9 +6093,7 @@ YAHOO.ext.SplitBar.prototype = {
         YAHOO.util.DDProxy.prototype.b4StartDrag.call(this.dd, x, y);
     },
     
-    /** 
-     * @private Called after the drag operation by the DDProxy
-     */
+    
     onEndProxyDrag : function(e){
         YAHOO.util.Dom.setStyle(this.proxy, 'display', 'none');
         var endPoint = YAHOO.util.Event.getXY(e);
@@ -6809,79 +6121,56 @@ YAHOO.ext.SplitBar.prototype = {
         }
     },
     
-    /**
-     * Get the adapter this SplitBar uses
-     * @return The adapter object
-     */
+    
     getAdapter : function(){
         return this.adapter;
     },
     
-    /**
-     * Set the adapter this SplitBar uses
-     * @param {Object} adapter A SplitBar adapter object
-     */
+    
     setAdapter : function(adapter){
         this.adapter = adapter;
         this.adapter.init(this);
     },
     
-    /**
-     * Gets the minimum size for the resizing element
-     * @return {Number} The minimum size
-     */
+    
     getMinimumSize : function(){
         return this.minSize;
     },
     
-    /**
-     * Sets the minimum size for the resizing element
-     * @param {Number} minSize The minimum size
-     */
+    
     setMinimumSize : function(minSize){
         this.minSize = minSize;
     },
     
-    /**
-     * Gets the maximum size for the resizing element
-     * @return {Number} The maximum size
-     */
+    
     getMaximumSize : function(){
         return this.maxSize;
     },
     
-    /**
-     * Sets the maximum size for the resizing element
-     * @param {Number} maxSize The maximum size
-     */
+    
     setMaximumSize : function(maxSize){
         this.maxSize = maxSize;
     },
     
-    /**
-     * Sets the initialize size for the resizing element
-     * @param {Number} size The initial size
-     */
+    
     setCurrentSize : function(size){
         var oldAnimate = this.animate;
         this.animate = false;
         this.adapter.setElementSize(this, size);
         this.animate = oldAnimate;
     }
-};
+});
 
-/**
- * @private static Create the shim to drag over iframes
- */
+
 YAHOO.ext.SplitBar.createShim = function(){
     var shim = document.createElement('div');
+    shim.unselectable = 'on';
     YAHOO.util.Dom.generateId(shim, 'split-shim');
     YAHOO.util.Dom.setStyle(shim, 'width', '100%');
     YAHOO.util.Dom.setStyle(shim, 'height', '100%');
     YAHOO.util.Dom.setStyle(shim, 'position', 'absolute');
     YAHOO.util.Dom.setStyle(shim, 'background', 'white');
     YAHOO.util.Dom.setStyle(shim, 'z-index', 11000);
-    shim.innerHTML = '&nbsp;';
     window.document.body.appendChild(shim);
     var shimEl = YAHOO.ext.Element.get(shim);
     shimEl.setOpacity(.01);
@@ -6889,9 +6178,7 @@ YAHOO.ext.SplitBar.createShim = function(){
     return shimEl;
 };
 
-/**
- * @private static Create our own proxy element element. So it will be the same same size on all browsers, we won't use borders. Instead we use a background color.
- */
+
 YAHOO.ext.SplitBar.createProxy = function(orientation){
     var proxy = document.createElement('div');
     proxy.unselectable = 'on';
@@ -6905,30 +6192,23 @@ YAHOO.ext.SplitBar.createProxy = function(orientation){
     }else{
         YAHOO.util.Dom.setStyle(proxy, 'cursor', 'n-resize');
     }
-    // the next 2 fix IE abs position div height problem
+    
     YAHOO.util.Dom.setStyle(proxy, 'line-height', '0px');
     YAHOO.util.Dom.setStyle(proxy, 'font-size', '0px');
     window.document.body.appendChild(proxy);
     return proxy;
 };
 
-/** 
- * @class
- * Default Adapter. It assumes the splitter and resizing element are not positioned
- * elements and only gets/sets the width of the element. Generally used for table based layouts.
- */
+
 YAHOO.ext.SplitBar.BasicLayoutAdapter = function(){
 };
 
 YAHOO.ext.SplitBar.BasicLayoutAdapter.prototype = {
-    // do nothing for now
+    
     init : function(s){
     
     },
-    /**
-     * Called before drag operations to get the current size of the resizing element. 
-     * @param {YAHOO.ext.SplitBar} s The SplitBar using this adapter
-     */
+    
      getElementSize : function(s){
         if(s.orientation == YAHOO.ext.SplitBar.HORIZONTAL){
             return s.resizingEl.getWidth();
@@ -6937,12 +6217,7 @@ YAHOO.ext.SplitBar.BasicLayoutAdapter.prototype = {
         }
     },
     
-    /**
-     * Called after drag operations to set the size of the resizing element.
-     * @param {YAHOO.ext.SplitBar} s The SplitBar using this adapter
-     * @param {Number} newSize The new size to set
-     * @param {Function} onComplete A function to be invoke when resizing is complete
-     */
+    
     setElementSize : function(s, newSize, onComplete){
         if(s.orientation == YAHOO.ext.SplitBar.HORIZONTAL){
             if(!YAHOO.util.Anim || !s.animate){
@@ -6967,13 +6242,7 @@ YAHOO.ext.SplitBar.BasicLayoutAdapter.prototype = {
     }
 };
 
-/** 
- *@class
- * Adapter that  moves the splitter element to align with the resized sizing element. 
- * Used with an absolute positioned SplitBar.
- * @param {String/HTMLElement/Element} container The container that wraps around the absolute positioned content. If it's
- * document.body, make sure you assign an id to the body element.
- */
+
 YAHOO.ext.SplitBar.AbsoluteLayoutAdapter = function(container){
     this.basic = new YAHOO.ext.SplitBar.BasicLayoutAdapter();
     this.container = getEl(container);
@@ -6982,7 +6251,7 @@ YAHOO.ext.SplitBar.AbsoluteLayoutAdapter = function(container){
 YAHOO.ext.SplitBar.AbsoluteLayoutAdapter.prototype = {
     init : function(s){
         this.basic.init(s);
-        //YAHOO.util.Event.on(window, 'resize', this.moveSplitter.createDelegate(this, [s]));
+        
     },
     
     getElementSize : function(s){
@@ -7012,180 +6281,153 @@ YAHOO.ext.SplitBar.AbsoluteLayoutAdapter.prototype = {
     }
 };
 
-/**
- * Orientation constant - Create a vertical SplitBar
- * @type Number
- */
+
 YAHOO.ext.SplitBar.VERTICAL = 1;
 
-/**
- * Orientation constant - Create a horizontal SplitBar
- * @type Number
- */
+
 YAHOO.ext.SplitBar.HORIZONTAL = 2;
 
-/**
- * Placement constant - The resizing element is to the left of the splitter element
- * @type Number
- */
+
 YAHOO.ext.SplitBar.LEFT = 1;
 
-/**
- * Placement constant - The resizing element is to the right of the splitter element
- * @type Number
- */
+
 YAHOO.ext.SplitBar.RIGHT = 2;
 
-/**
- * Placement constant - The resizing element is positioned above the splitter element
- * @type Number
- */
+
 YAHOO.ext.SplitBar.TOP = 3;
 
-/**
- * Placement constant - The resizing element is positioned under splitter element
- * @type Number
- */
+
 YAHOO.ext.SplitBar.BOTTOM = 4;
 
 
-/*
-------------------------------------------------------------------
-// File: grid\Grid.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * This class represents the primary interface of a component based grid control.
- * <br><br>Usage:<pre><code>
- * var grid = new YAHOO.ext.grid.Grid('my-container-id', dataModel, columnModel);
- * // set any options
- * grid.render();
- * </code></pre>
- * @requires YAHOO.util.Dom
- * @requires YAHOO.util.Event
- * @requires YAHOO.util.CustomEvent 
- * @requires YAHOO.ext.Element
- * @requires YAHOO.ext.util.Browser
- * @requires YAHOO.ext.util.CSS
- * @requires YAHOO.ext.SplitBar 
- * @requires YAHOO.ext.EventObject 
- * @constructor
- * @param {String/HTMLElement/YAHOO.ext.Element} container The element into which this grid will be rendered - 
- * The container MUST have some type of size defined for the grid to fill. The container will be 
- * automatically set to position relative if it isn't already.
- * @param {Object} dataModel The data model to bind to
- * @param {Object} colModel The column model with info about this grid's columns
- * @param {<i>Object</i>} selectionModel (optional) The selection model for this grid (defaults to DefaultSelectionModel)
- */
-YAHOO.ext.grid.Grid = function(container, dataModel, colModel, selectionModel){
-	/** @private */
+YAHOO.ext.grid.Grid = function(container, config, colModel, selectionModel){
+	
 	this.container = YAHOO.ext.Element.get(container);
-	if(this.container.getStyle('position') != 'absolute'){
-	    this.container.setStyle('position', 'relative');
-	}
-	//this.container.setStyle('overflow', 'hidden');
-	/** @private */
+	this.container.update('');
+	this.container.setStyle('overflow', 'hidden');
 	this.id = this.container.id;
-	
-    /** @private */
 	this.rows = [];
-    /** @private */
-	this.rowCount = 0;
-    /** @private */
-	this.fieldId = null;
-    /** @private */
-	this.dataModel = dataModel;
-    /** @private */
-	this.colModel = colModel;
-    /** @private */
-	this.selModel = selectionModel;
-	
-	/** @private */
+    this.rowCount = 0;
+    this.fieldId = null;
+    var dataModel = config; 
+    this.dataModel = dataModel;
+    this.colModel = colModel;
+    this.selModel = selectionModel;
 	this.activeEditor = null;
-	
-	/** @private */
 	this.editingCell = null;
 	
-	/** The minimum width a column can be resized to. (Defaults to 25)
-	 * @type Number */
+	
 	this.minColumnWidth = 25;
 	
-	/** True to automatically resize the columns to fit their content <b>on initial render</b>
-	 * @type Boolean */
+	
 	this.autoSizeColumns = false;
 	
-	/** True to measure headers with column data when auto sizing columns
-	 * @type Boolean */
+	
 	this.autoSizeHeaders = false;
 	
-	/**
-	 * True to autoSize the grid when the window resizes - defaults to true
-	 */
+	
 	this.monitorWindowResize = true;
 	
-	/** If autoSizeColumns is on, maxRowsToMeasure can be used to limit the number of
-	 * rows measured to get a columns size - defaults to 0 (all rows).
-	 * @type Number */
+	
 	this.maxRowsToMeasure = 0;
 	
-	/** True to highlight rows when the mouse is over (default is false)
-	 * @type Boolean */
+	
 	this.trackMouseOver = false;
 	
-	/** True to enable drag and drop of rows
-	 * @type Boolean */
+	
 	this.enableDragDrop = false;
 	
-	/** True to stripe the rows (default is true)
-	 * @type Boolean */
+	
 	this.stripeRows = true;
 	
-	/** A regular expression defining tagNames 
-     * allowed to have text selection (Defaults to <code>/INPUT|TEXTAREA/i</code>) */
+	this.autoHeight = false;
+	
+	
+	this.autoWidth = false;
+	
+	
+	this.view = null;
+	
+	
     this.allowTextSelectionPattern = /INPUT|TEXTAREA|SELECT/i;
 	
-	/** @private */
+	if(typeof config == 'object' && !config.getRowCount){
+	    YAHOO.ext.util.Config.apply(this, config);
+	}
+	
+	
 	this.setValueDelegate = this.setCellValue.createDelegate(this);
 	
 	var CE = YAHOO.util.CustomEvent;
-	/** @private */
+	
 	this.events = {
-	    // raw events
+	    
+	    
 	    'click' : new CE('click'),
+	    
 	    'dblclick' : new CE('dblclick'),
+	    
 	    'mousedown' : new CE('mousedown'),
+	    
 	    'mouseup' : new CE('mouseup'),
+	    
 	    'mouseover' : new CE('mouseover'),
+	    
 	    'mouseout' : new CE('mouseout'),
+	    
 	    'keypress' : new CE('keypress'),
+	    
 	    'keydown' : new CE('keydown'),
-	    // custom events
+	    
+	    
+	    
+	    
 	    'cellclick' : new CE('cellclick'),
+	    
 	    'celldblclick' : new CE('celldblclick'),
+	    
 	    'rowclick' : new CE('rowclick'),
+	    
 	    'rowdblclick' : new CE('rowdblclick'),
+	    
 	    'headerclick' : new CE('headerclick'),
+	    
 	    'rowcontextmenu' : new CE('rowcontextmenu'),
+	    
 	    'headercontextmenu' : new CE('headercontextmenu'),
+	    
 	    'beforeedit' : new CE('beforeedit'),
+	    
 	    'afteredit' : new CE('afteredit'),
+	    
 	    'bodyscroll' : new CE('bodyscroll'),
+	    
 	    'columnresize' : new CE('columnresize'),
+	    
 	    'startdrag' : new CE('startdrag'),
+	    
 	    'enddrag' : new CE('enddrag'),
+	    
 	    'dragdrop' : new CE('dragdrop'),
+	    
 	    'dragover' : new CE('dragover'),
+	    
 	    'dragenter' : new CE('dragenter'),
+	    
 	    'dragout' : new CE('dragout')
 	};
 };
 
 YAHOO.ext.grid.Grid.prototype = { 
-    /**
-     * Called once after all setup has been completed and the grid is ready to be rendered.
-     */
+    
     render : function(){
+        if((!this.container.dom.offsetHeight || this.container.dom.offsetHeight < 20) 
+                || this.container.getStyle('height') == 'auto'){
+    	    this.autoHeight = true;   
+    	}	       
+    	if((!this.container.dom.offsetWidth || this.container.dom.offsetWidth < 20)){
+    	    this.autoWidth = true;   
+    	}	       
     	if(!this.view){
     	    if(this.dataModel.isPaged()){
     		    this.view = new YAHOO.ext.grid.PagedGridView();
@@ -7210,18 +6452,9 @@ YAHOO.ext.grid.Grid.prototype = {
         c.mon("keypress", this.onKeyPress, this, true);
         c.mon("keydown", this.onKeyDown, this, true);
         this.init();
+        return this;
     },
     
-    setDataModel : function(dm, rerender){
-        this.view.unplugDataModel(this.dataModel);
-        this.dataModel = dm;
-        this.view.plugDataModel(dm);
-        if(rerender){
-            dm.fireEvent('datachanged');
-        }
-    },
-    
-    /** @private */
     init : function(){
         this.rows = this.el.dom.rows;
         if(!this.disableSelection){
@@ -7240,48 +6473,71 @@ YAHOO.ext.grid.Grid.prototype = {
         }
      },   
 
-    /** @ignore */
+    
+    reset : function(config){
+        this.destroy(false, true);
+        YAHOO.ext.util.Config.apply(this, config);
+        return this;
+    },
+    
+    
+    destroy : function(removeEl, keepListeners){
+        var c = this.container;
+        c.removeAllListeners();
+        this.view.unplugDataModel(this.dataModel);
+        YAHOO.ext.EventManager.removeResizeListener(this.view.onWindowResize, this.view);
+        this.view = null;
+        this.colModel.purgeListeners();
+        if(!keepListeners){
+            this.purgeListeners();
+        }
+        c.update('');
+        if(removeEl === true){
+            c.remove();
+        }
+    },
+    
+    
+    setDataModel : function(dm, rerender){
+        this.view.unplugDataModel(this.dataModel);
+        this.dataModel = dm;
+        this.view.plugDataModel(dm);
+        if(rerender){
+            dm.fireEvent('datachanged');
+        }
+    },
+    
     onMouseDown : function(e){
         this.fireEvent('mousedown', e);
     },
     
-    /** @ignore */
     onMouseUp : function(e){
         this.fireEvent('mouseup', e);
     },
     
-    /** @ignore */
     onMouseOver : function(e){
         this.fireEvent('mouseover', e);
     },
     
-    /** @ignore */
     onMouseOut : function(e){
         this.fireEvent('mouseout', e);
     },
     
-    /** @ignore */
     onKeyPress : function(e){
         this.fireEvent('keypress', e);
     },
     
-    /** @ignore */
     onKeyDown : function(e){
         this.fireEvent('keydown', e);
     },
     
-    /** Inherited from Observable */
     fireEvent : YAHOO.ext.util.Observable.prototype.fireEvent,
-    /** Inherited from Observable */
     on : YAHOO.ext.util.Observable.prototype.on,
-    /** Inherited from Observable */
     addListener : YAHOO.ext.util.Observable.prototype.addListener,
-    /** Inherited from Observable */
     delayedListener : YAHOO.ext.util.Observable.prototype.delayedListener,
-    /** Inherited from Observable */
     removeListener : YAHOO.ext.util.Observable.prototype.removeListener,
+    purgeListeners : YAHOO.ext.util.Observable.prototype.purgeListeners,
     
-    /** @ignore */
     onClick : function(e){
         this.fireEvent('click', e);
         var target = e.getTarget();
@@ -7299,7 +6555,6 @@ YAHOO.ext.grid.Grid.prototype = {
         }
     },
 
-    /** @ignore */
     onContextMenu : function(e){
         var target = e.getTarget();
         var row = this.getRowFromChild(target);
@@ -7313,7 +6568,6 @@ YAHOO.ext.grid.Grid.prototype = {
         e.preventDefault();
     },
 
-    /** @ignore */
     onDblClick : function(e){
         this.fireEvent('dblclick', e);
         var target = e.getTarget();
@@ -7327,9 +6581,7 @@ YAHOO.ext.grid.Grid.prototype = {
         }
     },
     
-    /**
-     * Starts editing the specified for the specified row/column
-     */
+    
     startEditing : function(rowIndex, colIndex){
         var row = this.rows[rowIndex];
         var cell = row.childNodes[colIndex];
@@ -7337,16 +6589,14 @@ YAHOO.ext.grid.Grid.prototype = {
         setTimeout(this.doEdit.createDelegate(this, [row, cell]), 10);
     },
         
-    /**
-     * Stops any active editing
-     */
+    
     stopEditing : function(){
         if(this.activeEditor){
             this.activeEditor.stopEditing();
         }
     },
         
-    /** @ignore */
+    
     doEdit : function(row, cell){
         if(!row || !cell) return;
         var cm = this.colModel;
@@ -7368,7 +6618,7 @@ YAHOO.ext.grid.Grid.prototype = {
                }catch(e){}
                ed.init(this, this.el.dom.parentNode, this.setValueDelegate);
                var value = dm.getValueAt(rowIndex, cm.getDataIndex(colIndex));
-               // set timeout so firefox stops editing before starting a new edit
+               
                setTimeout(ed.startEditing.createDelegate(ed, [value, row, cell]), 1);
            }   
         }  
@@ -7379,7 +6629,7 @@ YAHOO.ext.grid.Grid.prototype = {
          this.fireEvent('afteredit', this, rowIndex, colIndex);
     },
     
-    /** @ignore Called when text selection starts or mousedown to prevent default */
+    
     cancelTextSelection : function(e){
         var target = e.getTarget();
         if(target && target != this.el.dom.parentNode && !this.allowTextSelectionPattern.test(target.tagName)){
@@ -7387,19 +6637,13 @@ YAHOO.ext.grid.Grid.prototype = {
         }
     },
     
-    /**
-     * Causes the grid to manually recalculate it's dimensions. Generally this is done automatically, 
-     * but if manual update is required this method will initiate it.
-     */
+    
     autoSize : function(){
         this.view.updateWrapHeight();
         this.view.adjustForScroll();
     },
     
-    /**
-     * Scrolls the grid to the specified row
-     * @param {Number/HTMLElement} row The row object or index of the row
-     */
+    
     scrollTo : function(row){
         if(typeof row == 'number'){
             row = this.rows[row];
@@ -7407,23 +6651,18 @@ YAHOO.ext.grid.Grid.prototype = {
         this.view.ensureVisible(row, true);
     },
     
-    /** @private */
+    
     getEditingCell : function(){
         return this.editingCell;    
     },
     
-    /**
-     * Binds this grid to the field with the specified id. Initially reads and parses the comma 
-     * delimited ids in the field and selects those items. All selections made in the grid
-     * will be persisted to the field by their ids comma delimited.
-     * @param {String} The id of the field to bind to
-     */
+    
     bindToField : function(fieldId){
         this.fieldId = fieldId;
         this.readField();
     },
     
-    /** @private */
+    
     updateField : function(){
         if(this.fieldId){
             var field = YAHOO.util.Dom.get(this.fieldId);
@@ -7431,9 +6670,7 @@ YAHOO.ext.grid.Grid.prototype = {
         }
     },
     
-    /**
-     * Causes the grid to read and select the ids from the bound field - See {@link #bindToField}.
-     */
+    
     readField : function(){
         if(this.fieldId){
             var field = YAHOO.util.Dom.get(this.fieldId);
@@ -7443,21 +6680,12 @@ YAHOO.ext.grid.Grid.prototype = {
         }
     },
 	
-	/**
-	 * Returns the table row at the specified index
-	 * @return {HTMLElement} 
-	 */
+	
     getRow : function(index){
         return this.rows[index];
     },
 	
-	/**
-	 * Returns the rows that have the specified id(s). The id value for a row is provided 
-	 * by the DataModel. See {@link YAHOO.ext.grid.DefaultDataModel#getRowId}.
-	 * @param {String/Array} An id to find or an array of ids
-	 * @return {HtmlElement/Array} If one id was passed in, it returns one result. 
-	 * If an array of ids was specified, it returns an Array of HTMLElements
-	 */
+	
     getRowsById : function(id){
         var dm = this.dataModel;
         if(!(id instanceof Array)){
@@ -7483,30 +6711,17 @@ YAHOO.ext.grid.Grid.prototype = {
         return found;
     },
     
-    /**
-	 * Returns the row that comes after the specified row - text nodes are skipped.
-	 * @param {HTMLElement} row
-	 * @return {HTMLElement} 
-	 */
+    
     getRowAfter : function(row){
         return this.getSibling('next', row);
     },
     
-    /**
-	 * Returns the row that comes before the specified row - text nodes are skipped.
-	 * @param {HTMLElement} row
-	 * @return {HTMLElement} 
-	 */
+    
     getRowBefore : function(row){
         return this.getSibling('previous', row);
     },
     
-    /**
-	 * Returns the cell that comes after the specified cell - text nodes are skipped.
-	 * @param {HTMLElement} cell
-	 * @param {Boolean} includeHidden
-	 * @return {HTMLElement} 
-	 */
+    
     getCellAfter : function(cell, includeHidden){
         var next = this.getSibling('next', cell);
         if(next && !includeHidden && this.colModel.isHidden(next.columnIndex)){
@@ -7515,12 +6730,7 @@ YAHOO.ext.grid.Grid.prototype = {
         return next;
     },
     
-    /**
-	 * Returns the cell that comes before the specified cell - text nodes are skipped.
-	 * @param {HTMLElement} cell
-	 * @param {Boolean} includeHidden
-	 * @return {HTMLElement} 
-	 */
+    
     getCellBefore : function(cell, includeHidden){
         var prev = this.getSibling('previous', cell);
         if(prev && !includeHidden && this.colModel.isHidden(prev.columnIndex)){
@@ -7529,12 +6739,7 @@ YAHOO.ext.grid.Grid.prototype = {
         return prev;
     },
     
-    /**
-	 * Returns the last cell for the row - text nodes and hidden columns are skipped.
-	 * @param {HTMLElement} row
-	 * @param {Boolean} includeHidden
-	 * @return {HTMLElement} 
-	 */
+    
     getLastCell : function(row, includeHidden){
         var cell = this.getElement('previous', row.lastChild);
         if(cell && !includeHidden && this.colModel.isHidden(cell.columnIndex)){
@@ -7543,12 +6748,7 @@ YAHOO.ext.grid.Grid.prototype = {
         return cell;
     },
     
-    /**
-	 * Returns the first cell for the row - text nodes and hidden columns are skipped.
-	 * @param {HTMLElement} row
-	 * @param {Boolean} includeHidden
-	 * @return {HTMLElement} 
-	 */
+    
     getFirstCell : function(row, includeHidden){
         var cell = this.getElement('next', row.firstChild);
         if(cell && !includeHidden && this.colModel.isHidden(cell.columnIndex)){
@@ -7557,11 +6757,7 @@ YAHOO.ext.grid.Grid.prototype = {
         return cell;
     },
     
-    /**
-     * Gets siblings, skipping text nodes
-     * @param {String} type The direction to walk: 'next' or 'previous'
-     * @private
-     */
+    
     getSibling : function(type, node){
         if(!node) return null;
         type += 'Sibling';
@@ -7572,20 +6768,13 @@ YAHOO.ext.grid.Grid.prototype = {
         return n;
     },
     
-    /**
-     * Returns node if node is an HTMLElement else walks the siblings in direction looking for 
-     * a node that is an element
-     * @param {String} direction The direction to walk: 'next' or 'previous'
-     * @private
-     */
+    
     getElement : function(direction, node){
         if(!node || node.nodeType == 1) return node;
         else return this.getSibling(direction, node);
     },
     
-    /**
-     * @private
-     */
+    
     getElementFromChild : function(childEl, parentClass){
         if(!childEl || (YAHOO.util.Dom.hasClass(childEl, parentClass))){
 		    return childEl;
@@ -7601,46 +6790,28 @@ YAHOO.ext.grid.Grid.prototype = {
 	    return null;
     },
     
-    /**
-	 * Returns the row that contains the specified child element.
-	 * @param {HTMLElement} childEl
-	 * @return {HTMLElement} 
-	 */
+    
     getRowFromChild : function(childEl){
         return this.getElementFromChild(childEl, 'ygrid-row');
     },
     
-    /**
-	 * Returns the cell that contains the specified child element.
-	 * @param {HTMLElement} childEl
-	 * @return {HTMLElement} 
-	 */
+    
     getCellFromChild : function(childEl){
         return this.getElementFromChild(childEl, 'ygrid-col');
     },
     
     
-    /**
-     * Returns the header element that contains the specified child element.
-     * @param {HTMLElement}  childEl
-	 * @return {HTMLElement} 
-	 */
+    
      getHeaderFromChild : function(childEl){
         return this.getElementFromChild(childEl, 'ygrid-hd');
     },
     
-    /**
-     * Convenience method for getSelectionModel().getSelectedRows() - 
-     * See <small>{@link YAHOO.ext.grid.DefaultSelectionModel#getSelectedRows}</small> for more details.
-     */
+    
     getSelectedRows : function(){
         return this.selModel.getSelectedRows();
     },
     
-    /**
-     * Convenience method for getSelectionModel().getSelectedRows()[0] - 
-     * See <small>{@link YAHOO.ext.grid.DefaultSelectionModel#getSelectedRows}</small> for more details.
-     */
+    
     getSelectedRow : function(){
         if(this.selModel.hasSelection()){
             return this.selModel.getSelectedRows()[0];
@@ -7648,10 +6819,7 @@ YAHOO.ext.grid.Grid.prototype = {
         return null;
     },
     
-    /**
-     * Get the selected row indexes
-     * @return {Array} Array of indexes
-     */
+    
     getSelectedRowIndexes : function(){
         var a = [];
         var rows = this.selModel.getSelectedRows();
@@ -7661,10 +6829,7 @@ YAHOO.ext.grid.Grid.prototype = {
         return a;
     },
     
-    /**
-     * Gets the first selected row or -1 if none are selected
-     * @return {Number}
-     */
+    
     getSelectedRowIndex : function(){
         if(this.selModel.hasSelection()){
            return this.selModel.getSelectedRows()[0].rowIndex;
@@ -7672,10 +6837,7 @@ YAHOO.ext.grid.Grid.prototype = {
         return -1;
     },
     
-    /**
-     * Convenience method for getSelectionModel().getSelectedRowIds()[0] - 
-     * See <small>{@link YAHOO.ext.grid.DefaultSelectionModel#getSelectedRowIds}</small> for more details.
-     */
+    
     getSelectedRowId : function(){
         if(this.selModel.hasSelection()){
            return this.selModel.getSelectedRowIds()[0];
@@ -7683,51 +6845,34 @@ YAHOO.ext.grid.Grid.prototype = {
         return null;
     },
     
-    /**
-     * Convenience method for getSelectionModel().getSelectedRowIds() - 
-     * See <small>{@link YAHOO.ext.grid.DefaultSelectionModel#getSelectedRowIds}</small> for more details.
-     */
+    
     getSelectedRowIds : function(){
         return this.selModel.getSelectedRowIds();
     },
     
-    /**
-     * Convenience method for getSelectionModel().clearSelections() - 
-     * See <small>{@link YAHOO.ext.grid.DefaultSelectionModel#clearSelections}</small> for more details.
-     */
+    
     clearSelections : function(){
         this.selModel.clearSelections();
     },
     
         
-    /**
-     * Convenience method for getSelectionModel().selectAll() - 
-     * See <small>{@link YAHOO.ext.grid.DefaultSelectionModel#selectAll}</small> for more details.
-     */
+    
     selectAll : function(){
         this.selModel.selectAll();
     },
     
         
-    /**
-     * Convenience method for getSelectionModel().getCount() - 
-     * See <small>{@link YAHOO.ext.grid.DefaultSelectionModel#getCount}</small> for more details.
-     */
+    
     getSelectionCount : function(){
         return this.selModel.getCount();
     },
     
-    /**
-     * Convenience method for getSelectionModel().hasSelection() - 
-     * See <small>{@link YAHOO.ext.grid.DefaultSelectionModel#hasSelection}</small> for more details.
-     */
+    
     hasSelection : function(){
         return this.selModel.hasSelection();
     },
     
-    /**
-     * Returns the grid's SelectionModel.
-     */
+    
     getSelectionModel : function(){
         if(!this.selModel){
             this.selModel = new DefaultSelectionModel();
@@ -7735,54 +6880,31 @@ YAHOO.ext.grid.Grid.prototype = {
         return this.selModel;
     },
     
-    /**
-     * Returns the grid's DataModel.
-     */
+    
     getDataModel : function(){
         return this.dataModel;
     },
     
-    /**
-     * Returns the grid's ColumnModel.
-     */
+    
     getColumnModel : function(){
         return this.colModel;
     },
     
-    /**
-     * Returns the grid's GridView object.
-     */
+    
     getView : function(){
         return this.view;
     },
-    /**
-     * Called to get grid's drag proxy text, by default returns this.ddText. 
-     * @return {String}
-     */
+    
     getDragDropText : function(){
         return this.ddText.replace('%0', this.selModel.getCount());
     }
 };
-/**
- * Configures the text is the drag proxy (defaults to "%0 selected row(s)"). 
- * %0 is replaced with the number of selected rows.
- * @type String
- */
+
 YAHOO.ext.grid.Grid.prototype.ddText = "%0 selected row(s)";
 
-/*
-------------------------------------------------------------------
-// File: grid\GridDD.js
-------------------------------------------------------------------
-*/
 
-// kill dependency issue
 if(YAHOO.util.DDProxy){
-/**
- * @class
- * Custom implementation of YAHOO.util.DDProxy used internally by the grid
- * @extends YAHOO.util.DDProxy
- */
+
 YAHOO.ext.grid.GridDD = function(grid, bwrap){
     this.grid = grid;
     var ddproxy = document.createElement('div');
@@ -7795,7 +6917,7 @@ YAHOO.ext.grid.GridDD = function(grid, bwrap){
     ddproxy.appendChild(ddicon);
     var ddtext = document.createElement('span');
     ddtext.className = 'ygrid-drag-text';
-    ddtext.innerHTML = "&nbsp;";
+    ddtext.innerHTML = "&#160;";
     ddproxy.appendChild(ddtext);
     
     this.ddproxy = ddproxy;
@@ -7830,10 +6952,7 @@ YAHOO.ext.grid.GridDD.prototype.handleClick = function(e){
     }
 };
 
-/**
- * Updates the DD visual element to allow/not allow a drop
- * @param {Boolean} dropStatus True if drop is allowed on the target
- */
+
 YAHOO.ext.grid.GridDD.prototype.setDropStatus = function(dropStatus){
     if(dropStatus === true){
         YAHOO.util.Dom.replaceClass(this.ddicon, 'ygrid-drop-nodrop', 'ygrid-drop-ok');
@@ -7877,36 +6996,11 @@ YAHOO.ext.grid.GridDD.prototype.onDragOut = function(e, id) {
 };
 };
 
-/*
-------------------------------------------------------------------
-// File: grid\GridView.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * Default UI code used internally by the Grid. Documentation to come.
- * @constructor
- */
 YAHOO.ext.grid.GridView = function(){
-	/** @private */
 	this.grid = null;
-	
-	/** @private */
 	this.lastFocusedRow = null;
-	/**
-	 * Fires when the ViewPort is scrolled - fireDirect sig: (this, scrollLeft, scrollTop)
-	 * @type YAHOO.util.CustomEvent
-	 * @deprecated
-	 */
 	this.onScroll = new YAHOO.util.CustomEvent('onscroll');
-	
-	/**
-	 * @private
-	 */
 	this.adjustScrollTask = new YAHOO.ext.util.DelayedTask(this._adjustForScroll, this);
-	/**
-	 * @private
-	 */
 	this.ensureVisibleTask = new YAHOO.ext.util.DelayedTask();
 };
 
@@ -7919,9 +7013,7 @@ YAHOO.ext.grid.GridView.prototype = {
 		this.onScroll.fireDirect(this.grid, scrollLeft, scrollTop);
 	},
 	
-	/**
-	 * Utility method that gets an array of the cell renderers
-	 */
+	
 	getColumnRenderers : function(){
     	var renderers = [];
     	var cm = this.grid.colModel;
@@ -7975,11 +7067,12 @@ YAHOO.ext.grid.GridView.prototype = {
         }
     },
     
-    getCellAtPoint : function(x, y){
+    
+     getCellAtPoint : function(x, y){
         var colIndex = null;        
         var rowIndex = null;
         
-        // translate page coordinates to local coordinates
+        
         var xy = YAHOO.util.Dom.getXY(this.wrap);
         x = (x - xy[0]) + this.wrap.scrollLeft;
         y = (y - xy[1]) + this.wrap.scrollTop;
@@ -8006,12 +7099,12 @@ YAHOO.ext.grid.GridView.prototype = {
         return null;
     },
     
-    /** @private */
+    
     _adjustForScroll : function(){
         this.forceScrollUpdate();
         if(this.scrollbarMode == YAHOO.ext.grid.GridView.SCROLLBARS_OVERLAP){
             var adjustment = 0;
-            if(this.wrap.clientWidth && this.wrap.clientWidth != 0){
+            if(this.wrap.clientWidth && this.wrap.clientWidth !== 0){
                 adjustment = this.wrap.offsetWidth - this.wrap.clientWidth;
             }
             this.hwrap.setWidth(this.wrap.offsetWidth-adjustment);
@@ -8021,13 +7114,14 @@ YAHOO.ext.grid.GridView.prototype = {
         this.bwrap.setWidth(Math.max(this.grid.colModel.getTotalWidth(), this.wrap.clientWidth));
     },
 
-    focusRow : function(row){
+    
+     focusRow : function(row){
         if(typeof row == 'number'){
             row = this.getBodyTable().childNodes[row];
         }
         if(!row) return;
     	var left = this.wrap.scrollLeft;
-    	try{ // try catch for IE occasional focus bug
+    	try{ 
     	    row.childNodes.item(0).hideFocus = true;
         	row.childNodes.item(0).focus();
         }catch(e){}
@@ -8037,7 +7131,8 @@ YAHOO.ext.grid.GridView.prototype = {
         this.lastFocusedRow = row;
     },
 
-    ensureVisible : function(row, disableDelay){
+    
+     ensureVisible : function(row, disableDelay){
         if(!disableDelay){
             this.ensureVisibleTask.delay(50, this._ensureVisible, this, [row]);
         }else{
@@ -8045,16 +7140,16 @@ YAHOO.ext.grid.GridView.prototype = {
         }
     },
 
-    /** @ignore */
+    
     _ensureVisible : function(row){
         if(typeof row == 'number'){
             row = this.getBodyTable().childNodes[row];
         }
         if(!row) return;
     	var left = this.wrap.scrollLeft;
-    	var rowTop = parseInt(row.offsetTop, 10); // parseInt for safari bug
+    	var rowTop = parseInt(row.offsetTop, 10); 
         var rowBottom = rowTop + row.offsetHeight;
-        var clientTop = parseInt(this.wrap.scrollTop, 10); // parseInt for safari bug
+        var clientTop = parseInt(this.wrap.scrollTop, 10); 
         var clientBottom = clientTop + this.wrap.clientHeight;
         if(rowTop < clientTop){
         	this.wrap.scrollTop = rowTop;
@@ -8082,12 +7177,20 @@ YAHOO.ext.grid.GridView.prototype = {
             pos += width;
         }
         this.lastWidth = totalWidth;
+        if(this.grid.autoWidth){
+            this.grid.container.setWidth(totalWidth+this.grid.container.getBorderWidth('lr'));
+            this.grid.autoSize();
+        }
         this.bwrap.setWidth(Math.max(totalWidth, this.wrap.clientWidth));
-        if(!YAHOO.ext.util.Browser.isIE){ // fix scrolling prob in gecko and opera
+        if(!YAHOO.ext.util.Browser.isIE){ 
         	this.wrap.scrollLeft = this.hwrap.dom.scrollLeft;
         }
         this.syncScroll();
         this.forceScrollUpdate();
+        if(this.grid.autoHeight){
+            this.autoHeight();
+            this.updateWrapHeight();
+        }
     },
     
     setCSSWidth : function(colIndex, width, pos){
@@ -8098,7 +7201,8 @@ YAHOO.ext.grid.GridView.prototype = {
         }
     },
     
-    setCSSStyle : function(colIndex, name, value){
+    
+     setCSSStyle : function(colIndex, name, value){
         var selector = ["#" + this.grid.id + " .ygrid-col-" + colIndex, ".ygrid-col-" + colIndex];
         YAHOO.ext.util.CSS.updateRule(selector, name, value);
     },
@@ -8176,7 +7280,7 @@ YAHOO.ext.grid.GridView.prototype = {
             }
         }
         this.updateRowIndexes(firstRow);
-        this.adjustForScroll();
+        this.adjustForScroll(true);
     },
     
     renderRow : function(dataModel, row, rowIndex, colCount, renderers, dindexes){
@@ -8188,8 +7292,8 @@ YAHOO.ext.grid.GridView.prototype = {
             var span = document.createElement('span');
             span.className = 'ygrid-cell-text';
             td.appendChild(span);
-            var val = renderers[colIndex](dataModel.getValueAt(rowIndex, dindexes[colIndex]), rowIndex, colIndex);
-            if(typeof val == 'undefined' || val === '') val = '&nbsp;';
+            var val = renderers[colIndex](dataModel.getValueAt(rowIndex, dindexes[colIndex]), rowIndex, colIndex, td);
+            if(typeof val == 'undefined' || val === '') val = '&#160;';
             span.innerHTML = val;
             row.appendChild(td);
         }
@@ -8197,10 +7301,10 @@ YAHOO.ext.grid.GridView.prototype = {
     
     deleteRows : function(dataModel, firstRow, lastRow){
         this.updateBodyHeight();
-        // first make sure they are deselected
+        
         this.grid.selModel.deselectRange(firstRow, lastRow);
         var bt = this.getBodyTable();
-        var rows = []; // get references because the rowIndex will change
+        var rows = []; 
         for(var rowIndex = firstRow; rowIndex <= lastRow; rowIndex++){
             rows.push(bt.childNodes[rowIndex]);
         }
@@ -8223,8 +7327,8 @@ YAHOO.ext.grid.GridView.prototype = {
             var cells = row.childNodes;
             for(var colIndex = 0; colIndex < colCount; colIndex++){
                 var td = cells[colIndex];
-                var val = renderers[colIndex](dataModel.getValueAt(rowIndex, dindexes[colIndex]), rowIndex, colIndex);
-                if(typeof val == 'undefined' || val === '') val = '&nbsp;';
+                var val = renderers[colIndex](dataModel.getValueAt(rowIndex, dindexes[colIndex]), rowIndex, colIndex, td);
+                if(typeof val == 'undefined' || val === '') val = '&#160;';
                 td.firstChild.innerHTML = val;
             }
         }
@@ -8264,6 +7368,7 @@ YAHOO.ext.grid.GridView.prototype = {
     },
     
     renderRows : function(dataModel){
+        this.grid.stopEditing();
         if(this.grid.selModel){
             this.grid.selModel.clearSelections();
         }
@@ -8275,15 +7380,15 @@ YAHOO.ext.grid.GridView.prototype = {
     
     updateCell : function(dataModel, rowIndex, dataIndex){
         var colIndex = this.getColumnIndexByDataIndex(dataIndex);
-        if(typeof colIndex == 'undefined'){ // not present in grid
+        if(typeof colIndex == 'undefined'){ 
             return;
         }
         var bt = this.getBodyTable();
         var row = bt.childNodes[rowIndex];
         var cell = row.childNodes[colIndex];
         var renderer = this.grid.colModel.getRenderer(colIndex);
-        var val = renderer(dataModel.getValueAt(rowIndex, dataIndex), rowIndex, colIndex);
-        if(typeof val == 'undefined' || val === '') val = '&nbsp;';
+        var val = renderer(dataModel.getValueAt(rowIndex, dataIndex), rowIndex, colIndex, cell);
+        if(typeof val == 'undefined' || val === '') val = '&#160;';
         cell.firstChild.innerHTML = val;
     },
     
@@ -8303,10 +7408,11 @@ YAHOO.ext.grid.GridView.prototype = {
             var cell = rows[i].childNodes[colIndex].firstChild;
             maxWidth = Math.max(maxWidth, cell.scrollWidth);
         }
-        return maxWidth + /*margin for error in IE*/ 5;
+        return maxWidth +  5;
     },
     
-    autoSizeColumn : function(colIndex, forceMinSize){
+    
+     autoSizeColumn : function(colIndex, forceMinSize){
         if(forceMinSize){
            this.setCSSWidth(colIndex, this.grid.minColumnWidth);
         }
@@ -8316,7 +7422,8 @@ YAHOO.ext.grid.GridView.prototype = {
         this.grid.fireEvent('columnresize', colIndex, newWidth);
     },
     
-    autoSizeColumns : function(){
+    
+     autoSizeColumns : function(){
         var colModel = this.grid.colModel;
         var colCount = colModel.getColumnCount();
         var wrap = this.wrap;
@@ -8332,6 +7439,7 @@ YAHOO.ext.grid.GridView.prototype = {
         }
         this.updateColumns();  
     },
+    
     
     fitColumns : function(){
         var cm = this.grid.colModel;
@@ -8358,6 +7466,7 @@ YAHOO.ext.grid.GridView.prototype = {
     
     onWindowResize : function(){
         if(this.grid.monitorWindowResize){
+            this.adjustForScroll();
             this.updateWrapHeight();
             this.adjustForScroll();
         }  
@@ -8365,16 +7474,18 @@ YAHOO.ext.grid.GridView.prototype = {
     
     updateWrapHeight : function(){
         this.grid.container.beginMeasure();
-        var box = this.grid.container.getBox(true);
+        this.autoHeight();
+        var box = this.grid.container.getSize(true);
         this.wrapEl.setHeight(box.height-this.footerHeight-parseInt(this.wrap.offsetTop, 10));
+        this.pwrap.setSize(box.width, box.height);
         this.grid.container.endMeasure();
     },
     
     forceScrollUpdate : function(){
-        var wrap = this.wrap;
-        YAHOO.util.Dom.setStyle(wrap, 'width', (wrap.offsetWidth) +'px');
-        setTimeout(function(){ // set timeout so FireFox works
-            YAHOO.util.Dom.setStyle(wrap, 'width', '');
+        var wrap = this.wrapEl;
+        wrap.setWidth(wrap.getWidth(true));
+        setTimeout(function(){ 
+            wrap.setWidth('');
         }, 1);
     },
     
@@ -8424,20 +7535,26 @@ YAHOO.ext.grid.GridView.prototype = {
         colModel.onHeaderChange.subscribe(this.updateHeaders, this, true);
         colModel.onHiddenChange.subscribe(this.handleHiddenChange, this, true);
         
-        YAHOO.util.Event.on(window, 'resize', this.onWindowResize, this, true);
-        
+        if(grid.monitorWindowResize === true){
+            YAHOO.ext.EventManager.onWindowResize(this.onWindowResize, this, true);
+        }
         var autoSizeDelegate = this.autoSizeColumn.createDelegate(this);
         
         var colCount = colModel.getColumnCount();
-    
+        
         var dh = YAHOO.ext.DomHelper;
-        //create wrapper elements that handle offsets and scrolling
-        var wrap = dh.append(container, {tag: 'div', cls: 'ygrid-wrap'});
+        this.pwrap = dh.append(container, 
+            {tag: 'div', cls: 'ygrid-positioner', 
+            style: 'position:relative;width:100%;height:100%;left:0;top:0;overflow:hidden;'}, true);
+        var pos = this.pwrap.dom;
+        
+        
+        var wrap = dh.append(pos, {tag: 'div', cls: 'ygrid-wrap'});
         this.wrap = wrap;
         this.wrapEl = getEl(wrap, true);
         YAHOO.ext.EventManager.on(wrap, 'scroll', this.handleScroll, this, true);
         
-        var hwrap = dh.append(container, {tag: 'div', cls: 'ygrid-wrap-headers'});
+        var hwrap = dh.append(pos, {tag: 'div', cls: 'ygrid-wrap-headers'});
         this.hwrap = getEl(hwrap, true);
         
         var bwrap = dh.append(wrap, {tag: 'div', cls: 'ygrid-wrap-body', id: container.id + '-body'});
@@ -8446,7 +7563,7 @@ YAHOO.ext.grid.GridView.prototype = {
         bwrap.rows = bwrap.childNodes;
         
         this.footerHeight = 0;
-        var foot = this.appendFooter(container);
+        var foot = this.appendFooter(this.pwrap.dom);
         if(foot){
             this.footer = getEl(foot, true);
             this.footerHeight = this.footer.getHeight();
@@ -8457,7 +7574,7 @@ YAHOO.ext.grid.GridView.prototype = {
         this.hrow = hrow;
         
         if(!YAHOO.ext.util.Browser.isGecko){
-            // IE doesn't like iframes, we will leave this alone
+            
             var iframe = document.createElement('iframe');
             iframe.className = 'ygrid-hrow-frame';
             iframe.frameBorder = 0;
@@ -8470,21 +7587,21 @@ YAHOO.ext.grid.GridView.prototype = {
         
         var htemplate = dh.createTemplate({
            tag: 'span', cls: 'ygrid-hd ygrid-header-{0}', children: [{
-                tag: 'span', 
-                cls: 'ygrid-hd-body', 
-                html: '<table border="0" cellpadding="0" cellspacing="0">' +
+                tag: 'span',
+                cls: 'ygrid-hd-body',
+                html: '<table border="0" cellpadding="0" cellspacing="0" title="{2}">' +
                       '<tbody><tr><td><span>{1}</span></td>' +
                       '<td><span class="sort-desc"></span><span class="sort-asc"></span></td>' +
                       '</tr></tbody></table>'
-           }]           
+           }]
         });
         htemplate.compile();
         for(var i = 0; i < colCount; i++){
-            var hd = htemplate.append(hrow, [i, colModel.getColumnHeader(i)]);
+            var hd = htemplate.append(hrow, [i, colModel.getColumnHeader(i), colModel.getColumnTooltip(i) || '']);
             var spans = hd.getElementsByTagName('span');
             hd.textNode = spans[1];
             hd.sortDesc = spans[2];
-    	    hd.sortAsc = spans[3];
+            hd.sortAsc = spans[3];
     	    hd.columnIndex = i;
             this.headers.push(hd);
             if(colModel.isSortable(i)){
@@ -8535,9 +7652,28 @@ YAHOO.ext.grid.GridView.prototype = {
         return null;  
     },
     
+    autoHeight : function(){
+        if(this.grid.autoHeight){
+            var h = this.getBodyHeight();
+            var c = this.grid.container;
+            var total = h + (parseInt(this.wrap.offsetTop, 10)||0) + 
+                    this.footerHeight + c.getBorderWidth('tb') + c.getPadding('tb')
+                    + (this.wrap.offsetHeight - this.wrap.clientHeight);
+            c.setHeight(total);
+            
+        }
+    },
+    
+    getBodyHeight : function(){
+        return this.grid.dataModel.getRowCount() * this.getRowHeight();;
+    },
+    
     updateBodyHeight : function(){
-        YAHOO.util.Dom.setStyle(this.getBodyTable(), 'height', 
-                             (this.grid.dataModel.getRowCount()*this.rowHeight)+'px');
+        this.getBodyTable().style.height = this.getBodyHeight() + 'px';
+        if(this.grid.autoHeight){
+            this.autoHeight();
+            this.updateWrapHeight();
+        }
     }
 };
 YAHOO.ext.grid.GridView.SCROLLBARS_UNDER = 0;
@@ -8546,15 +7682,8 @@ YAHOO.ext.grid.GridView.prototype.scrollbarMode = YAHOO.ext.grid.GridView.SCROLL
 
 YAHOO.ext.grid.GridView.prototype.fitColumnsToContainer = YAHOO.ext.grid.GridView.prototype.fitColumns;
 
-/**
- * @class
- * Used internal by GridView to route header related events.
- * @constructor
- */
 YAHOO.ext.grid.HeaderController = function(grid){
-	/** @private */
 	this.grid = grid;
-	/** @private */
 	this.headers = [];
 };
 
@@ -8585,13 +7714,13 @@ YAHOO.ext.grid.HeaderController.prototype = {
     headerOver : function(e){
         var header = this.grid.getHeaderFromChild(e.getTarget());
         YAHOO.util.Dom.addClass(header, 'ygrid-hd-over');
-        //YAHOO.ext.util.CSS.applyFirst(header, this.grid.id, '.ygrid-hd-over');
+        
     },
     
     headerOut : function(e){
         var header = this.grid.getHeaderFromChild(e.getTarget());
         YAHOO.util.Dom.removeClass(header, 'ygrid-hd-over');
-        //YAHOO.ext.util.CSS.revertFirst(header, this.grid.id, '.ygrid-hd-over');
+        
     },
     
     cancelTextSelection : function(e){
@@ -8599,164 +7728,170 @@ YAHOO.ext.grid.HeaderController.prototype = {
     }
 };
 
-/*
-------------------------------------------------------------------
-// File: grid\PagedGridView.js
-------------------------------------------------------------------
-*/
-
 YAHOO.ext.grid.PagedGridView = function(){
     YAHOO.ext.grid.PagedGridView.superclass.constructor.call(this);
     this.cursor = 1;
 };
-YAHOO.extendX(YAHOO.ext.grid.PagedGridView, YAHOO.ext.grid.GridView);
 
-YAHOO.ext.grid.PagedGridView.prototype.appendFooter = function(parentEl){
-    var fwrap = document.createElement('div');
-    fwrap.className = 'ygrid-wrap-footer';
-    var fbody = document.createElement('span');
-    fbody.className = 'ygrid-footer';
-    fwrap.appendChild(fbody);
-    parentEl.appendChild(fwrap);
-    this.createPagingToolbar(fbody);
-    return fwrap;
-};
-YAHOO.ext.grid.PagedGridView.prototype.createPagingToolbar = function(container){
-    var tb = new YAHOO.ext.Toolbar(container);
-    this.pageToolbar = tb;
-    this.first = tb.addButton({
-        tooltip: this.firstText, 
-        className: 'ygrid-page-first',
-        disabled: true,
-        click: this.onClick.createDelegate(this, ['first'])
-    });
-    this.prev = tb.addButton({
-        tooltip: this.prevText, 
-        className: 'ygrid-page-prev', 
-        disabled: true,
-        click: this.onClick.createDelegate(this, ['prev'])
-    });
-    tb.addSeparator();
-    tb.add(this.beforePageText);
-    var pageBox = document.createElement('input');
-    pageBox.type = 'text';
-    pageBox.size = 3;
-    pageBox.value = '1';
-    pageBox.className = 'ygrid-page-number';
-    tb.add(pageBox);
-    this.field = getEl(pageBox, true);
-    this.field.mon('keydown', this.onEnter, this, true);
-    this.field.on('focus', function(){pageBox.select();});
-    this.afterTextEl = tb.addText(this.afterPageText.replace('%0', '1'));
-    this.field.setHeight(18);
-    tb.addSeparator();
-    this.next = tb.addButton({
-        tooltip: this.nextText, 
-        className: 'ygrid-page-next', 
-        disabled: true,
-        click: this.onClick.createDelegate(this, ['next'])
-    });
-    this.last = tb.addButton({
-        tooltip: this.lastText, 
-        className: 'ygrid-page-last', 
-        disabled: true,
-        click: this.onClick.createDelegate(this, ['last'])
-    });
-    tb.addSeparator();
-    this.loading = tb.addButton({
-        tooltip: this.refreshText, 
-        className: 'ygrid-loading',
-        disabled: true,
-        click: this.onClick.createDelegate(this, ['refresh'])
-    });
-    this.onPageLoaded(1, this.grid.dataModel.getTotalPages());
-};
-YAHOO.ext.grid.PagedGridView.prototype.getPageToolbar = function(){
-    return this.pageToolbar;  
-};
+YAHOO.extendX(YAHOO.ext.grid.PagedGridView, YAHOO.ext.grid.GridView, {
+    appendFooter : function(parentEl){
+        var fwrap = document.createElement('div');
+        fwrap.className = 'ygrid-wrap-footer';
+        var fbody = document.createElement('span');
+        fbody.className = 'ygrid-footer';
+        fwrap.appendChild(fbody);
+        parentEl.appendChild(fwrap);
+        this.createPagingToolbar(fbody);
+        return fwrap;
+    },
 
-YAHOO.ext.grid.PagedGridView.prototype.onPageLoaded = function(pageNum, totalPages){
-    this.cursor = pageNum;
-    this.lastPage = totalPages;
-    this.afterTextEl.innerHTML = this.afterPageText.replace('%0', totalPages);
-    this.field.dom.value = pageNum;
-    this.first.setDisabled(pageNum == 1);
-    this.prev.setDisabled(pageNum == 1);
-    this.next.setDisabled(pageNum == totalPages);
-    this.last.setDisabled(pageNum == totalPages);
-    this.loading.enable();
-};
-
-YAHOO.ext.grid.PagedGridView.prototype.onEnter = function(e){
-    if(e.browserEvent.keyCode == e.RETURN){
-        var v = this.field.dom.value;
-        if(!v){
-            this.field.dom.value = this.cursor;
-            return;
+    createPagingToolbar : function(container){
+        var tb = new YAHOO.ext.Toolbar(container);
+        this.pageToolbar = tb;
+        this.first = tb.addButton({
+            tooltip: this.firstText, 
+            className: 'ygrid-page-first',
+            disabled: true,
+            click: this.onClick.createDelegate(this, ['first'])
+        });
+        this.prev = tb.addButton({
+            tooltip: this.prevText, 
+            className: 'ygrid-page-prev', 
+            disabled: true,
+            click: this.onClick.createDelegate(this, ['prev'])
+        });
+        tb.addSeparator();
+        tb.add(this.beforePageText);
+        var pageBox = document.createElement('input');
+        pageBox.type = 'text';
+        pageBox.size = 3;
+        pageBox.value = '1';
+        pageBox.className = 'ygrid-page-number';
+        tb.add(pageBox);
+        this.field = getEl(pageBox, true);
+        this.field.mon('keydown', this.onEnter, this, true);
+        this.field.on('focus', function(){pageBox.select();});
+        this.afterTextEl = tb.addText(this.afterPageText.replace('%0', '1'));
+        this.field.setHeight(18);
+        tb.addSeparator();
+        this.next = tb.addButton({
+            tooltip: this.nextText, 
+            className: 'ygrid-page-next', 
+            disabled: true,
+            click: this.onClick.createDelegate(this, ['next'])
+        });
+        this.last = tb.addButton({
+            tooltip: this.lastText, 
+            className: 'ygrid-page-last', 
+            disabled: true,
+            click: this.onClick.createDelegate(this, ['last'])
+        });
+        tb.addSeparator();
+        this.loading = tb.addButton({
+            tooltip: this.refreshText, 
+            className: 'ygrid-loading',
+            disabled: true,
+            click: this.onClick.createDelegate(this, ['refresh'])
+        });
+        this.onPageLoaded(1, this.grid.dataModel.getTotalPages());
+    },
+    
+    
+    getPageToolbar : function(){
+        return this.pageToolbar;  
+    },
+    
+    onPageLoaded : function(pageNum, totalPages){
+        this.cursor = pageNum;
+        this.lastPage = totalPages;
+        this.afterTextEl.innerHTML = this.afterPageText.replace('%0', totalPages);
+        this.field.dom.value = pageNum;
+        this.first.setDisabled(pageNum == 1);
+        this.prev.setDisabled(pageNum == 1);
+        this.next.setDisabled(pageNum == totalPages);
+        this.last.setDisabled(pageNum == totalPages);
+        this.loading.enable();
+    },
+    
+    onLoadError : function(){
+        this.loading.enable();
+    },
+    
+    onEnter : function(e){
+        if(e.browserEvent.keyCode == e.RETURN){
+            var v = this.field.dom.value;
+            if(!v){
+                this.field.dom.value = this.cursor;
+                return;
+            }
+            var pageNum = parseInt(v, 10);
+            if(isNaN(pageNum)){
+                this.field.dom.value = this.cursor;
+                return;
+            }
+            pageNum = Math.min(Math.max(1, pageNum), this.lastPage);
+            this.grid.dataModel.loadPage(pageNum);
+            e.stopEvent();
         }
-        var pageNum = parseInt(v, 10);
-        if(isNaN(v)){
-            this.field.dom.value = this.cursor;
-            return;
+    },
+    
+    beforeLoad : function(){
+        this.grid.stopEditing();
+        if(this.loading){
+            this.loading.disable();
+        }  
+    },
+    
+    onClick : function(which){
+        switch(which){
+            case 'first':
+                this.grid.dataModel.loadPage(1);
+            break;
+            case 'prev':
+                this.grid.dataModel.loadPage(this.cursor -1);
+            break;
+            case 'next':
+                this.grid.dataModel.loadPage(this.cursor + 1);
+            break;
+            case 'last':
+                this.grid.dataModel.loadPage(this.lastPage);
+            break;
+            case 'refresh':
+                this.grid.dataModel.loadPage(this.cursor);
+            break;
         }
-        pageNum = Math.min(Math.max(1, pageNum), this.lastPage);
-        this.grid.dataModel.loadPage(pageNum);
-        e.stopEvent();
-    }
-};
+    },
+    
+    unplugDataModel : function(dm){
+        dm.removeListener('beforeload', this.beforeLoad, this);
+        dm.removeListener('load', this.onPageLoaded, this);
+        dm.removeListener('loadexception', this.onLoadError, this);
+        YAHOO.ext.grid.PagedGridView.superclass.unplugDataModel.call(this, dm);
+    },
+    
+    plugDataModel : function(dm){
+        dm.on('beforeload', this.beforeLoad, this, true);
+        dm.on('load', this.onPageLoaded, this, true);
+        dm.on('loadexception', this.onLoadError, this);
+        YAHOO.ext.grid.PagedGridView.superclass.plugDataModel.call(this, dm);
+    },
+    
+    
+    beforePageText : "Page",
+    
+    afterPageText : "of %0",
+    
+    firstText : "First Page",
+    
+    prevText : "Previous Page",
+    
+    nextText : "Next Page",
+    
+    lastText : "Last Page",
+    
+    refreshText : "Refresh"
+});
 
-YAHOO.ext.grid.PagedGridView.prototype.beforeLoad = function(){
-    if(this.loading){
-        this.loading.disable();
-    }  
-};
-
-YAHOO.ext.grid.PagedGridView.prototype.onClick = function(which){
-    switch(which){
-        case 'first':
-            this.grid.dataModel.loadPage(1);
-        break;
-        case 'prev':
-            this.grid.dataModel.loadPage(this.cursor -1);
-        break;
-        case 'next':
-            this.grid.dataModel.loadPage(this.cursor + 1);
-        break;
-        case 'last':
-            this.grid.dataModel.loadPage(this.lastPage);
-        break;
-        case 'refresh':
-            this.grid.dataModel.loadPage(this.cursor);
-        break;
-    }
-};
-
-YAHOO.ext.grid.PagedGridView.prototype.unplugDataModel = function(dm){
-    dm.removeListener('beforeload', this.beforeLoad, this);
-    dm.removeListener('load', this.onPageLoaded, this);
-    YAHOO.ext.grid.PagedGridView.superclass.unplugDataModel.call(this, dm);
-};
-
-YAHOO.ext.grid.PagedGridView.prototype.plugDataModel = function(dm){
-    dm.on('beforeload', this.beforeLoad, this, true);
-    dm.on('load', this.onPageLoaded, this, true);
-    YAHOO.ext.grid.PagedGridView.superclass.plugDataModel.call(this, dm);
-};
-
-YAHOO.ext.grid.PagedGridView.prototype.beforePageText = "Page";
-YAHOO.ext.grid.PagedGridView.prototype.afterPageText = "of %0";
-YAHOO.ext.grid.PagedGridView.prototype.firstText = "First Page";
-YAHOO.ext.grid.PagedGridView.prototype.prevText = "Previous Page";
-YAHOO.ext.grid.PagedGridView.prototype.nextText = "Next Page";
-YAHOO.ext.grid.PagedGridView.prototype.lastText = "Last Page";
-YAHOO.ext.grid.PagedGridView.prototype.refreshText = "Refresh";
-
-
-/*
-------------------------------------------------------------------
-// File: grid\EditorGrid.js
-------------------------------------------------------------------
-*/
 
 YAHOO.ext.grid.EditorGrid = function(container, dataModel, colModel){
     YAHOO.ext.grid.EditorGrid.superclass.constructor.call(this, container, dataModel, 
@@ -8765,48 +7900,29 @@ YAHOO.ext.grid.EditorGrid = function(container, dataModel, colModel){
 };
 YAHOO.extendX(YAHOO.ext.grid.EditorGrid, YAHOO.ext.grid.Grid);
 
-/*
-------------------------------------------------------------------
-// File: grid\AbstractColumnModel.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * This abstract class defines the ColumnModel interface and provides default implementations of the events required by the Grid. 
- * @constructor
-*/
 YAHOO.ext.grid.AbstractColumnModel = function(){
-	/** Fires when a column width is changed - fireDirect sig: (this, columnIndex, newWidth)
-     * @type YAHOO.util.CustomEvent 
-     * */
-    this.onWidthChange = new YAHOO.util.CustomEvent('widthChanged');
-    /** Fires when a header has changed - fireDirect sig: (this, columnIndex, newHeader)
-     * @type YAHOO.util.CustomEvent 
-     * */
+	
+	this.onWidthChange = new YAHOO.util.CustomEvent('widthChanged');
     this.onHeaderChange = new YAHOO.util.CustomEvent('headerChanged');
-	/** Fires when a column is hidden or unhidden - fireDirect sig: (this, columnIndex, hidden)
-     * @type YAHOO.util.CustomEvent 
-     * */
-    this.onHiddenChange = new YAHOO.util.CustomEvent('hiddenChanged');
+	this.onHiddenChange = new YAHOO.util.CustomEvent('hiddenChanged');
     
     this.events = {
-        'widthchange': this.onWidthChange,
-        'headerchange': this.onHeaderChange,
-        'hiddenchange': this.onHiddenChange
+        
+	    'widthchange': this.onWidthChange,
+        
+	    'headerchange': this.onHeaderChange,
+        
+	    'hiddenchange': this.onHiddenChange
     };
 };
 
 YAHOO.ext.grid.AbstractColumnModel.prototype = {
-	/** Inherited from Observable */
-    fireEvent : YAHOO.ext.util.Observable.prototype.fireEvent,
-    /** Inherited from Observable */
+	fireEvent : YAHOO.ext.util.Observable.prototype.fireEvent,
     on : YAHOO.ext.util.Observable.prototype.on,
-    /** Inherited from Observable */
     addListener : YAHOO.ext.util.Observable.prototype.addListener,
-    /** Inherited from Observable */
     delayedListener : YAHOO.ext.util.Observable.prototype.delayedListener,
-    /** Inherited from Observable */
     removeListener : YAHOO.ext.util.Observable.prototype.removeListener,
+    purgeListeners : YAHOO.ext.util.Observable.prototype.purgeListeners,
     
     fireWidthChange : function(colIndex, newWidth){
 		this.onWidthChange.fireDirect(this, colIndex, newWidth);
@@ -8820,555 +7936,350 @@ YAHOO.ext.grid.AbstractColumnModel.prototype = {
 		this.onHiddenChange.fireDirect(this, colIndex, hidden);
 	},
 	
-	/**
-     * Interface method - Returns the number of columns.
-     * @return {Number}
-     */
+	
     getColumnCount : function(){
         return 0;
     },
     
-    /**
-     * Interface method - Returns true if the specified column is sortable.
-     * @param {Number} col The column index
-     * @return {Boolean}
-     */
+    
     isSortable : function(col){
         return false;
     },
     
-    /**
-     * Interface method - Returns true if the specified column is hidden.
-     * @param {Number} col The column index
-     * @return {Boolean}
-     */
+    
     isHidden : function(col){
         return false;
     },
     
-    /**
-     * Interface method - Returns the sorting comparison function defined for the column (defaults to sortTypes.none).
-     * @param {Number} col The column index
-     * @return {Function}
-     */
+    
     getSortType : function(col){
         return YAHOO.ext.grid.DefaultColumnModel.sortTypes.none;
     },
     
-    /**
-     * Interface method - Returns the rendering (formatting) function defined for the column.
-     * @param {Number} col The column index
-     * @return {Function}
-     */
+    
     getRenderer : function(col){
         return YAHOO.ext.grid.DefaultColumnModel.defaultRenderer;
     },
     
-    /**
-     * Interface method - Returns the width for the specified column.
-     * @param {Number} col The column index
-     * @return {Number}
-     */
+    
     getColumnWidth : function(col){
         return 0;
     },
     
-    /**
-     * Interface method - Returns the total width of all columns.
-     * @return {Number}
-     */
+    
     getTotalWidth : function(){
         return 0;
     },
     
-    /**
-     * Interface method - Returns the header for the specified column.
-     * @param {Number} col The column index
-     * @return {String}
-     */
+    
     getColumnHeader : function(col){
         return '';
     }
 };
 
 
-/*
-------------------------------------------------------------------
-// File: grid\DefaultColumnModel.js
-------------------------------------------------------------------
-*/
-
-/**
- * @class
- * This is the default implementation of a ColumnModel used by the Grid. It defines
- * the columns in the grid.
- * <br>Usage:<br>
- * <pre><code>
- * var sort = YAHOO.ext.grid.DefaultColumnModel.sortTypes;
- * var myColumns = [
-	{header: "Ticker", width: 60, sortable: true, sortType: sort.asUCString}, 
-	{header: "Company Name", width: 150, sortable: true, sortType: sort.asUCString}, 
-	{header: "Market Cap.", width: 100, sortable: true, sortType: sort.asFloat}, 
-	{header: "$ Sales", width: 100, sortable: true, sortType: sort.asFloat, renderer: money}, 
-	{header: "Employees", width: 100, sortable: true, sortType: sort.asFloat}
- * ];
- * var colModel = new YAHOO.ext.grid.DefaultColumnModel(myColumns);
- * </code></pre>
- * @extends YAHOO.ext.grid.AbstractColumnModel
- * @constructor
-*/
 YAHOO.ext.grid.DefaultColumnModel = function(config){
 	YAHOO.ext.grid.DefaultColumnModel.superclass.constructor.call(this);
-    /**
-     * The config passed into the constructor
-     */
+    
     this.config = config;
     
-    /**
-     * The width of columns which have no width specified (defaults to 100)
-     * @type Number
-     */
+    
     this.defaultWidth = 100;
-    /**
-     * Default sortable of columns which have no sortable specified (defaults to false)
-     * @type Boolean
-     */
+    
     this.defaultSortable = false;
 };
-YAHOO.extendX(YAHOO.ext.grid.DefaultColumnModel, YAHOO.ext.grid.AbstractColumnModel);
-
-/**
- * Returns the number of columns.
- * @return {Number}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.getColumnCount = function(){
-    return this.config.length;
-};
+YAHOO.extendX(YAHOO.ext.grid.DefaultColumnModel, YAHOO.ext.grid.AbstractColumnModel, {
     
-/**
- * Returns true if the specified column is sortable.
- * @param {Number} col The column index
- * @return {Boolean}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.isSortable = function(col){
-    if(typeof this.config[col].sortable == 'undefined'){
-        return this.defaultSortable;
-    }
-    return this.config[col].sortable;
-};
     
-/**
- * Returns the sorting comparison function defined for the column (defaults to sortTypes.none).
- * @param {Number} col The column index
- * @return {Function}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.getSortType = function(col){
-    if(!this.dataMap){
-        // build a lookup so we don't search every time
-        var map = [];
-        for(var i = 0, len = this.config.length; i < len; i++){
-            map[this.getDataIndex(i)] = i;
+    getColumnCount : function(){
+        return this.config.length;
+    },
+        
+    
+    isSortable : function(col){
+        if(typeof this.config[col].sortable == 'undefined'){
+            return this.defaultSortable;
         }
-        this.dataMap = map;
-    }
-    col = this.dataMap[col];
-    if(!this.config[col].sortType){
-        return YAHOO.ext.grid.DefaultColumnModel.sortTypes.none;
-    }
-    return this.config[col].sortType;
-};
+        return this.config[col].sortable;
+    },
+        
     
-/**
- * Sets the sorting comparison function for a column.
- * @param {Number} col The column index
- * @param {Function} fn
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.setSortType = function(col, fn){
-    this.config[col].sortType = fn;
-};
+    getSortType : function(col){
+        if(!this.dataMap){
+            
+            var map = [];
+            for(var i = 0, len = this.config.length; i < len; i++){
+                map[this.getDataIndex(i)] = i;
+            }
+            this.dataMap = map;
+        }
+        col = this.dataMap[col];
+        if(!this.config[col].sortType){
+            return YAHOO.ext.grid.DefaultColumnModel.sortTypes.none;
+        }
+        return this.config[col].sortType;
+    },
+        
     
-
-/**
- * Returns the rendering (formatting) function defined for the column.
- * @param {Number} col The column index
- * @return {Function}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.getRenderer = function(col){
-    if(!this.config[col].renderer){
-        return YAHOO.ext.grid.DefaultColumnModel.defaultRenderer;
-    }
-    return this.config[col].renderer;
-};
+    setSortType : function(col, fn){
+        this.config[col].sortType = fn;
+    },
+        
     
-/**
- * Sets the rendering (formatting) function for a column.
- * @param {Number} col The column index
- * @param {Function} fn
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.setRenderer = function(col, fn){
-    this.config[col].renderer = fn;
-};
     
-/**
- * Returns the width for the specified column.
- * @param {Number} col The column index
- * @return {Number}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.getColumnWidth = function(col){
-    return this.config[col].width || this.defaultWidth;
-};
+    getRenderer : function(col){
+        if(!this.config[col].renderer){
+            return YAHOO.ext.grid.DefaultColumnModel.defaultRenderer;
+        }
+        return this.config[col].renderer;
+    },
+        
     
-/**
- * Sets the width for a column.
- * @param {Number} col The column index
- * @param {Number} width The new width
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.setColumnWidth = function(col, width, suppressEvent){
-    this.config[col].width = width;
-    this.totalWidth = null;
-    if(!suppressEvent){
-         this.onWidthChange.fireDirect(this, col, width);
-    }
-};
+    setRenderer : function(col, fn){
+        this.config[col].renderer = fn;
+    },
+        
     
-/**
- * Returns the total width of all columns.
- * @param {Boolean} includeHidden True to include hidden column widths
- * @return {Number}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.getTotalWidth = function(includeHidden){
-    if(!this.totalWidth){
-        this.totalWidth = 0;
-        for(var i = 0; i < this.config.length; i++){
-            if(includeHidden || !this.isHidden(i)){
-                this.totalWidth += this.getColumnWidth(i);
+    getColumnWidth : function(col){
+        return this.config[col].width || this.defaultWidth;
+    },
+        
+    
+    setColumnWidth : function(col, width, suppressEvent){
+        this.config[col].width = width;
+        this.totalWidth = null;
+        if(!suppressEvent){
+             this.onWidthChange.fireDirect(this, col, width);
+        }
+    },
+        
+    
+    getTotalWidth : function(includeHidden){
+        if(!this.totalWidth){
+            this.totalWidth = 0;
+            for(var i = 0; i < this.config.length; i++){
+                if(includeHidden || !this.isHidden(i)){
+                    this.totalWidth += this.getColumnWidth(i);
+                }
             }
         }
-    }
-    return this.totalWidth;
-};
+        return this.totalWidth;
+    },
+        
     
-/**
- * Returns the header for the specified column.
- * @param {Number} col The column index
- * @return {String}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.getColumnHeader = function(col){
-    return this.config[col].header;
-};
-     
-/**
- * Sets the header for a column.
- * @param {Number} col The column index
- * @param {String} header The new header
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.setColumnHeader = function(col, header){
-    this.config[col].header = header;
-    this.onHeaderChange.fireDirect(this, col, header);
-};
-/**
- * Returns the dataIndex for the specified column.
- * @param {Number} col The column index
- * @return {Number}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.getDataIndex = function(col){
-    if(typeof this.config[col].dataIndex != 'number'){
-        return col;
+    getColumnHeader : function(col){
+        return this.config[col].header;
+    },
+         
+    
+    setColumnHeader : function(col, header){
+        this.config[col].header = header;
+        this.onHeaderChange.fireDirect(this, col, header);
+    },
+    
+    
+    getColumnTooltip : function(col){
+            return this.config[col].tooltip;
+    },
+    
+    setColumnTooltip : function(col, header){
+            this.config[col].tooltip = tooltip;
+    },
+        
+    
+    getDataIndex : function(col){
+        if(typeof this.config[col].dataIndex != 'number'){
+            return col;
+        }
+        return this.config[col].dataIndex;
+    },
+         
+    
+    setDataIndex : function(col, dataIndex){
+        this.config[col].dataIndex = dataIndex;
+    },
+    
+    isCellEditable : function(colIndex, rowIndex){
+        return this.config[colIndex].editable || (typeof this.config[colIndex].editable == 'undefined' && this.config[colIndex].editor);
+    },
+    
+    
+    getCellEditor : function(colIndex, rowIndex){
+        return this.config[colIndex].editor;
+    },
+       
+    
+    setEditable : function(col, editable){
+        this.config[col].editable = editable;
+    },
+    
+    
+    
+    isHidden : function(colIndex){
+        return this.config[colIndex].hidden;
+    },
+    
+    
+    
+    isFixed : function(colIndex){
+        return this.config[colIndex].fixed;
+    },
+    
+    
+    isResizable : function(colIndex){
+        return this.config[colIndex].resizable !== false;
+    },
+    
+    setHidden : function(colIndex, hidden){
+        this.config[colIndex].hidden = hidden;
+        this.totalWidth = null;
+        this.fireHiddenChange(colIndex, hidden);
+    },
+    
+    
+    setEditor : function(col, editor){
+        this.config[col].editor = editor;
     }
-    return this.config[col].dataIndex;
-};
-     
-/**
- * Sets the dataIndex for a column.
- * @param {Number} col The column index
- * @param {Number} dataIndex The new dataIndex
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.setDataIndex = function(col, dataIndex){
-    this.config[col].dataIndex = dataIndex;
-};
-/**
- * Returns true if the cell is editable.
- * @param {Number} colIndex The column index
- * @param {Number} rowIndex The row index
- * @return {Boolean}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.isCellEditable = function(colIndex, rowIndex){
-    return this.config[colIndex].editable || (typeof this.config[colIndex].editable == 'undefined' && this.config[colIndex].editor);
-};
-
-/**
- * Returns the editor defined for the cell/column.
- * @param {Number} colIndex The column index
- * @param {Number} rowIndex The row index
- * @return {Object}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.getCellEditor = function(colIndex, rowIndex){
-    return this.config[colIndex].editor;
-};
-   
-/**
- * Sets if a column is editable.
- * @param {Number} col The column index
- * @param {Boolean} editable True if the column is editable
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.setEditable = function(col, editable){
-    this.config[col].editable = editable;
-};
+});
 
 
-/**
- * Returns true if the column is hidden.
- * @param {Number} colIndex The column index
- * @return {Boolean}
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.isHidden = function(colIndex){
-    return this.config[colIndex].hidden;
+YAHOO.ext.grid.DefaultColumnModel.sortTypes = {
+    none : function(s) {
+    	return s;
+    },
+
+    asUCString : function(s) {
+    	return String(s).toUpperCase();
+    },
+    
+    asDate : function(s) {
+        if(s instanceof Date){
+            return s.getTime();
+        }
+    	return Date.parse(String(s));
+    },
+    
+    asFloat : function(s) {
+    	var val = parseFloat(String(s).replace(/,/g, ''));
+        if(isNaN(val)) val = 0;
+    	return val;
+    },
+    
+    asInt : function(s) {
+        var val = parseInt(String(s).replace(/,/g, ''));
+        if(isNaN(val)) val = 0;
+    	return val;
+    }
 };
 
-
-/**
- * Returns true if the column width cannot be changed
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.isFixed = function(colIndex){
-    return this.config[colIndex].fixed;
-};
-
-/**
- * Returns true if the column cannot be resized
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.isResizable = function(colIndex){
-    return this.config[colIndex].resizable !== false;
-};
-/**
- * Sets if a column is hidden.
- * @param {Number} colIndex The column index
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.setHidden = function(colIndex, hidden){
-    this.config[colIndex].hidden = hidden;
-    this.totalWidth = null;
-    this.fireHiddenChange(colIndex, hidden);
-};
-
-/**
- * Sets the editor for a column.
- * @param {Number} col The column index
- * @param {Object} editor The editor object
- */
-YAHOO.ext.grid.DefaultColumnModel.prototype.setEditor = function(col, editor){
-    this.config[col].editor = editor;
-};
-
-
-/**
- * Default empty rendering function
- */
 YAHOO.ext.grid.DefaultColumnModel.defaultRenderer = function(value){
 	if(typeof value == 'string' && value.length < 1){
-	    return '&nbsp;';
+	    return '&#160;';
 	}
 	return value;
 }
 
-/**
- * Defines the default sorting (casting?) comparison functions used when sorting data:
- * <br>&nbsp;&nbsp;sortTypes.none - sorts data as it is without casting or parsing (the default)
- * <br>&nbsp;&nbsp;sortTypes.asUCString - case insensitive string
- * <br>&nbsp;&nbsp;sortTypes.asDate - attempts to parse data as a date
- * <br>&nbsp;&nbsp;sortTypes.asFloat
- * <br>&nbsp;&nbsp;sortTypes.asInt
- */
-YAHOO.ext.grid.DefaultColumnModel.sortTypes = {};
-
-YAHOO.ext.grid.DefaultColumnModel.sortTypes.none = function(s) {
-	return s;
-};
-
-YAHOO.ext.grid.DefaultColumnModel.sortTypes.asUCString = function(s) {
-	return String(s).toUpperCase();
-};
-
-YAHOO.ext.grid.DefaultColumnModel.sortTypes.asDate = function(s) {
-    if(s instanceof Date){
-        return s.getTime();
-    }
-	return Date.parse(String(s));
-};
-
-YAHOO.ext.grid.DefaultColumnModel.sortTypes.asFloat = function(s) {
-	var val = parseFloat(String(s).replace(/,/g, ''));
-    if(isNaN(val)) val = 0;
-	return val;
-};
-
-YAHOO.ext.grid.DefaultColumnModel.sortTypes.asInt = function(s) {
-    var val = parseInt(String(s).replace(/,/g, ''));
-    if(isNaN(val)) val = 0;
-	return val;
-};
-
-/*
-------------------------------------------------------------------
-// File: data\AbstractDataModel.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * This abstract class provides default implementations of the events required by the Grid. 
- It takes care of the creating the CustomEvents and provides some convenient methods for firing the events. <br><br>
- * @constructor
-*/
 YAHOO.ext.grid.AbstractDataModel = function(){
-    /** Fires when a cell is updated - fireDirect sig: (this, rowIndex, columnIndex)
-     * @type YAHOO.util.CustomEvent
-     * @deprecated Use addListener instead of accessing directly
-     */
+    
     this.onCellUpdated = new YAHOO.util.CustomEvent('onCellUpdated');
-    /** Fires when all data needs to be revalidated - fireDirect sig: (thisd)
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated Use addListener instead of accessing directly
-     */
+    
     this.onTableDataChanged = new YAHOO.util.CustomEvent('onTableDataChanged');
-    /** Fires when rows are deleted - fireDirect sig: (this, firstRowIndex, lastRowIndex)
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated Use addListener instead of accessing directly
-     */
+    
     this.onRowsDeleted = new YAHOO.util.CustomEvent('onRowsDeleted');
-    /** Fires when a rows are inserted - fireDirect sig: (this, firstRowIndex, lastRowIndex)
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated Use addListener instead of accessing directly
-     */
+    
     this.onRowsInserted = new YAHOO.util.CustomEvent('onRowsInserted');
-    /** Fires when a rows are updated - fireDirect sig: (this, firstRowIndex, lastRowIndex)
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated Use addListener instead of accessing directly
-     */
+    
     this.onRowsUpdated = new YAHOO.util.CustomEvent('onRowsUpdated');
-    /** Fires when a sort has reordered the rows - fireDirect sig: (this, sortColumnIndex, 
-     * sortDirection = 'ASC' or 'DESC')
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated Use addListener instead of accessing directly
-     */
+    
     this.onRowsSorted = new YAHOO.util.CustomEvent('onRowsSorted');
     
     this.events = {
+      
       'cellupdated' : this.onCellUpdated,
+      
       'datachanged' : this.onTableDataChanged,
+      
       'rowsdeleted' : this.onRowsDeleted,
+      
       'rowsinserted' : this.onRowsInserted,
+      
       'rowsupdated' : this.onRowsUpdated,
+      
       'rowssorted' : this.onRowsSorted
     };
 };
 
 YAHOO.ext.grid.AbstractDataModel.prototype = {
     
-    /** Inherited from Observable */
     fireEvent : YAHOO.ext.util.Observable.prototype.fireEvent,
-    /** Inherited from Observable */
     on : YAHOO.ext.util.Observable.prototype.on,
-    /** Inherited from Observable */
     addListener : YAHOO.ext.util.Observable.prototype.addListener,
-    /** Inherited from Observable */
     delayedListener : YAHOO.ext.util.Observable.prototype.delayedListener,
-    /** Inherited from Observable */
     removeListener : YAHOO.ext.util.Observable.prototype.removeListener,
+    purgeListeners : YAHOO.ext.util.Observable.prototype.purgeListeners,
     
-    /**
-     *  Notifies listeners that the value of the cell at [row, col] has been updated
-     */
+    
     fireCellUpdated : function(row, col){
         this.onCellUpdated.fireDirect(this, row, col);
     },
     
-    /**
-     *  Notifies listeners that all data for the grid may have changed - use as a last resort. This 
-     * also wipes out all selections a user might have made.
-     */
+    
     fireTableDataChanged : function(){
         this.onTableDataChanged.fireDirect(this);
     },
     
-    /**
-     *  Notifies listeners that rows in the range [firstRow, lastRow], inclusive, have been deleted
-     */
+    
     fireRowsDeleted : function(firstRow, lastRow){
         this.onRowsDeleted.fireDirect(this, firstRow, lastRow);
     },
     
-    /**
-     *  Notifies listeners that rows in the range [firstRow, lastRow], inclusive, have been inserted
-     */
+    
     fireRowsInserted : function(firstRow, lastRow){
         this.onRowsInserted.fireDirect(this, firstRow, lastRow);
     },
     
-    /**
-     *  Notifies listeners that rows in the range [firstRow, lastRow], inclusive, have been updated
-     */
+    
     fireRowsUpdated : function(firstRow, lastRow){
         this.onRowsUpdated.fireDirect(this, firstRow, lastRow);
     },
     
-    /**
-     *  Notifies listeners that rows have been sorted and any indexes may be invalid
-     */
+    
     fireRowsSorted : function(sortColumnIndex, sortDir, noRefresh){
         this.onRowsSorted.fireDirect(this, sortColumnIndex, sortDir, noRefresh);
     },
     
-    /**
-     * Empty interface method - Classes which extend AbstractDataModel should implement this method.
-     * See {@link YAHOO.ext.DefaultDataModel} for an example implementation.
-     */
+    
     sort : function(sortInfo, columnIndex, direction, suppressEvent){
     	
     },
     
-    /**
-     * Interface method to supply the view with info regarding the Grid's current sort state - if overridden,
-     * this should return an object like this {column: this.sortColumn, direction: this.sortDir}.
-     * @return {Object} 
-     */
+    
     getSortState : function(){
     	return {column: this.sortColumn, direction: this.sortDir};
     },
     
-    /**
-     * Empty interface method - Classes which extend AbstractDataModel should implement this method.
-     * See {@link YAHOO.ext.DefaultDataModel} for an example implementation.
-     */
+    
     getRowCount : function(){
     	
     },
     
-    /**
-     * Empty interface method - Classes which extend AbstractDataModel should implement this method to support virtual row counts.
-     */
+    
     getTotalRowCount : function(){
     	return this.getRowCount();
     },
     
     
-    /**
-     * Empty interface method - Classes which extend AbstractDataModel should implement this method.
-     * See {@link YAHOO.ext.DefaultDataModel} for an example implementation.
-     */
+    
     getRowId : function(rowIndex){
     	
     },
     
-    /**
-     * Empty interface method - Classes which extend AbstractDataModel should implement this method.
-     * See {@link YAHOO.ext.DefaultDataModel} for an example implementation.
-     */
+    
     getValueAt : function(rowIndex, colIndex){
     	
     },
     
-    /**
-     * Empty interface method - Classes which extend AbstractDataModel should implement this method.
-     * See {@link YAHOO.ext.DefaultDataModel} for an example implementation.
-     */
+    
     setValueAt : function(value, rowIndex, colIndex){
     	
     },
@@ -9378,1064 +8289,779 @@ YAHOO.ext.grid.AbstractDataModel.prototype = {
     }
 };
 
-/*
-------------------------------------------------------------------
-// File: data\DefaultDataModel.js
-------------------------------------------------------------------
-*/
 
-/**
- * @class
- * This is the default implementation of a DataModel used by the Grid. It works 
- * with multi-dimensional array based data. Using the event system in the base class 
- * {@link YAHOO.ext.grid.AbstractDataModel}, all updates to this DataModel are automatically
- * reflected in the user interface.
- * <br>Usage:<br>
- * <pre><code>
- * var myData = [
-	["MSFT","Microsoft Corporation", "314,571.156", "32,187.000", "55000"],
-	["ORCL", "Oracle Corporation", "62,615.266", "9,519.000", "40650"]
- * ];
- * var dataModel = new YAHOO.ext.grid.DefaultDataModel(myData);
- * </code></pre>
- * @extends YAHOO.ext.grid.AbstractDataModel
- * @constructor
-*/
 YAHOO.ext.grid.DefaultDataModel = function(data){
     YAHOO.ext.grid.DefaultDataModel.superclass.constructor.call(this);
-    /**@private*/
+    
     this.data = data;
 };
-YAHOO.extendX(YAHOO.ext.grid.DefaultDataModel, YAHOO.ext.grid.AbstractDataModel);
-
-/**
- * Returns the number of rows in the dataset
- * @return {Number}
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.getRowCount = function(){
-    return this.data.length;
-};
+YAHOO.extendX(YAHOO.ext.grid.DefaultDataModel, YAHOO.ext.grid.AbstractDataModel, {
     
-/**
- * Returns the ID of the specified row. By default it return the value of the first column. 
- * Override to provide more advanced ID handling. 
- * @return {Number}
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.getRowId = function(rowIndex){
-    return this.data[rowIndex][0];
-};
-
-/**
- * Returns the column data for the specified row. 
- * @return {Array}
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.getRow = function(rowIndex){
-    return this.data[rowIndex];
-};
-
-/**
- * Returns the column data for the specified rows as a 
- * multi-dimensional array: rows[3][0] would give you the value of row 4, column 0. 
- * @param {Array} indexes The row indexes to fetch
- * @return {Array}
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.getRows = function(indexes){
-    var data = this.data;
-    var r = [];
-    for(var i = 0; i < indexes.length; i++){
-       r.push(data[indexes[i]]);
-    }
-    return r;
-};
-
-/**
- * Returns the value at the specified data position
- * @param {Number} rowIndex
- * @param {Number} colIndex
- * @return {Object}
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.getValueAt = function(rowIndex, colIndex){
-	return this.data[rowIndex][colIndex];
-};
-
-/**
- * Sets the specified value at the specified data position
- * @param {Object} value The new value
- * @param {Number} rowIndex
- * @param {Number} colIndex
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.setValueAt = function(value, rowIndex, colIndex){
-    this.data[rowIndex][colIndex] = value;
-    this.fireCellUpdated(rowIndex, colIndex);
-};
-
-/**
- * @private
- * Removes the specified range of rows.
- * @param {Number} startIndex
- * @param {<i>Number</i>} endIndex (optional) Defaults to startIndex
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.removeRows = function(startIndex, endIndex){
-    endIndex = endIndex || startIndex;
-    this.data.splice(startIndex, endIndex-startIndex+1);
-    this.fireRowsDeleted(startIndex, endIndex);
-};
-
-/**
- * Remove a row.
- * @param {Number} index
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.removeRow = function(index){
-    this.data.splice(index, 1);
-    this.fireRowsDeleted(index, index);
-};
-
-/**
- * @private
- * Removes all rows.
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.removeAll = function(){
-	var count = this.getRowCount();
-	if(count > 0){
-    	this.removeRows(0, count-1);
-	}
-};
-
-/**
- * Query the DataModel rows by the filters defined in spec, for example...
- * <pre><code>
- * // column 1 starts with Jack, column 2 filtered by myFcn, column 3 equals 'Fred'
- * dataModel.filter({1: /^Jack.+/i}, 2: myFcn, 3: 'Fred'});
- * </code></pre> 
- * @param {Object} spec The spec is generally an object literal consisting of
- * column index and filter type. The filter type can be a string/number (exact match),
- * a regular expression to test using String.search() or a function to call. If it's a function, 
- * it will be called with the value for the specified column and an array of the all column 
- * values for that row: yourFcn(value, columnData). If it returns anything other than true, 
- * the row is not a match. If you have modified Object.prototype this method may fail.
- * @param {Boolean} returnUnmatched True to return rows which <b>don't</b> match the query instead
- * of rows that do match
- * @return {Array} An array of row indexes that match
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.query = function(spec, returnUnmatched){
-    var d = this.data;
-    var r = [];
-    for(var i = 0; i < d.length; i++){
-        var row = d[i];
-        var isMatch = true;
-        for(var col in spec){
-            //if(typeof spec[col] != 'function'){
-                if(!isMatch) continue;
-                var filter = spec[col];
-                switch(typeof filter){
-                    case 'string':
-                    case 'number':
-                    case 'boolean':
-                      if(row[col] != filter){
-                          isMatch = false;
-                      }
-                    break;
-                    case 'function':
-                      if(!filter(row[col], row)){
-                          isMatch = false;
-                      }
-                    break;
-                    case 'object':
-                       if(filter instanceof RegExp){
-                           if(String(row[col]).search(filter) === -1){
-                               isMatch = false;
+    getRowCount : function(){
+        return this.data.length;
+    },
+        
+    
+    getRowId : function(rowIndex){
+        return this.data[rowIndex][0];
+    },
+    
+    
+    getRow : function(rowIndex){
+        return this.data[rowIndex];
+    },
+    
+    
+    getRows : function(indexes){
+        var data = this.data;
+        var r = [];
+        for(var i = 0; i < indexes.length; i++){
+           r.push(data[indexes[i]]);
+        }
+        return r;
+    },
+    
+    
+    getValueAt : function(rowIndex, colIndex){
+    	return this.data[rowIndex][colIndex];
+    },
+    
+    
+    setValueAt: function(value, rowIndex, colIndex){
+        this.data[rowIndex][colIndex] = value;
+        this.fireCellUpdated(rowIndex, colIndex);
+    },
+    
+    
+    removeRows: function(startIndex, endIndex){
+        endIndex = endIndex || startIndex;
+        this.data.splice(startIndex, endIndex-startIndex+1);
+        this.fireRowsDeleted(startIndex, endIndex);
+    },
+    
+    
+    removeRow: function(index){
+        this.data.splice(index, 1);
+        this.fireRowsDeleted(index, index);
+    },
+    
+    
+    removeAll: function(){
+    	var count = this.getRowCount();
+    	if(count > 0){
+        	this.removeRows(0, count-1);
+    	}
+    },
+    
+    
+    query: function(spec, returnUnmatched){
+        var d = this.data;
+        var r = [];
+        for(var i = 0; i < d.length; i++){
+            var row = d[i];
+            var isMatch = true;
+            for(var col in spec){
+                
+                    if(!isMatch) continue;
+                    var filter = spec[col];
+                    switch(typeof filter){
+                        case 'string':
+                        case 'number':
+                        case 'boolean':
+                          if(row[col] != filter){
+                              isMatch = false;
+                          }
+                        break;
+                        case 'function':
+                          if(!filter(row[col], row)){
+                              isMatch = false;
+                          }
+                        break;
+                        case 'object':
+                           if(filter instanceof RegExp){
+                               if(String(row[col]).search(filter) === -1){
+                                   isMatch = false;
+                               }
                            }
-                       }
-                    break;
-                }
-            //}
+                        break;
+                    }
+                
+            }
+            if(isMatch && !returnUnmatched){
+                r.push(i);
+            }else if(!isMatch && returnUnmatched){
+                r.push(i);
+            }
         }
-        if(isMatch && !returnUnmatched){
-            r.push(i);
-        }else if(!isMatch && returnUnmatched){
-            r.push(i);
+        return r;
+    },
+    
+    
+    filter: function(query){
+        var matches = this.query(query, true);
+        var data = this.data;
+        
+        
+        for(var i = 0; i < matches.length; i++){ 
+            data[matches[i]]._deleted = true;
         }
-    }
-    return r;
-};
-
-/**
- * Filter the DataModel rows by the query defined in spec, see {@link #query} for more details 
- * on the query spec.
- * @param {Object} query The query spec {@link #query}
- * @return {Number} The number of rows removed
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.filter = function(query){
-    var matches = this.query(query, true);
-    var data = this.data;
-    // go thru the data setting matches to deleted
-    // while not disturbing row indexes
-    for(var i = 0; i < matches.length; i++){ 
-        data[matches[i]]._deleted = true;
-    }
-    for(var i = 0; i < data.length; i++){
-        while(data[i] && data[i]._deleted === true){
-            this.removeRow(i);
+        for(var i = 0; i < data.length; i++){
+            while(data[i] && data[i]._deleted === true){
+                this.removeRow(i);
+            }
         }
-    }
-    return matches.length;
-};
-
-/**
- * Adds a row to the dataset.
- * @param {Array} cellValues The array of values for the new row
- * @return {Number} The index of the added row
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.addRow = function(cellValues){
-    this.data.push(cellValues);
-    var newIndex = this.data.length-1;
-    this.fireRowsInserted(newIndex, newIndex);
-    this.applySort();
-    return newIndex;
-};
-
-/**
- * @private
- * Adds a set of rows.
- * @param {Array} rowData This should be an array of arrays like the constructor takes
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.addRows = function(rowData){
-    this.data = this.data.concat(rowData);
-    var firstIndex = this.data.length-rowData.length;
-    this.fireRowsInserted(firstIndex, firstIndex+rowData.length-1);
-    this.applySort();
-};
-
-/**
- * Inserts a row a the specified location in the dataset.
- * @param {Number} index The index where the row should be inserted
- * @param {Array} cellValues The array of values for the new row
- * @return {Number} The index the row was inserted in
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.insertRow = function(index, cellValues){
-    this.data.splice(index, 0, cellValues);
-    this.fireRowsInserted(index, index);
-    this.applySort();
-    return index;
-};
-
-/**
- * @private
- * Inserts a set of rows.
- * @param {Number} index The index where the rows should be inserted
- * @param {Array} rowData This should be an array of arrays like the constructor takes
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.insertRows = function(index, rowData){
-    /*
-    if(index == this.data.length){ // try these two first since they are faster
+        return matches.length;
+    },
+    
+    
+    addRow: function(cellValues){
+        this.data.push(cellValues);
+        var newIndex = this.data.length-1;
+        this.fireRowsInserted(newIndex, newIndex);
+        this.applySort();
+        return newIndex;
+    },
+    
+    
+    addRows: function(rowData){
         this.data = this.data.concat(rowData);
-    }else if(index == 0){
-        this.data = rowData.concat(this.data);
-    }else{
-        var newData = this.data.slice(0, index);
-        newData.concat(rowData);
-        newData.concat(this.data.slice(index));
-        this.data = newData;
-    }*/
-    var args = rowData.concat();
-    args.splice(0, 0, index, 0);
-    this.data.splice.apply(this.data, args);
-    this.fireRowsInserted(index, index+rowData.length-1);
-    this.applySort();
-};
-
-/**
- * Applies the last used sort to the current data.
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.applySort = function(suppressEvent){
-	if(typeof this.sortColumn != 'undefined'){
-		this.sort(this.sortInfo, this.sortColumn, this.sortDir, suppressEvent);
-	}
-};
-
-YAHOO.ext.grid.DefaultDataModel.prototype.setDefaultSort = function(sortInfo, columnIndex, direction){
-    this.sortInfo = sortInfo;
-    this.sortColumn = columnIndex;
-    this.sortDir = direction;
-};
-/**
- * Sorts the data by the specified column - Uses the sortType specified for the column in the passed columnModel.
- * @param {Function/Object} sortInfo A sort comparison function or null to use the default or A object that has a method getSortType(index) that returns a function like 
- *                                               a grid column model. 
- * @param {Number} columnIndex The column index to sort by
- * @param {String} direction The direction of the sort ('DESC' or 'ASC')
- */
-YAHOO.ext.grid.DefaultDataModel.prototype.sort = function(sortInfo, columnIndex, direction, suppressEvent){
-    // store these so we can maintain sorting when we load new data
-    this.sortInfo = sortInfo;
-    this.sortColumn = columnIndex;
-    this.sortDir = direction;
+        var firstIndex = this.data.length-rowData.length;
+        this.fireRowsInserted(firstIndex, firstIndex+rowData.length-1);
+        this.applySort();
+    },
     
-    var dsc = (direction && direction.toUpperCase() == 'DESC');
-    var sortType = null;
-    if(sortInfo != null){
-        if(typeof sortInfo == 'function'){
-            sortType = sortInfo;
-        }else if(typeof sortInfo == 'object'){
-            sortType = sortInfo.getSortType(columnIndex);;
-        }
-    }
-    var fn = function(cells, cells2){
-        var v1 = sortType ? sortType(cells[columnIndex], cells) : cells[columnIndex];
-        var v2 = sortType ? sortType(cells2[columnIndex], cells2) : cells2[columnIndex];
-        if(v1 < v2)
-			return dsc ? +1 : -1;
-		if(v1 > v2)
-			return dsc ? -1 : +1;
-	    return 0;
-    };
-    this.data.sort(fn);
-    if(!suppressEvent){
-       this.fireRowsSorted(columnIndex, direction);
-    }
-};
-
-/**
- * Calls passed function with each rows data - if the function returns false it stops.
- */ 
-YAHOO.ext.grid.DefaultDataModel.prototype.each = function(fn, scope){
-    var d = this.data;
-    for(var i = 0, len = d.length; i < len; i++){
-        if(fn.call(scope || window, d[i], i) === false) break;
-    }
-};
-
-/**
- * Alias to YAHOO.ext.grid.DefaultColumnModel.sortTypes
- */
-YAHOO.ext.grid.DefaultDataModel.sortTypes = YAHOO.ext.grid.DefaultColumnModel.sortTypes;
-
-/*
-------------------------------------------------------------------
-// File: data\LoadableDataModel.js
-------------------------------------------------------------------
-*/
-/**
- * @class
- * This class extends DefaultDataModel and adds the core functionality to load data remotely. <br><br>
- * @extends YAHOO.ext.grid.DefaultDataModel
- * @constructor
- * @param {String} dataType YAHOO.ext.grid.LoadableDataModel.XML, YAHOO.ext.grid.LoadableDataModel.TEXT or YAHOO.ext.grid.JSON
-*/
-YAHOO.ext.grid.LoadableDataModel = function(dataType){
-    YAHOO.ext.grid.LoadableDataModel.superclass.constructor.call(this, []);
     
-    /** Fires when a successful load is completed - fireDirect sig: (this)
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated Use addListener instead of accessing directly
-     */
-    this.onLoad = new YAHOO.util.CustomEvent('load');
-    /** Fires when a load fails - fireDirect sig: (this, errorMsg, responseObj)
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated Use addListener instead of accessing directly
-     */
-    this.onLoadException = new YAHOO.util.CustomEvent('loadException');
+    insertRow: function(index, cellValues){
+        this.data.splice(index, 0, cellValues);
+        this.fireRowsInserted(index, index);
+        this.applySort();
+        return index;
+    },
     
-    this.events['load'] = this.onLoad;
-    this.events['beforeload'] = new YAHOO.util.CustomEvent('beforeload');
-    this.events['loadexception'] = this.onLoadException;
     
-    /**@private*/
-    this.dataType = dataType;
-    /**@private*/
-    this.preprocessors = [];
-    /**@private*/
-    this.postprocessors = [];
+    insertRows: function(index, rowData){
+        
+        var args = rowData.concat();
+        args.splice(0, 0, index, 0);
+        this.data.splice.apply(this.data, args);
+        this.fireRowsInserted(index, index+rowData.length-1);
+        this.applySort();
+    },
     
-    // paging info
-    /** The active page @type Number*/
-    this.loadedPage = 1;
-    /** True to use remote sorting, initPaging automatically sets this to true @type Boolean */
-    this.remoteSort = false;
-    /** The number of records per page @type Number*/
-    this.pageSize = 0;
-    /** The script/page to call to provide paged/sorted data @type String*/
-    this.pageUrl = null;
-    /** An object of key/value pairs to be passed as parameters
-     * when loading pages/sorting @type Object*/
-    this.baseParams = {};
-    /** Maps named params to url parameters - Override to specify your own param names */
-    this.paramMap = {'page':'page', 'pageSize':'pageSize', 'sortColumn':'sortColumn', 'sortDir':'sortDir'};
     
-};
-YAHOO.extendX(YAHOO.ext.grid.LoadableDataModel, YAHOO.ext.grid.DefaultDataModel);
-
-/** @ignore */
-YAHOO.ext.grid.LoadableDataModel.prototype.setLoadedPage = function(pageNum, userCallback){
-    this.loadedPage = pageNum;
-    if(typeof userCallback == 'function'){
-        userCallback();
-    }
-};
-
-/** Returns true if this model uses paging @type Boolean */
-YAHOO.ext.grid.LoadableDataModel.prototype.isPaged = function(){
-    return this.pageSize > 0;
-};
-
-/** Returns the total number of records available, override if needed @type Number */
-YAHOO.ext.grid.LoadableDataModel.prototype.getTotalRowCount = function(){
-    return this.totalCount || this.getRowCount();
-};
-
-/** Returns the number of records per page @type Number */
-YAHOO.ext.grid.LoadableDataModel.prototype.getPageSize = function(){
-    return this.pageSize;
-};
-
-/** Returns the total number of pages available @type Number */
-YAHOO.ext.grid.LoadableDataModel.prototype.getTotalPages = function(){
-    if(this.getPageSize() == 0 || this.getTotalRowCount() == 0){
-        return 1;
-    }
-    return Math.ceil(this.getTotalRowCount()/this.getPageSize());
-};
-
-/** Initializes paging for this model. */
-YAHOO.ext.grid.LoadableDataModel.prototype.initPaging = function(url, pageSize, baseParams){
-    this.pageUrl = url;
-    this.pageSize = pageSize;
-    this.remoteSort = true;
-    if(baseParams) this.baseParams = baseParams;
-};
-
-/** @ignore */
-YAHOO.ext.grid.LoadableDataModel.prototype.createParams = function(pageNum, sortColumn, sortDir){
-    var params = {}, map = this.paramMap;
-    for(var key in this.baseParams){
-        if(typeof this.baseParams[key] != 'function'){
-            params[key] = this.baseParams[key];
-        }
-    }
-    params[map['page']] = pageNum;
-    params[map['pageSize']] = this.getPageSize();
-    params[map['sortColumn']] = (typeof sortColumn == 'undefined' ? '' : sortColumn);
-    params[map['sortDir']] = sortDir || '';
-    return params;
-};
-
-YAHOO.ext.grid.LoadableDataModel.prototype.loadPage = function(pageNum, callback, keepExisting){
-    var sort = this.getSortState();
-    var params = this.createParams(pageNum, sort.column, sort.direction);
-    this.load(this.pageUrl, params, this.setLoadedPage.createDelegate(this, [pageNum, callback]), 
-               keepExisting ? (pageNum-1) * this.pageSize : null);
-};
-
-/** @ignore */
-YAHOO.ext.grid.LoadableDataModel.prototype.applySort = function(suppressEvent){
-	if(!this.remoteSort){
-        YAHOO.ext.grid.LoadableDataModel.superclass.applySort.apply(this, arguments);
-    }else if(!suppressEvent){
-        var sort = this.getSortState();
-        if(sort.column){
-           this.fireRowsSorted(sort.column, sort.direction, true);
-        }
-    }
-};
-
-/** @ignore */
-YAHOO.ext.grid.LoadableDataModel.prototype.resetPaging = function(){
-	this.loadedPage = 1;
-};
-
-/** Overridden sort method to use remote sorting if turned on */
-YAHOO.ext.grid.LoadableDataModel.prototype.sort = function(sortInfo, columnIndex, direction, suppressEvent){
-    if(!this.remoteSort){
-        YAHOO.ext.grid.LoadableDataModel.superclass.sort.apply(this, arguments);
-    }else{
+    applySort: function(suppressEvent){
+    	if(typeof this.sortColumn != 'undefined'){
+    		this.sort(this.sortInfo, this.sortColumn, this.sortDir, suppressEvent);
+    	}
+    },
+    
+    
+    setDefaultSort: function(sortInfo, columnIndex, direction){
         this.sortInfo = sortInfo;
         this.sortColumn = columnIndex;
         this.sortDir = direction;
-        var params = this.createParams(this.loadedPage, columnIndex, direction);
-        this.load(this.pageUrl, params, this.fireRowsSorted.createDelegate(this, [columnIndex, direction, true]));
-    }
-}
-/**
- * Initiates the loading of the data from the specified URL - Failed load attempts will 
- * fire the {@link #onLoadException} event.
- * @param {Object/String} url The url from which the data can be loaded
- * @param {<i>String/Object</i>} params (optional) The parameters to pass as either a url encoded string "param1=1&amp;param2=2" or as an object {param1: 1, param2: 2}
- * @param {<i>Function</i>} callback (optional) Callback when load is complete - called with signature (this, rowCountLoaded)
- * @param {<i>Number</i>} insertIndex (optional) if present, loaded data is inserted at the specified index instead of overwriting existing data
- */
-YAHOO.ext.grid.LoadableDataModel.prototype.load = function(url, params, callback, insertIndex){
-	this.fireEvent('beforeload');
-	if(params && typeof params != 'string'){ // must be object
-        var buf = [];
-        for(var key in params){
-            if(typeof params[key] != 'function'){
-                buf.push(encodeURIComponent(key), '=', encodeURIComponent(params[key]), '&');
+    },
+    
+    sort: function(sortInfo, columnIndex, direction, suppressEvent){
+        
+        this.sortInfo = sortInfo;
+        this.sortColumn = columnIndex;
+        this.sortDir = direction;
+        
+        var dsc = (direction && direction.toUpperCase() == 'DESC');
+        var sortType = null;
+        if(sortInfo != null){
+            if(typeof sortInfo == 'function'){
+                sortType = sortInfo;
+            }else if(typeof sortInfo == 'object'){
+                sortType = sortInfo.getSortType(columnIndex);;
             }
         }
-        delete buf[buf.length-1];
-        params = buf.join('');
+        var fn = function(cells, cells2){
+            var v1 = sortType ? sortType(cells[columnIndex], cells) : cells[columnIndex];
+            var v2 = sortType ? sortType(cells2[columnIndex], cells2) : cells2[columnIndex];
+            if(v1 < v2)
+    			return dsc ? +1 : -1;
+    		if(v1 > v2)
+    			return dsc ? -1 : +1;
+    	    return 0;
+        };
+        this.data.sort(fn);
+        if(!suppressEvent){
+           this.fireRowsSorted(columnIndex, direction);
+        }
+    },
+    
+     
+    each: function(fn, scope){
+        var d = this.data;
+        for(var i = 0, len = d.length; i < len; i++){
+            if(fn.call(scope || window, d[i], i) === false) break;
+        }
     }
-    var cb = {
-        success: this.processResponse,
-        failure: this.processException,
-        scope: this,
-		argument: {callback: callback, insertIndex: insertIndex}
-    };
-    var method = params ? 'POST' : 'GET';
-    YAHOO.util.Connect.asyncRequest(method, url, cb, params);
-};
+});
 
-/**@private*/
-YAHOO.ext.grid.LoadableDataModel.prototype.processResponse = function(response){
-    var cb = response.argument.callback;
-    var keepExisting = (typeof response.argument.insertIndex == 'number');
-    var insertIndex = response.argument.insertIndex;
-    switch(this.dataType){
-    	case YAHOO.ext.grid.LoadableDataModel.XML:
-    		this.loadData(response.responseXML, cb, keepExisting, insertIndex);
-    	break;
-    	case YAHOO.ext.grid.LoadableDataModel.JSON:
-    		var rtext = response.responseText;
-    		try { // this code is a modified version of Yahoo! UI DataSource JSON parsing
-		        // Trim leading spaces
-		        while(rtext.substring(0,1) == " ") {
-		            rtext = rtext.substring(1, rtext.length);
-		        }
-		        // Invalid JSON response
-		        if(rtext.indexOf("{") < 0) {
-		            throw "Invalid JSON response";
-		        }
-		
-		        // Empty (but not invalid) JSON response
-		        if(rtext.indexOf("{}") === 0) {
-		            this.loadData({}, response.argument.callback);
-		            return;
-		        }
-		
-		        // Turn the string into an object literal...
-		        // ...eval is necessary here
-		        var jsonObjRaw = eval("(" + rtext + ")");
-		        if(!jsonObjRaw) {
-		            throw "Error evaling JSON response";
-		        }
-				this.loadData(jsonObjRaw, cb, keepExisting, insertIndex);
-		    } catch(e) {
-		        this.fireLoadException(e, response);
-				if(typeof callback == 'function'){
-			    	callback(this, false);
-			    }
-		   	}
-    	break;
-    	case YAHOO.ext.grid.LoadableDataModel.TEXT:
-    		this.loadData(response.responseText, cb, keepExisting, insertIndex);
-    	break;
-    };
-};
 
-/**@private*/
-YAHOO.ext.grid.LoadableDataModel.prototype.processException = function(response){
-    this.fireLoadException(null, response);
-    if(typeof response.argument.callback == 'function'){
-        response.argument.callback(this, false);
+YAHOO.ext.grid.DefaultDataModel.sortTypes = YAHOO.ext.grid.DefaultColumnModel.sortTypes;
+
+YAHOO.ext.grid.LoadableDataModel = function(dataType){
+    YAHOO.ext.grid.LoadableDataModel.superclass.constructor.call(this, []);
+    
+    
+    this.onLoad = new YAHOO.util.CustomEvent('load');
+    
+    this.onLoadException = new YAHOO.util.CustomEvent('loadException');
+    
+    this.events['load'] = this.onLoad;
+    
+    this.events['beforeload'] = new YAHOO.util.CustomEvent('beforeload');
+    
+    this.events['loadexception'] = this.onLoadException;
+    
+    
+    this.dataType = dataType;
+    
+    this.preprocessors = [];
+    
+    this.postprocessors = [];
+    
+    
+    
+    this.loadedPage = 1;
+    
+    this.remoteSort = false;
+    
+    this.pageSize = 0;
+    
+    this.pageUrl = null;
+    
+    this.baseParams = {};
+    
+    this.paramMap = {'page':'page', 'pageSize':'pageSize', 'sortColumn':'sortColumn', 'sortDir':'sortDir'};
+    
+};
+YAHOO.extendX(YAHOO.ext.grid.LoadableDataModel, YAHOO.ext.grid.DefaultDataModel, {
+    
+    
+    setLoadedPage: function(pageNum, userCallback){
+        this.loadedPage = pageNum;
+        if(typeof userCallback == 'function'){
+            userCallback();
+        }
+    },
+    
+    
+    isPaged: function(){
+        return this.pageSize > 0;
+    },
+    
+    
+    getTotalRowCount: function(){
+        return this.totalCount || this.getRowCount();
+    },
+    
+    
+    getPageSize: function(){
+        return this.pageSize;
+    },
+    
+    
+    getTotalPages: function(){
+        if(this.getPageSize() == 0 || this.getTotalRowCount() == 0){
+            return 1;
+        }
+        return Math.ceil(this.getTotalRowCount()/this.getPageSize());
+    },
+    
+    
+    initPaging: function(url, pageSize, baseParams){
+        this.pageUrl = url;
+        this.pageSize = pageSize;
+        this.remoteSort = true;
+        if(baseParams) this.baseParams = baseParams;
+    },
+    
+    
+    createParams: function(pageNum, sortColumn, sortDir){
+        var params = {}, map = this.paramMap;
+        for(var key in this.baseParams){
+            if(typeof this.baseParams[key] != 'function'){
+                params[key] = this.baseParams[key];
+            }
+        }
+        params[map['page']] = pageNum;
+        params[map['pageSize']] = this.getPageSize();
+        params[map['sortColumn']] = (typeof sortColumn == 'undefined' ? '' : sortColumn);
+        params[map['sortDir']] = sortDir || '';
+        return params;
+    },
+    
+    
+    loadPage: function(pageNum, callback, keepExisting){
+        var sort = this.getSortState();
+        var params = this.createParams(pageNum, sort.column, sort.direction);
+        this.load(this.pageUrl, params, this.setLoadedPage.createDelegate(this, [pageNum, callback]), 
+                   keepExisting ? (pageNum-1) * this.pageSize : null);
+    },
+    
+    
+    applySort: function(suppressEvent){
+    	if(!this.remoteSort){
+            YAHOO.ext.grid.LoadableDataModel.superclass.applySort.apply(this, arguments);
+        }else if(!suppressEvent){
+            var sort = this.getSortState();
+            if(sort.column){
+               this.fireRowsSorted(sort.column, sort.direction, true);
+            }
+        }
+    },
+    
+    
+    resetPaging: function(){
+    	this.loadedPage = 1;
+    },
+    
+    
+    sort: function(sortInfo, columnIndex, direction, suppressEvent){
+        if(!this.remoteSort){
+            YAHOO.ext.grid.LoadableDataModel.superclass.sort.apply(this, arguments);
+        }else{
+            this.sortInfo = sortInfo;
+            this.sortColumn = columnIndex;
+            this.sortDir = direction;
+            var params = this.createParams(this.loadedPage, columnIndex, direction);
+            this.load(this.pageUrl, params, this.fireRowsSorted.createDelegate(this, [columnIndex, direction, true]));
+        }
+    },
+    
+    
+    load: function(url, params, callback, insertIndex){
+    	this.fireEvent('beforeload', this);
+    	if(params && typeof params != 'string'){ 
+            var buf = [];
+            for(var key in params){
+                if(typeof params[key] != 'function'){
+                    buf.push(encodeURIComponent(key), '=', encodeURIComponent(params[key]), '&');
+                }
+            }
+            delete buf[buf.length-1];
+            params = buf.join('');
+        }
+        var cb = {
+            success: this.processResponse,
+            failure: this.processException,
+            scope: this,
+    		argument: {callback: callback, insertIndex: insertIndex}
+        };
+        var method = params ? 'POST' : 'GET';
+        this.transId = YAHOO.util.Connect.asyncRequest(method, url, cb, params);
+    },
+    
+    
+    processResponse: function(response){
+        var cb = response.argument.callback;
+        var keepExisting = (typeof response.argument.insertIndex == 'number');
+        var insertIndex = response.argument.insertIndex;
+        switch(this.dataType){
+        	case YAHOO.ext.grid.LoadableDataModel.XML:
+        		this.loadData(response.responseXML, cb, keepExisting, insertIndex);
+        	break;
+        	case YAHOO.ext.grid.LoadableDataModel.JSON:
+        		var rtext = response.responseText;
+        		try { 
+    		        
+    		        while(rtext.substring(0,1) == " ") {
+    		            rtext = rtext.substring(1, rtext.length);
+    		        }
+    		        
+    		        if(rtext.indexOf("{") < 0) {
+    		            throw "Invalid JSON response";
+    		        }
+    		
+    		        
+    		        if(rtext.indexOf("{}") === 0) {
+    		            this.loadData({}, response.argument.callback);
+    		            return;
+    		        }
+    		
+    		        
+    		        
+    		        var jsonObjRaw = eval("(" + rtext + ")");
+    		        if(!jsonObjRaw) {
+    		            throw "Error evaling JSON response";
+    		        }
+    				this.loadData(jsonObjRaw, cb, keepExisting, insertIndex);
+    		    } catch(e) {
+    		        this.fireLoadException(e, response);
+    				if(typeof cb == 'function'){
+    			    	cb(this, false);
+    			    }
+    		   	}
+        	break;
+        	case YAHOO.ext.grid.LoadableDataModel.TEXT:
+        		this.loadData(response.responseText, cb, keepExisting, insertIndex);
+        	break;
+        };
+    },
+    
+    
+    processException: function(response){
+        this.fireLoadException(null, response);
+        if(typeof response.argument.callback == 'function'){
+            response.argument.callback(this, false);
+        }
+    },
+    
+    fireLoadException: function(e, responseObj){
+        this.onLoadException.fireDirect(this, e, responseObj);
+    },
+    
+    fireLoadEvent: function(){
+        this.fireEvent('load', this.loadedPage, this.getTotalPages());
+    },
+    
+    
+    addPreprocessor: function(columnIndex, fn){
+        this.preprocessors[columnIndex] = fn;
+    },
+    
+    
+    getPreprocessor: function(columnIndex){
+        return this.preprocessors[columnIndex];
+    },
+    
+    
+    removePreprocessor: function(columnIndex){
+        this.preprocessors[columnIndex] = null;
+    },
+    
+    
+    addPostprocessor: function(columnIndex, fn){
+        this.postprocessors[columnIndex] = fn;
+    },
+    
+    
+    getPostprocessor: function(columnIndex){
+        return this.postprocessors[columnIndex];
+    },
+    
+    
+    removePostprocessor: function(columnIndex){
+        this.postprocessors[columnIndex] = null;
+    },
+    
+    loadData: function(data, callback, keepExisting, insertIndex){
+    	
     }
-};
-
-YAHOO.ext.grid.LoadableDataModel.prototype.fireLoadException = function(e, responseObj){
-    this.onLoadException.fireDirect(this, e, responseObj);
-};
-
-YAHOO.ext.grid.LoadableDataModel.prototype.fireLoadEvent = function(){
-    this.fireEvent('load', this.loadedPage, this.getTotalPages());
-};
-
-/**
- * Adds a preprocessor function to parse data before it is added to the Model - ie. Date.parse to parse dates.
- */
-YAHOO.ext.grid.LoadableDataModel.prototype.addPreprocessor = function(columnIndex, fn){
-    this.preprocessors[columnIndex] = fn;
-};
-
-/**
- * Gets the preprocessor function for the specified column.
- */
-YAHOO.ext.grid.LoadableDataModel.prototype.getPreprocessor = function(columnIndex){
-    return this.preprocessors[columnIndex];
-};
-
-/**
- * Removes a preprocessor function.
- */
-YAHOO.ext.grid.LoadableDataModel.prototype.removePreprocessor = function(columnIndex){
-    this.preprocessors[columnIndex] = null;
-};
-
-/**
- * Adds a postprocessor function to format data before updating the underlying data source (ie. convert date to string before updating XML document).
- */
-YAHOO.ext.grid.LoadableDataModel.prototype.addPostprocessor = function(columnIndex, fn){
-    this.postprocessors[columnIndex] = fn;
-};
-
-/**
- * Gets the postprocessor function for the specified column.
- */
-YAHOO.ext.grid.LoadableDataModel.prototype.getPostprocessor = function(columnIndex){
-    return this.postprocessors[columnIndex];
-};
-
-/**
- * Removes a postprocessor function.
- */
-YAHOO.ext.grid.LoadableDataModel.prototype.removePostprocessor = function(columnIndex){
-    this.postprocessors[columnIndex] = null;
-};
-/**
- * Empty interface method - Called to process the data returned by the XHR - Classes which extend LoadableDataModel should implement this method.
- * See {@link YAHOO.ext.XMLDataModel} for an example implementation.
- */
-YAHOO.ext.grid.LoadableDataModel.prototype.loadData = function(data, callback, keepExisting, insertIndex){
-	
-};
+});
 
 YAHOO.ext.grid.LoadableDataModel.XML = 'xml';
 YAHOO.ext.grid.LoadableDataModel.JSON = 'json';
 YAHOO.ext.grid.LoadableDataModel.TEXT = 'text';
 
-/*
-YAHOO.ext.grid.SparceDataset = function(bufferSize){
-    this.stack = [];
-    this.bufferSize = bufferSize || 1000;
-    this.maxIndex = 0;
-    
-    this.events = {
-        'rowsexpired' : new YAHOO.util.CustomEvent('rowsexpired')
-    };
-};
-
-YAHOO.ext.grid.SparceDataset.prototype = {
-    addListener : YAHOO.ext.grid.Grid.prototype.addListener,
-    removeListener : YAHOO.ext.grid.Grid.prototype.removeListener,
-    fireEvent : YAHOO.ext.grid.Grid.prototype.fireEvent,
-    
-    getRowAt : function(index){
-        return this[String(index)];
-    },
-    
-    splice : function(index, deleteCount){
-        this.insertRowsAt(index, Array.prototype.slice.call(arguments, 2));
-    },
-    
-    concat : function(){
-        this.insertRowsAt(index, Array.prototype.slice.call(arguments, 2));
-    },
-    
-    insertRowsAt: function(index, rowData){
-        for(var i = 0; i < rowData.length; i++) {
-        	var d = rowData[i];
-        	var dataIndex = index + i;
-        	this[dataIndex] = d;
-        	this.stack.push(dataIndex);
-        }
-        this.maxIndex = Math.max(this.maxIndex, index+rowData.length);
-        this.cleanup();
-    },
-    
-    cleanup : function(){
-        while(stack.length > this.bufferSize){
-            var dataIndex = stack.shift();
-            delete this[dataIndex];
-            this.fireEvent('rowsexpired', dataIndex);
-        }
-    }
-};*/
 
 
 
 
 
 
-
-/*
-------------------------------------------------------------------
-// File: data\XMLDataModel.js
-------------------------------------------------------------------
-*/
-
-/**
- * @class
- * This is an implementation of a DataModel used by the Grid. It works 
- * with XML data. 
- * <br>Example schema from Amazon search:
- * <pre><code>
- * var schema = {
- *     tagName: 'Item',
- *     id: 'ASIN',
- *     fields: ['Author', 'Title', 'Manufacturer', 'ProductGroup']
- * };
- * </code></pre>
- * @extends YAHOO.ext.grid.LoadableDataModel
- * @constructor
- * @param {Object} schema The schema to use
- * @param {XMLDocument} xml An XML document to load immediately
-*/
 YAHOO.ext.grid.XMLDataModel = function(schema, xml){
     YAHOO.ext.grid.XMLDataModel.superclass.constructor.call(this, YAHOO.ext.grid.LoadableDataModel.XML);
-    /**@private*/
+    
     this.schema = schema;
     this.xml = xml;
     if(xml){
         this.loadData(xml);
     }
+    this.idSeed = 0;
 };
-YAHOO.extendX(YAHOO.ext.grid.XMLDataModel, YAHOO.ext.grid.LoadableDataModel);
-
-YAHOO.ext.grid.XMLDataModel.prototype.getDocument = function(){
-   return this.xml;    
-};
-
-/**
- * Overrides loadData in LoadableDataModel to process XML
- * @param {XMLDocument} doc The document to load
- * @param {<i>Function</i>} callback (optional) callback to call when loading is complete
- * @param {<i>Boolean</i>} keepExisting (optional) true to keep existing data
- * @param {<i>Number</i>} insertIndex (optional) if present, loaded data is inserted at the specified index instead of overwriting existing data
- */
-YAHOO.ext.grid.XMLDataModel.prototype.loadData = function(doc, callback, keepExisting, insertIndex){
-	this.xml = doc;
-	var idField = this.schema.id;
-	var fields = this.schema.fields;
-	if(this.schema.totalTag){
-	    this.totalCount = null;
-	    var totalNode = doc.getElementsByTagName(this.schema.totalTag);
-	    if(totalNode && totalNode.item(0) && totalNode.item(0).firstChild) {
-            var v = parseInt(totalNode.item(0).firstChild.nodeValue, 10);
-            if(!isNaN(v)){
-                this.totalCount = v;
-            }
+YAHOO.extendX(YAHOO.ext.grid.XMLDataModel, YAHOO.ext.grid.LoadableDataModel, {
+    
+    getDocument: function(){
+       return this.xml;    
+    },
+    
+    
+    loadData: function(doc, callback, keepExisting, insertIndex){
+    	this.xml = doc;
+    	var idField = this.schema.id;
+    	var fields = this.schema.fields;
+    	if(this.schema.totalTag){
+    	    this.totalCount = null;
+    	    var totalNode = doc.getElementsByTagName(this.schema.totalTag);
+    	    if(totalNode && totalNode.item(0) && totalNode.item(0).firstChild) {
+                var v = parseInt(totalNode.item(0).firstChild.nodeValue, 10);
+                if(!isNaN(v)){
+                    this.totalCount = v;
+                }
+        	}
     	}
-	}
-	var rowData = [];
-	var nodes = doc.getElementsByTagName(this.schema.tagName);
-    if(nodes && nodes.length > 0) {
-	    for(var i = 0; i < nodes.length; i++) {
-	        var node = nodes.item(i);
-	        var colData = [];
-	        colData.node = node;
-	        colData.id = this.getNamedValue(node, idField, String(i));
-	        for(var j = 0; j < fields.length; j++) {
-	            var val = this.getNamedValue(node, fields[j], "");
-	            if(this.preprocessors[j]){
-	                val = this.preprocessors[j](val);
-	            }
-	            colData.push(val);
-	        }
-	        rowData.push(colData);
-	    }
-    }
-    if(keepExisting !== true){
-       YAHOO.ext.grid.XMLDataModel.superclass.removeAll.call(this);
-	}
-	if(typeof insertIndex != 'number'){
-	    insertIndex = this.getRowCount();
-	}
-    YAHOO.ext.grid.XMLDataModel.superclass.insertRows.call(this, insertIndex, rowData);
-    if(typeof callback == 'function'){
-    	callback(this, true);
-    }
-    this.fireLoadEvent();
-};
-
-/**
- * Adds a row to this DataModel and syncs the XML document
- * @param {String} id The id of the row, if null the next row index is used
- * @param {Array} cellValues The cell values for this row
- * @return {Number} The index of the new row
- */
-YAHOO.ext.grid.XMLDataModel.prototype.addRow = function(id, cellValues){
-    var newIndex = this.getRowCount();
-    var node = this.createNode(this.xml, id, cellValues);
-    cellValues.id = id || newIndex;
-    cellValues.node = node;
-    YAHOO.ext.grid.XMLDataModel.superclass.addRow.call(this, cellValues);
-    return newIndex;
-};
-
-/**
- * Inserts a row into this DataModel and syncs the XML document
- * @param {Number} index The index to insert the row
- * @param {String} id The id of the row, if null the next row index is used
- * @param {Array} cellValues The cell values for this row
- * @return {Number} The index of the new row
- */
-YAHOO.ext.grid.XMLDataModel.prototype.insertRow = function(index, id, cellValues){
-    var node = this.createNode(this.xml, id, cellValues);
-    cellValues.id = id || this.getRowCount();
-    cellValues.node = node;
-    YAHOO.ext.grid.XMLDataModel.superclass.insertRow.call(this, index, cellValues);
-    return index;
-};
-
-/**
- * Removes the row from DataModel and syncs the XML document
- * @param {Number} index The index of the row to remove
- */
-YAHOO.ext.grid.XMLDataModel.prototype.removeRow = function(index){
-    var node = this.data[index].node;
-    node.parentNode.removeChild(node);
-    YAHOO.ext.grid.XMLDataModel.superclass.removeRow.call(this, index, index);
-};
-
-YAHOO.ext.grid.XMLDataModel.prototype.getNode = function(rowIndex){
-    return this.data[rowIndex].node;
-};
-
-/**
- * Override this method to define your own node creation routine for when new rows are added.
- * By default this method clones the first node and sets the column values in the newly cloned node.
- * @param {XMLDocument} xmlDoc The xml document being used by this model
- * @param {Array} colData The column data for the new node
- * @return {XMLNode} The created node
- */
-YAHOO.ext.grid.XMLDataModel.prototype.createNode = function(xmlDoc, id, colData){
-    var template = this.data[0].node;
-    var newNode = template.cloneNode(true);
-    var fields = this.schema.fields;
-    for(var i = 0; i < fields.length; i++){
-        var nodeValue = colData[i];
-        if(this.postprocessors[i]){
-            nodeValue = this.postprocessors[i](nodeValue);
+    	var rowData = [];
+    	var nodes = doc.getElementsByTagName(this.schema.tagName);
+        if(nodes && nodes.length > 0) {
+    	    for(var i = 0; i < nodes.length; i++) {
+    	        var node = nodes.item(i);
+    	        var colData = [];
+    	        colData.node = node;
+    	        colData.id = this.getNamedValue(node, idField, String(++this.idSeed));
+    	        for(var j = 0; j < fields.length; j++) {
+    	            var val = this.getNamedValue(node, fields[j], "");
+    	            if(this.preprocessors[j]){
+    	                val = this.preprocessors[j](val);
+    	            }
+    	            colData.push(val);
+    	        }
+    	        rowData.push(colData);
+    	    }
         }
-        this.setNamedValue(newNode, fields[i], nodeValue);
-    }
-    if(id){
-        this.setNamedValue(newNode, this.schema.idField, id);
-    }
-    template.parentNode.appendChild(newNode);
-    return newNode;
-};
-
-/**
- * Convenience function looks for value in attributes, then in children tags - also 
- * normalizes namespace matches (ie matches ns:tag, FireFox matches tag and not ns:tag).
- */
-YAHOO.ext.grid.XMLDataModel.prototype.getNamedValue = function(node, name, defaultValue){
-	if(!node || !name){
-		return defaultValue;
-	}
-	var nodeValue = defaultValue;
-    var attrNode = node.attributes.getNamedItem(name);
-    if(attrNode) {
-    	nodeValue = attrNode.value;
-    } else {
+        if(keepExisting !== true){
+           YAHOO.ext.grid.XMLDataModel.superclass.removeAll.call(this);
+    	}
+    	if(typeof insertIndex != 'number'){
+    	    insertIndex = this.getRowCount();
+    	}
+        YAHOO.ext.grid.XMLDataModel.superclass.insertRows.call(this, insertIndex, rowData);
+        if(typeof callback == 'function'){
+        	callback(this, true);
+        }
+        this.fireLoadEvent();
+    },
+    
+    
+    addRow: function(id, cellValues){
+        var node = this.createNode(this.xml, id, cellValues);
+        cellValues.id = id || ++this.idSeed;
+        cellValues.node = node;
+        return YAHOO.ext.grid.XMLDataModel.superclass.addRow.call(this, cellValues);
+    },
+    
+    
+    insertRow: function(index, id, cellValues){
+        var node = this.createNode(this.xml, id, cellValues);
+        cellValues.id = id || ++this.idSeed;
+        cellValues.node = node;
+        return YAHOO.ext.grid.XMLDataModel.superclass.insertRow.call(this, index, cellValues);
+    },
+    
+    
+    removeRow: function(index){
+        var node = this.data[index].node;
+        node.parentNode.removeChild(node);
+        YAHOO.ext.grid.XMLDataModel.superclass.removeRow.call(this, index, index);
+    },
+    
+    getNode: function(rowIndex){
+        return this.data[rowIndex].node;
+    },
+    
+    
+    createNode: function(xmlDoc, id, colData){
+        var template = this.data[0].node;
+        var newNode = template.cloneNode(true);
+        var fields = this.schema.fields;
+        for(var i = 0, len = fields.length; i < len; i++){
+            var nodeValue = colData[i];
+            if(this.postprocessors[i]){
+                nodeValue = this.postprocessors[i](nodeValue);
+            }
+            this.setNamedValue(newNode, fields[i], nodeValue);
+        }
+        if(id){
+            this.setNamedValue(newNode, this.schema.idField, id);
+        }
+        template.parentNode.appendChild(newNode);
+        return newNode;
+    },
+    
+    
+    getNamedValue: function(node, name, defaultValue){
+    	if(!node || !name){
+    		return defaultValue;
+    	}
+    	var nodeValue = defaultValue;
+        var attrNode = node.attributes.getNamedItem(name);
+        if(attrNode) {
+        	nodeValue = attrNode.value;
+        } else {
+            var childNode = node.getElementsByTagName(name);
+            if(childNode && childNode.item(0) && childNode.item(0).firstChild) {
+                nodeValue = childNode.item(0).firstChild.nodeValue;
+        	}else{
+        	    
+        	    var index = name.indexOf(':');
+        	    if(index > 0){
+        	        return this.getNamedValue(node, name.substr(index+1), defaultValue);
+        	    }
+        	}
+        }
+        return nodeValue;
+    },
+    
+    
+    setNamedValue: function(node, name, value){
+    	if(!node || !name){
+    		return;
+    	}
+    	var attrNode = node.attributes.getNamedItem(name);
+        if(attrNode) {
+        	attrNode.value = value;
+        	return;
+        }
         var childNode = node.getElementsByTagName(name);
         if(childNode && childNode.item(0) && childNode.item(0).firstChild) {
-            nodeValue = childNode.item(0).firstChild.nodeValue;
-    	}else{
-    	    // try to strip namespace for FireFox
+            childNode.item(0).firstChild.nodeValue = value;
+        }else{
+    	    
     	    var index = name.indexOf(':');
     	    if(index > 0){
-    	        return this.getNamedValue(node, name.substr(index+1), defaultValue);
+    	        this.setNamedValue(node, name.substr(index+1), value);
     	    }
     	}
-    }
-    return nodeValue;
-};
-
-/**
- * Convenience function set a value in the underlying xml node.
- */
-YAHOO.ext.grid.XMLDataModel.prototype.setNamedValue = function(node, name, value){
-	if(!node || !name){
-		return;
-	}
-	var attrNode = node.attributes.getNamedItem(name);
-    if(attrNode) {
-    	attrNode.value = value;
-    	return;
-    }
-    var childNode = node.getElementsByTagName(name);
-    if(childNode && childNode.item(0) && childNode.item(0).firstChild) {
-        childNode.item(0).firstChild.nodeValue = value;
-    }else{
-	    // try to strip namespace for FireFox
-	    var index = name.indexOf(':');
-	    if(index > 0){
-	        this.setNamedValue(node, name.substr(index+1), value);
-	    }
-	}
-};
-
-/**
- * Overrides DefaultDataModel.setValueAt to update the underlying XML Document
- * @param {Object} value The new value
- * @param {Number} rowIndex
- * @param {Number} colIndex
- */
-YAHOO.ext.grid.XMLDataModel.prototype.setValueAt = function(value, rowIndex, colIndex){
-    var node = this.data[rowIndex].node;
-    if(node){
-        var nodeValue = value;
-        if(this.postprocessors[colIndex]){
-            nodeValue = this.postprocessors[colIndex](value);
+    },
+    
+    
+    setValueAt: function(value, rowIndex, colIndex){
+        var node = this.data[rowIndex].node;
+        if(node){
+            var nodeValue = value;
+            if(this.postprocessors[colIndex]){
+                nodeValue = this.postprocessors[colIndex](value);
+            }
+            this.setNamedValue(node, this.schema.fields[colIndex], nodeValue);
         }
-        this.setNamedValue(node, this.schema.fields[colIndex], nodeValue);
-    }
-    YAHOO.ext.grid.XMLDataModel.superclass.setValueAt.call(this, value, rowIndex, colIndex);
-};
+        YAHOO.ext.grid.XMLDataModel.superclass.setValueAt.call(this, value, rowIndex, colIndex);
+    },
+    
+    
+    getRowId: function(rowIndex){
+        return this.data[rowIndex].id;
+    },
+    
+    addRows : function(rowData){   
+        for(var j = 0, len = rowData.length; j < len; j++){
+           var cellValues = rowData[j];
+           var id = ++this.idSeed; 
+           var node = this.createNode(this.xml, id, cellValues);       
+           cellValues.node=node;
+           cellValues.id = cellValues.id || id;
+           YAHOO.ext.grid.XMLDataModel.superclass.addRow.call(this,cellValues);
+        }
+    },   
 
-/**
- * Overrides getRowId in DefaultDataModel to return the ID value of the specified node. 
- * @param {Number} rowIndex
- * @return {Number}
- */
-YAHOO.ext.grid.XMLDataModel.prototype.getRowId = function(rowIndex){
-    return this.data[rowIndex].id;
-};
+   insertRows : function(index, rowData){
+       
+       rowData = rowData.slice(0).reverse();
+       for(var j = 0, len = rowData.length; j < len; j++){
+          var cellValues = rowData[j];
+          var id = ++this.idSeed; 
+          var node = this.createNode(this.xml, id, cellValues);
+          cellValues.id = cellValues.id || id;
+          cellValues.node = node;
+          YAHOO.ext.grid.XMLDataModel.superclass.insertRow.call(this, index, cellValues);
+       }
+   }
+});
 
-/*
-------------------------------------------------------------------
-// File: data\JSONDataModel.js
-------------------------------------------------------------------
-*/
 
-/**
- * @class
- * This is an implementation of a DataModel used by the Grid. It works 
- * with JSON data.
- * <br>Example schema:
- * <pre><code>
- * var schema = {
- *     root: 'Results.Result',
- *     id: 'ASIN',
- *     fields: ['Author', 'Title', 'Manufacturer', 'ProductGroup']
- * };
- * </code></pre>
- * @extends YAHOO.ext.grid.LoadableDataModel
- * @constructor
-*/
 YAHOO.ext.grid.JSONDataModel = function(schema){
     YAHOO.ext.grid.JSONDataModel.superclass.constructor.call(this, YAHOO.ext.grid.LoadableDataModel.JSON);
-    /**@private*/
+    
     this.schema = schema;
 };
-YAHOO.extendX(YAHOO.ext.grid.JSONDataModel, YAHOO.ext.grid.LoadableDataModel);
-
-/**
- * Overrides loadData in LoadableDataModel to process JSON data
- * @param {Object} data The JSON object to load
- * @param {Function} callback
- */
-YAHOO.ext.grid.JSONDataModel.prototype.loadData = function(data, callback, keepExisting){
-	var idField = this.schema.id;
-	var fields = this.schema.fields;
-	if(this.schema.totalProperty){
-        var v = parseInt(eval('data.' + this.schema.totalProperty), 10);
-        if(!isNaN(v)){
-            this.totalCount = v;
-        }
+YAHOO.extendX(YAHOO.ext.grid.JSONDataModel, YAHOO.ext.grid.LoadableDataModel, {
+    
+    loadData : function(data, callback, keepExisting){
+    	var idField = this.schema.id;
+    	var fields = this.schema.fields;
+    	try{
+        	if(this.schema.totalProperty){
+                var v = parseInt(eval('data.' + this.schema.totalProperty), 10);
+                if(!isNaN(v)){
+                    this.totalCount = v;
+                }
+            }
+        	var rowData = [];
+    	    var root = eval('data.' + this.schema.root);
+    	    for(var i = 0; i < root.length; i++){
+    			var node = root[i];
+    			var colData = [];
+    			colData.node = node;
+    			colData.id = (typeof node[idField] != 'undefined' && node[idField] !== '' ? node[idField] : String(i));
+    			for(var j = 0; j < fields.length; j++) {
+    			    var val = node[fields[j]];
+    			    if(typeof val == 'undefined'){
+    			        val = '';
+    			    }
+    	            if(this.preprocessors[j]){
+    	                val = this.preprocessors[j](val);
+    	            }
+    	            colData.push(val);
+    	        }
+    	        rowData.push(colData);
+    		}
+    		if(keepExisting !== true){
+    		  this.removeAll();
+    		}
+            this.addRows(rowData);
+        	this.fireLoadEvent();
+    		if(typeof callback == 'function'){
+    	    	callback(this, true);
+    	    }
+        }catch(e){
+    		this.fireLoadException(e, null);
+    		if(typeof callback == 'function'){
+    	    	callback(this, false);
+    	    }
+    	}
+    },
+    
+    
+    getRowId : function(rowIndex){
+        return this.data[rowIndex].id;
     }
-	var rowData = [];
-	try{
-	    var root = eval('data.' + this.schema.root);
-	    for(var i = 0; i < root.length; i++){
-			var node = root[i];
-			var colData = [];
-			colData.node = node;
-			colData.id = (typeof node[idField] != 'undefined' && node[idField] !== '' ? node[idField] : String(i));
-			for(var j = 0; j < fields.length; j++) {
-			    var val = node[fields[j]];
-			    if(typeof val == 'undefined'){
-			        val = '';
-			    }
-	            if(this.preprocessors[j]){
-	                val = this.preprocessors[j](val);
-	            }
-	            colData.push(val);
-	        }
-	        rowData.push(colData);
-		}
-		if(keepExisting !== true){
-		  this.removeAll();
-		}
-        this.addRows(rowData);
-    	if(typeof callback == 'function'){
-	    	callback(this, true);
-	    }
-    	this.fireLoadEvent();
-	}catch(e){
-		this.fireLoadException(e, null);
-		if(typeof callback == 'function'){
-	    	callback(this, false);
-	    }
-	}
-};
+});
 
-/**
- * Overrides getRowId in DefaultDataModel to return the ID value of the specified node. 
- * @param {Number} rowIndex
- * @return {Number}
- */
-YAHOO.ext.grid.JSONDataModel.prototype.getRowId = function(rowIndex){
-    return this.data[rowIndex].id;
-};
-
-/*
-------------------------------------------------------------------
-// File: grid\SelectionModel.js
-------------------------------------------------------------------
-*/
-/**
- @class The default SelectionModel used by {@link YAHOO.ext.grid.Grid}. 
- It supports multiple selections and keyboard selection/navigation. <br><br>
- @constructor
- */
 YAHOO.ext.grid.DefaultSelectionModel = function(){
-    /** @private */
     this.selectedRows = [];
-    /** @private */
     this.selectedRowIds = [];
-    /** @private */
     this.lastSelectedRow = null;
     
-    /** Fires when a row is selected or deselected - fireDirect sig: (this, row, isSelected)
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated
-     */
     this.onRowSelect = new YAHOO.util.CustomEvent('SelectionTable.rowSelected');
-    /** Fires when the selection changes on the Grid - fireDirect sig: (this, selectedRows[], selectedRowIds[])
-     * @type YAHOO.util.CustomEvent 
-     * @deprecated
-     */
     this.onSelectionChange = new YAHOO.util.CustomEvent('SelectionTable.selectionChanged');
     
     this.events = {
-        'selectionchange' : this.onSelectionChange,
-        'rowselect' : this.onRowSelect
+        
+	    'selectionchange' : this.onSelectionChange,
+        
+	    'rowselect' : this.onRowSelect
     };
     
     this.locked = false;
 };
 
 YAHOO.ext.grid.DefaultSelectionModel.prototype = {
-    /** @ignore Called by the grid automatically. Do not call directly. */
+    
     init : function(grid){
         this.grid = grid;
         this.initEvents();
     },
     
+    
     lock : function(){
         this.locked = true;
     },
+    
     
     unlock : function(){
         this.locked = false;  
     },
     
+    
     isLocked : function(){
         return this.locked;    
     },
     
-    /** @ignore */
+    
     initEvents : function(){
         if(this.grid.trackMouseOver){
         	this.grid.addListener("mouseover", this.handleOver, this, true);
@@ -10445,19 +9071,14 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         this.grid.addListener("keydown", this.keyDown, this, true);
     },
     
-    /** Inherited from Observable */
     fireEvent : YAHOO.ext.util.Observable.prototype.fireEvent,
-    /** Inherited from Observable */
     on : YAHOO.ext.util.Observable.prototype.on,
-    /** Inherited from Observable */
     addListener : YAHOO.ext.util.Observable.prototype.addListener,
-    /** Inherited from Observable */
     delayedListener : YAHOO.ext.util.Observable.prototype.delayedListener,
-    /** Inherited from Observable */
     removeListener : YAHOO.ext.util.Observable.prototype.removeListener,
+    purgeListeners : YAHOO.ext.util.Observable.prototype.purgeListeners,
     
-    /** @ignore Syncs selectedRows with the correct row by looking it up by id. 
-      Used after a sort moves data around. */
+    
     syncSelectionsToIds : function(){
         if(this.getCount() > 0){
             var ids = this.selectedRowIds.concat();
@@ -10466,11 +9087,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /**
-     * Set the selected rows by their ID(s). IDs must match what is returned by the DataModel getRowId(index).
-     * @param {String/Array} id The id(s) to select 
-     * @param {<i>Boolean</i>} keepExisting (optional) True to retain existing selections 
-     */
+    
     selectRowsById : function(id, keepExisting){
         var rows = this.grid.getRowsById(id);
         if (!(rows instanceof Array)){
@@ -10480,17 +9097,12 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         this.selectRows(rows, keepExisting);
     },
     
-    /**
-     * Gets the number of selected rows.
-     * @return {Number}
-     */
+    
     getCount : function(){
         return this.selectedRows.length;
     },
     
-    /**
-     * Selects the first row in the grid.
-     */
+    
     selectFirstRow : function(){
         for(var j = 0; j < this.grid.rows.length; j++){
             if(this.isSelectable(this.grid.rows[j])){
@@ -10501,10 +9113,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /**
-     * Selects the row immediately following the last selected row.
-     * @param {<i>Boolean</i>} keepExisting (optional) True to retain existing selections
-     */
+    
     selectNext : function(keepExisting){
         if(this.lastSelectedRow){
             for(var j = (this.lastSelectedRow.rowIndex+1); j < this.grid.rows.length; j++){
@@ -10518,10 +9127,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /**
-     * Selects the row that precedes the last selected row.
-     * @param {<i>Boolean</i>} keepExisting (optional) True to retain existing selections 
-     */
+    
     selectPrevious : function(keepExisting){
         if(this.lastSelectedRow){
             for(var j = (this.lastSelectedRow.rowIndex-1); j >= 0; j--){
@@ -10535,25 +9141,17 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /**
-     * Returns the selected rows.
-     * @return {Array} Array of DOM row elements
-     */
+    
     getSelectedRows : function(){
         return this.selectedRows;
     },
     
-    /**
-     * Returns the selected row ids.
-     * @return {Array} Array of String ids
-     */
+    
     getSelectedRowIds : function(){
         return this.selectedRowIds;
     },
     
-    /**
-     * Clears all selections.
-     */
+    
     clearSelections : function(){
         if(this.isLocked()) return;
         var oldSelections = this.selectedRows.concat();
@@ -10565,43 +9163,32 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
     },
     
         
-    /**
-     * Selects all rows.
-     */
+    
     selectAll : function(){
         if(this.isLocked()) return;
-        for(var j = 0; j < this.grid.rows.length; j++){
+        this.selectedRows = [];
+        this.selectedRowIds = [];
+        for(var j = 0, len = this.grid.rows.length; j < len; j++){
             this.setRowState(this.grid.rows[j], true, true);
         }
     },
     
-    /**
-     * Returns True if there is a selection.
-     * @return {Boolean}
-     */
+    
     hasSelection : function(){
         return this.selectedRows.length > 0;
     },
     
-    /**
-     * Returns True if the specified row is selected.
-     * @param {HTMLElement} row The row to check
-     * @return {Boolean}
-     */
+    
     isSelected : function(row){
         return row && (row.selected === true || row.getAttribute('selected') == 'true');
     },
     
-    /**
-     * Returns True if the specified row is selectable.
-     * @param {HTMLElement} row The row to check
-     * @return {Boolean}
-     */
+    
     isSelectable : function(row){
         return row && row.getAttribute('selectable') != 'false';
     },
     
-    /** @ignore */
+    
     rowClick : function(grid, rowIndex, e){
         if(this.isLocked()) return;
         var row = grid.getRow(rowIndex);
@@ -10618,29 +9205,17 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /**
-     * Deprecated. Tries to focus the row and scroll it into view - Use grid.scrollTo or grid.getView().focusRow() instead.
-     * @deprecated
-     * @param {HTMLElement} row The row to focus
-     */
+    
     focusRow : function(row){
     	this.grid.view.focusRow(row);
     },
 
-    /**
-     * Selects a row.
-     * @param {Number/HTMLElement} row The row or index of the row to select
-     * @param {<i>Boolean</i>} keepExisting (optional) True to retain existing selections 
-     */
+    
     selectRow : function(row, keepExisting){
         this.setRowState(this.getRow(row), true, keepExisting);
     },
     
-    /**
-     * Selects multiple rows.
-     * @param {Array} rows Array of the rows or indexes of the row to select
-     * @param {<i>Boolean</i>} keepExisting (optional) True to retain existing selections 
-     */
+    
     selectRows : function(rows, keepExisting){
         if(!keepExisting){
             this.clearSelections();
@@ -10650,15 +9225,12 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /**
-     * Deselects a row.
-     * @param {Number/HTMLElement} row The row or index of the row to deselect
-     */
+    
     deselectRow : function(row){
         this.setRowState(this.getRow(row), false);
     },
     
-    /** @ignore */
+    
     getRow : function(row){
         if(typeof row == 'number'){
             row = this.grid.rows[row];
@@ -10666,36 +9238,27 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         return row;
     },
     
-    /**
-     * Selects a range of rows. All rows in between startRow and endRow are also selected.
-     * @param {Number/HTMLElement} startRow The row or index of the first row in the range
-     * @param {Number/HTMLElement} endRow The row or index of the last row in the range
-     * @param {<i>Boolean</i>} keepExisting (optional) True to retain existing selections 
-     */
+    
     selectRange : function(startRow, endRow, keepExisting){
         startRow = this.getRow(startRow);
         endRow = this.getRow(endRow);
         this.setRangeState(startRow, endRow, true, keepExisting);
     },
     
-    /**
-     * Deselects a range of rows. All rows in between startRow and endRow are also deselected.
-     * @param {Number/HTMLElement} startRow The row or index of the first row in the range
-     * @param {Number/HTMLElement} endRow The row or index of the last row in the range
-     */
+    
     deselectRange : function(startRow, endRow){
         startRow = this.getRow(startRow);
         endRow = this.getRow(endRow);
         this.setRangeState(startRow, endRow, false, true);
     },
     
-    /** @ignore */
+    
     setRowStateFromChild : function(childEl, selected, keepExisting){
         var row = this.grid.getRowFromChild(childEl);
         this.setRowState(row, selected, keepExisting);
     },
     
-    /** @ignore */
+    
     setRangeState : function(startRow, endRow, selected, keepExisting){
         if(this.isLocked()) return;
         if(!keepExisting){
@@ -10710,7 +9273,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         this.setRowState(endRow, selected, true);
     },
     
-    /** @ignore */
+    
     setRowState : function(row, selected, keepExisting){
         if(this.isLocked()) return;
         if(this.isSelectable(row)){
@@ -10733,7 +9296,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
 
-    /** @ignore */
+    
     handleOver : function(e){
         var row = this.grid.getRowFromChild(e.getTarget());
         if(this.isSelectable(row) && !this.isSelected(row)){
@@ -10741,7 +9304,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /** @ignore */
+    
     handleOut : function(e){
         var row = this.grid.getRowFromChild(e.getTarget());
         if(this.isSelectable(row) && !this.isSelected(row)){
@@ -10749,7 +9312,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /** @ignore */
+    
     keyDown : function(e){
         if(e.browserEvent.keyCode == e.DOWN){
             this.selectNext(e.shiftKey);
@@ -10760,7 +9323,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
 
-    /** @ignore */
+    
     setRowClass : function(row, cssClass){
         if(this.isSelectable(row)){
             if(cssClass == 'selected'){
@@ -10776,7 +9339,7 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
         }
     },
     
-    /** @ignore */
+    
     _removeSelected : function(row){
         var sr = this.selectedRows;
         for (var i = 0; i < sr.length; i++) {
@@ -10789,27 +9352,18 @@ YAHOO.ext.grid.DefaultSelectionModel.prototype = {
     }
 };
 
-/**
- @class Extends {@link YAHOO.ext.grid.DefaultSelectionModel} to allow only one row to be selected at a time. <br><br> 
- @extends YAHOO.ext.grid.DefaultSelectionModel
- @constructor
- */
+
 YAHOO.ext.grid.SingleSelectionModel = function(){
     YAHOO.ext.grid.SingleSelectionModel.superclass.constructor.call(this);
 };
 
 YAHOO.extendX(YAHOO.ext.grid.SingleSelectionModel, YAHOO.ext.grid.DefaultSelectionModel);
 
-/** @ignore */
+
 YAHOO.ext.grid.SingleSelectionModel.prototype.setRowState = function(row, selected){
     YAHOO.ext.grid.SingleSelectionModel.superclass.setRowState.call(this, row, selected, false);
 };
 
-/**
- @class Extends {@link YAHOO.ext.grid.DefaultSelectionModel} to disable row selection. <br><br> 
- @extends YAHOO.ext.grid.DefaultSelectionModel
- @constructor
- */
 YAHOO.ext.grid.DisableSelectionModel = function(){
     YAHOO.ext.grid.DisableSelectionModel.superclass.constructor.call(this);
 };
@@ -10819,21 +9373,10 @@ YAHOO.extendX(YAHOO.ext.grid.DisableSelectionModel, YAHOO.ext.grid.DefaultSelect
 YAHOO.ext.grid.DisableSelectionModel.prototype.initEvents = function(){
 };
 
-/*
-------------------------------------------------------------------
-// File: grid\EditorSelectionModel.js
-------------------------------------------------------------------
-*/
 
-/**
- @class Extends {@link YAHOO.ext.grid.DefaultSelectionModel} to enable cell navigation. <br><br> 
- @extends YAHOO.ext.grid.DefaultSelectionModel
- @constructor
- */
 YAHOO.ext.grid.EditorSelectionModel = function(){
     YAHOO.ext.grid.EditorSelectionModel.superclass.constructor.call(this);
-    /** Number of clicks to activate a cell (for editing) - valid values are 1 or 2
-     * @type Number */
+    
     this.clicksToActivateCell = 1;
     this.events['cellactivate'] = new YAHOO.util.CustomEvent('cellactivate');
 };
@@ -10843,7 +9386,7 @@ YAHOO.extendX(YAHOO.ext.grid.EditorSelectionModel, YAHOO.ext.grid.DefaultSelecti
 YAHOO.ext.grid.EditorSelectionModel.prototype.disableArrowNavigation = false;
 YAHOO.ext.grid.EditorSelectionModel.prototype.controlForArrowNavigation = false;
 
-/** @ignore */
+
 YAHOO.ext.grid.EditorSelectionModel.prototype.initEvents = function(){
     this.grid.addListener("cellclick", this.onCellClick, this, true);
     this.grid.addListener("celldblclick", this.onCellDblClick, this, true);
@@ -10875,11 +9418,11 @@ YAHOO.ext.grid.EditorSelectionModel.prototype.onCellDblClick = function(grid, ro
     }
 };
 
-/** @ignore */
+
 YAHOO.ext.grid.EditorSelectionModel.prototype.setRowState = function(row, selected){
     YAHOO.ext.grid.EditorSelectionModel.superclass.setRowState.call(this, row, false, false);
 };
-/** @ignore */
+
 YAHOO.ext.grid.EditorSelectionModel.prototype.focusRow = function(row, selected){
 };
 
@@ -10922,7 +9465,7 @@ YAHOO.ext.grid.EditorSelectionModel.prototype.getEditorCellBefore = function(cel
 YAHOO.ext.grid.EditorSelectionModel.prototype.allowArrowNav = function(e){
     return (!this.disableArrowNavigation && (!this.controlForArrowNavigation || e.ctrlKey));
 }
-/** @ignore */
+
 YAHOO.ext.grid.EditorSelectionModel.prototype.keyDown = function(e){
     var g = this.grid, cm = g.colModel, cell = g.getEditingCell();
     if(!cell) return;
@@ -10982,6 +9525,7 @@ YAHOO.ext.grid.EditorSelectionModel.prototype.keyDown = function(e){
     }
 };
 
+
 YAHOO.ext.grid.EditorAndSelectionModel = function(){
     YAHOO.ext.grid.EditorAndSelectionModel.superclass.constructor.call(this);
     this.events['cellactivate'] = new YAHOO.util.CustomEvent('cellactivate');
@@ -11003,11 +9547,6 @@ YAHOO.ext.grid.EditorAndSelectionModel.prototype.onCellDblClick = function(grid,
     }
 }; 
 
-/*
-------------------------------------------------------------------
-// File: grid\editor\CellEditor.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.grid.CellEditor = function(element){
     this.colIndex = null;
     this.rowIndex = null;
@@ -11023,9 +9562,9 @@ YAHOO.ext.grid.CellEditor = function(element){
 
 YAHOO.ext.grid.CellEditor.prototype = {
     init : function(grid, bodyElement, callback){
-        // there's no way for the grid to know if multiple columns 
-        // share the same editor so it will try to initialize the 
-        // same one over and over
+        
+        
+        
         if(this.initialized) return;
         this.initialized = true;
         this.callback = callback;
@@ -11064,7 +9603,7 @@ YAHOO.ext.grid.CellEditor.prototype = {
              this.editing = false;
              var newValue = this.getValue();
              this.hide();
-             //if(focusCell){try{this.cell.focus();}catch(e){}}; // try to give the cell focus so keyboard nav still works
+             
              if(this.originalValue != newValue){
                 this.callback(newValue, this.rowIndex, this.colIndex);
              }
@@ -11095,12 +9634,6 @@ YAHOO.ext.grid.CellEditor.prototype = {
         this.element.hide();
     }
 };
-
-/*
-------------------------------------------------------------------
-// File: grid\editor\CheckboxEditor.js
-------------------------------------------------------------------
-*/
 
 YAHOO.ext.grid.CheckboxEditor = function(){
     var div = document.createElement('span');
@@ -11155,11 +9688,6 @@ YAHOO.ext.grid.CheckboxEditor.prototype.hide = function(){
     this.element.hide();
 };
 
-/*
-------------------------------------------------------------------
-// File: grid\editor\DateEditor.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.grid.DateEditor = function(config){
     var div = document.createElement('span');
     div.className = 'ygrid-editor ygrid-editor-container';
@@ -11253,7 +9781,7 @@ YAHOO.ext.grid.DateEditor.prototype = {
              this.editing = false;
              var newValue = this.getValue();
              this.hide();
-             //if(focusCell){try{this.cell.focus();}catch(e){}}// try to give the cell focus so keyboard nav still works
+             
              if(this.originalValue != newValue){
                 this.callback(newValue, this.rowIndex, this.colIndex);
              }
@@ -11294,7 +9822,7 @@ YAHOO.ext.grid.DateEditor.prototype = {
     validate : function(){
         var dom = this.element.dom;
         var value = dom.value;
-        if(value.length < 1){ // if it's blank
+        if(value.length < 1){ 
              if(this.allowBlank){
                  dom.title = '';
                  this.element.removeClass('ygrid-editor-invalid');
@@ -11404,11 +9932,6 @@ YAHOO.ext.grid.DateEditor.prototype.invalidText = '%0 is not a valid date - it m
 YAHOO.ext.grid.DateEditor.prototype.validationDelay = 200;
 YAHOO.ext.grid.DateEditor.prototype.validator = function(){return true;};
 
-/*
-------------------------------------------------------------------
-// File: grid\editor\NumberEditor.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.grid.NumberEditor = function(config){
     var element = document.createElement('input');
     element.type = 'text';
@@ -11453,7 +9976,7 @@ YAHOO.ext.grid.NumberEditor.prototype.initEvents = function(){
 YAHOO.ext.grid.NumberEditor.prototype.validate = function(){
     var dom = this.element.dom;
     var value = dom.value;
-    if(value.length < 1){ // if it's blank
+    if(value.length < 1){ 
          if(this.allowBlank){
              dom.title = '';
              this.element.removeClass('ygrid-editor-invalid');
@@ -11522,12 +10045,12 @@ YAHOO.ext.grid.NumberEditor.prototype.fixPrecision = function(value){
    if(!this.allowDecimals || this.decimalPrecision == -1 || isNaN(value) || value == 0 || !value){
        return value;
    }
-   // this should work but doesn't due to precision error in JS
-   // var scale = Math.pow(10, this.decimalPrecision);
-   // var fixed = this.decimalPrecisionFcn(value * scale);
-   // return fixed / scale;
-   //
-   // so here's our workaround:
+   
+   
+   
+   
+   
+   
    var scale = Math.pow(10, this.decimalPrecision+1);
    var fixed = this.decimalPrecisionFcn(value * scale);
    fixed = this.decimalPrecisionFcn(fixed/10);
@@ -11549,12 +10072,6 @@ YAHOO.ext.grid.NumberEditor.prototype.blankText = 'This field cannot be blank';
 YAHOO.ext.grid.NumberEditor.prototype.nanText = '%0 is not a valid number';
 YAHOO.ext.grid.NumberEditor.prototype.validationDelay = 100;
 YAHOO.ext.grid.NumberEditor.prototype.validator = function(){return true;};
-
-/*
-------------------------------------------------------------------
-// File: widgets\DatePicker.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.DatePicker = function(id, parentElement){
     this.id = id;
     this.selectedDate = new Date();
@@ -11753,10 +10270,7 @@ YAHOO.ext.DatePicker.prototype = {
     }
 };
 
-/**
- * This code is not pretty, but it is fast!
- * @ignore
- */ 
+ 
 YAHOO.ext.DatePicker.prototype.buildControl = function(parentElement){
     var c = document.createElement('div');
     c.style.position = 'absolute';
@@ -11764,7 +10278,7 @@ YAHOO.ext.DatePicker.prototype.buildControl = function(parentElement){
     document.body.appendChild(c);
     var html = '<iframe id="'+this.id+'_shdw" frameborder="0" style="position:absolute; z-index:2000; display:none; top:0px; left:0px;" class="ypopcal-shadow"></iframe>' +
     '<div hidefocus="true" class="ypopcal" id="'+this.id+'" style="-moz-outline:none; position:absolute; z-index:2001; display:none; top:0px; left:0px;">' +
-    '<table class="ypopcal-head" border=0 cellpadding=0 cellspacing=0><tbody><tr><td class="ypopcal-arrow"><div class="prev-month">&nbsp;</div></td><td class="ypopcal-month">&nbsp;</td><td class="ypopcal-arrow"><div class="next-month">&nbsp;</div></td></tr></tbody></table>' +
+    '<table class="ypopcal-head" border=0 cellpadding=0 cellspacing=0><tbody><tr><td class="ypopcal-arrow"><div class="prev-month">&#160;</div></td><td class="ypopcal-month">&#160;</td><td class="ypopcal-arrow"><div class="next-month">&#160;</div></td></tr></tbody></table>' +
     '<center><div class="ypopcal-inner">';
     html += "<table border=0 cellpadding=2 cellspacing=0 class=\"ypopcal-table\"><thead><tr class=\"ypopcal-daynames\">";
     var names = this.dayNames;
@@ -11805,11 +10319,11 @@ YAHOO.ext.DatePicker.prototype.buildInnerCal = function(dateVal){
     var cells = this.cells;
     days += startingPos;
     
-    // convert everything to numbers so it's fast
+    
     var day = 86400000;
     var date = this.clearTime(new Date(pm.getFullYear(), pm.getMonth(), prevStart));
     var today = this.clearTime(new Date()).getTime();
-    var sel = this.selectedDate ? this.clearTime(this.selectedDate).getTime() : today + 1; //today +1 will never match anything
+    var sel = this.selectedDate ? this.clearTime(this.selectedDate).getTime() : today + 1; 
     var min = this.minDate ? this.clearTime(this.minDate).getTime() : Number.NEGATIVE_INFINITY;
     var max = this.maxDate ? this.clearTime(this.maxDate).getTime() : Number.POSITIVE_INFINITY;
     var ddMatch = this.disabledDatesRE;
@@ -11828,7 +10342,7 @@ YAHOO.ext.DatePicker.prototype.buildInnerCal = function(dateVal){
         if(t == sel){
             cell.className += ' selected';
         }
-        // disabling
+        
         if(t < min) {
             cell.className = ' ypopcal-disabled';
             cell.title = cal.minText;
@@ -11899,11 +10413,6 @@ YAHOO.ext.DatePicker.prototype.monthNames = Date.monthNames;
 
 YAHOO.ext.DatePicker.prototype.dayNames = Date.dayNames;
 
-/*
-------------------------------------------------------------------
-// File: grid\editor\SelectEditor.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.grid.SelectEditor = function(element){
     element.hideFocus = true;
     YAHOO.ext.grid.SelectEditor.superclass.constructor.call(this, element);
@@ -11918,11 +10427,6 @@ YAHOO.ext.grid.SelectEditor.prototype.fitToCell = function(box){
     this.element.setBox(box, true);
 };
 
-/*
-------------------------------------------------------------------
-// File: grid\editor\TextEditor.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.grid.TextEditor = function(config){
     var element = document.createElement('input');
     element.type = 'text';
@@ -11937,7 +10441,7 @@ YAHOO.extendX(YAHOO.ext.grid.TextEditor, YAHOO.ext.grid.CellEditor);
 YAHOO.ext.grid.TextEditor.prototype.validate = function(){
     var dom = this.element.dom;
     var value = dom.value;
-    if(value.length < 1){ // if it's blank
+    if(value.length < 1){ 
          if(this.allowBlank){
              dom.title = '';
              this.element.removeClass('ygrid-editor-invalid');
@@ -12012,25 +10516,22 @@ YAHOO.ext.grid.TextEditor.prototype.validationDelay = 200;
 YAHOO.ext.grid.TextEditor.prototype.regex = null;
 YAHOO.ext.grid.TextEditor.prototype.regexText = '';
 
-/*
-------------------------------------------------------------------
-// File: layout\LayoutManager.js
-------------------------------------------------------------------
-*/
-/**
- * Very basic base class for LayoutManagers
- */
 YAHOO.ext.LayoutManager = function(container){
     YAHOO.ext.LayoutManager.superclass.constructor.call(this);
     this.el = getEl(container, true);
     this.id = this.el.id;
     this.el.addClass('ylayout-container');
+    
     this.monitorWindowResize = true;
     this.regions = {};
     this.events = {
+        
         'layout' : new YAHOO.util.CustomEvent(),
+        
         'regionresized' : new YAHOO.util.CustomEvent(),
+        
         'regioncollapsed' : new YAHOO.util.CustomEvent(),
+        
         'regionexpanded' : new YAHOO.util.CustomEvent()
     };
     this.updating = false;
@@ -12038,13 +10539,16 @@ YAHOO.ext.LayoutManager = function(container){
 };
 
 YAHOO.extendX(YAHOO.ext.LayoutManager, YAHOO.ext.util.Observable, {
+    
     isUpdating : function(){
         return this.updating; 
     },
     
+    
     beginUpdate : function(){
         this.updating = true;    
     },
+    
     
     endUpdate : function(noLayout){
         this.updating = false;
@@ -12070,6 +10574,7 @@ YAHOO.extendX(YAHOO.ext.LayoutManager, YAHOO.ext.util.Observable, {
         this.fireEvent('regionexpanded', region);
     },
         
+    
     getViewSize : function(){
         var size;
         if(this.el.dom != document.body){
@@ -12084,9 +10589,11 @@ YAHOO.extendX(YAHOO.ext.LayoutManager, YAHOO.ext.util.Observable, {
         return size;
     },
     
+    
     getEl : function(){
         return this.el;
     },
+    
     
     getRegion : function(target){
         return this.regions[target];
@@ -12099,22 +10606,19 @@ YAHOO.extendX(YAHOO.ext.LayoutManager, YAHOO.ext.util.Observable, {
     }
 });
 
-/*
-------------------------------------------------------------------
-// File: layout\LayoutRegion.js
-------------------------------------------------------------------
-*/
-
 YAHOO.ext.LayoutRegion = function(mgr, config, pos){
     this.mgr = mgr;
     this.position  = pos;
     var dh = YAHOO.ext.DomHelper;
+    
     this.el = dh.append(mgr.el.dom, {tag: 'div', cls: 'ylayout-panel ylayout-panel-' + this.position}, true);
-    this.titleEl = dh.append(this.el.dom, {tag: 'div', cls: 'ylayout-panel-hd ylayout-title-'+this.position, children:[
-        {tag: 'span', cls: 'ylayout-panel-hd-text', html: '&nbsp;'},
-        {tag: 'div', cls: 'ylayout-panel-hd-tools'}
+    
+    this.titleEl = dh.append(this.el.dom, {tag: 'div', unselectable: 'on', cls: 'yunselectable ylayout-panel-hd ylayout-title-'+this.position, children:[
+        {tag: 'span', cls: 'yunselectable ylayout-panel-hd-text', unselectable: 'on', html: '&#160;'},
+        {tag: 'div', cls: 'yunselectable ylayout-panel-hd-tools', unselectable: 'on'}
     ]}, true);
     this.titleEl.enableDisplayMode();
+    
     this.titleTextEl = this.titleEl.dom.firstChild;
     this.tools = getEl(this.titleEl.dom.childNodes[1], true);
     this.closeBtn = this.createTool(this.tools.dom, 'ylayout-close');
@@ -12124,15 +10628,26 @@ YAHOO.ext.LayoutRegion = function(mgr, config, pos){
     
     this.bodyEl = dh.append(this.el.dom, {tag: 'div', cls: 'ylayout-panel-body'}, true);
     this.events = {
+        
+        'beforeremove' : new YAHOO.util.CustomEvent('beforeremove'),
+        
         'invalidated' : new YAHOO.util.CustomEvent('invalidated'),
+        
         'visibilitychange' : new YAHOO.util.CustomEvent('visibilitychange'),
+        
         'paneladded' : new YAHOO.util.CustomEvent('paneladded'),
+        
         'panelremoved' : new YAHOO.util.CustomEvent('panelremoved'),
+        
         'collapsed' : new YAHOO.util.CustomEvent('collapsed'),
+        
         'expanded' : new YAHOO.util.CustomEvent('expanded'),
+        
         'panelactivated' : new YAHOO.util.CustomEvent('panelactivated'),
+        
         'resized' : new YAHOO.util.CustomEvent('resized')
-    }
+    };
+    
     this.panels = new YAHOO.ext.util.MixedCollection();
     this.panels.getKey = this.getPanelId.createDelegate(this);
     this.box = null;
@@ -12145,11 +10660,7 @@ YAHOO.ext.LayoutRegion = function(mgr, config, pos){
     
     this.applyConfig(config);
     
-    /* Not yet but soon!
-    this.draggable = config.draggable || false;
-    if(YAHOO.ext.LayoutRegionDD && mgr.enablePanelDD){
-        this.dd = new YAHOO.ext.LayoutRegionDD(this);
-    }*/
+    
 };
 
 YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
@@ -12162,6 +10673,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
             var dh = YAHOO.ext.DomHelper;
             this.collapseBtn = this.createTool(this.tools.dom, 'ylayout-collapse-'+this.position);
             this.collapseBtn.mon('click', this.collapse, this, true);
+            
             this.collapsedEl = dh.append(this.mgr.el.dom, {tag: 'div', cls: 'ylayout-collapsed ylayout-collapsed-'+this.position, children:[
                 {tag: 'div', cls: 'ylayout-collapsed-tools'}
             ]}, true);
@@ -12203,10 +10715,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
         }
     },
     
-    /**
-     * Resizes the region to the specified size. For vertical regions (west, east) this adjusts the width, for horizontal (north, south) the height.
-     * @param {Number} newSize The new width or height
-     */
+    
     resizeTo : function(newSize){
         switch(this.position){
             case 'east':
@@ -12250,7 +10759,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
             this.el.dom.style.left = box.x + 'px';
             this.el.dom.style.top = box.y + 'px';
             this.el.setSize(box.width, box.height);
-            var bodyHeight = this.config.titlebar ? box.height - (this.titleEl.getHeight()||0) : box.height;
+            var bodyHeight = this.titleEl.isVisible() ? box.height - (this.titleEl.getHeight()||0) : box.height;
             bodyHeight -= this.el.getBorderWidth('tb');
             bodyWidth = box.width - this.el.getBorderWidth('rl');
             this.bodyEl.setHeight(bodyHeight);
@@ -12274,9 +10783,11 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
         }
     },
     
+    
     getEl : function(){
         return this.el;
     },
+    
     
     hide : function(){
         if(!this.collapsed){
@@ -12290,6 +10801,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
         this.fireEvent('visibilitychange', this, false);
     },
     
+    
     show : function(){
         if(!this.collapsed){
             this.el.show();
@@ -12299,6 +10811,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
         this.visible = true;
         this.fireEvent('visibilitychange', this, true);
     },
+    
     
     isVisible : function(){
         return this.visible;
@@ -12320,6 +10833,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
        }   
     },
     
+    
     collapse : function(skipAnim){
         if(this.collapsed) return;
         this.collapsed = true;
@@ -12327,19 +10841,21 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
             this.split.el.hide();
         }
         if(this.config.animate && skipAnim !== true){
+            this.fireEvent('invalidated', this);    
             this.animateCollapse();
         }else{
             this.el.setLocation(-20000,-20000);
             this.el.hide();
             this.collapsedEl.show();
-            this.fireEvent('collapsed', this); 
+            this.fireEvent('collapsed', this);
+            this.fireEvent('invalidated', this); 
         }
-        this.fireEvent('invalidated', this);    
     },
     
     animateCollapse : function(){
-        // overridden
+        
     },
+    
     
     expand : function(e, skipAnim){
         if(e) e.stopPropagation();
@@ -12364,7 +10880,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
     },
     
     animateExpand : function(){
-        // overridden
+        
     },
     
     initTabs : function(){
@@ -12387,10 +10903,11 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
               this.setActivePanel(panel); 
         }, this, true);
         if(this.config.closeOnTab){
-            ti.on('close', function(){
-                     this.remove(panel);
-                }, this, true);
-            }
+            ti.on('beforeclose', function(t, e){
+                e.cancel = true;
+                this.remove(panel);
+            }, this, true);
+        }
         return ti;
     },
     
@@ -12405,7 +10922,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
     
     updateTitle : function(title){
         if(this.titleTextEl && !this.config.title){
-            this.titleTextEl.innerHTML = (typeof title != 'undefined' && title.length > 0 ? title : "&nbsp;");
+            this.titleTextEl.innerHTML = (typeof title != 'undefined' && title.length > 0 ? title : "&#160;");
         }
     },
     
@@ -12422,11 +10939,9 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
         this.closeBtn.setVisible(!this.config.closeOnTab && !this.isSlid && panel.isClosable());
         this.updateTitle(panel.getTitle());
         this.fireEvent('panelactivated', this, panel);
-        /*
-        if(this.dd && !panel.enableDD){
-            this.dd.lock();
-        }*/
+        
     },
+    
     
     showPanel : function(panel){
         if(panel = this.getPanel(panel)){
@@ -12436,7 +10951,9 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
                 this.setActivePanel(panel);
             }
         }
+        return panel;
     },
+    
     
     getActivePanel : function(){
         return this.activePanel;
@@ -12444,7 +10961,7 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
     
     validateVisibility : function(){
         if(this.panels.getCount() < 1){
-            this.updateTitle('&nbsp;');
+            this.updateTitle('&#160;');
             this.closeBtn.hide();
             this.hide();
         }else{
@@ -12454,7 +10971,18 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
         }
     },
     
+    
     add : function(panel){
+        if(arguments.length > 1){
+            for(var i = 0, len = arguments.length; i < len; i++) {
+            	this.add(arguments[i]);
+            }
+            return null;
+        }
+        if(this.hasPanel(panel)){
+            this.showPanel(panel);
+            return panel;
+        }
         panel.setRegion(this);
         this.panels.add(panel);
         if(this.panels.getCount() == 1 && !this.config.alwaysShowTabs){
@@ -12473,15 +11001,21 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
         return panel;
     },
     
+    
     hasPanel : function(panel){
+        if(typeof panel == 'object'){ 
+            panel = panel.getId();
+        }
         return this.getPanel(panel) ? true : false;
     },
+    
     
     hidePanel : function(panel){
         if(this.tabs && (panel = this.getPanel(panel))){
             this.tabs.hideTab(panel.getEl().id);
         }
     },
+    
     
     unhidePanel : function(panel){
         if(this.tabs && (panel = this.getPanel(panel))){
@@ -12490,24 +11024,36 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
     },
     
     clearPanels : function(){
-        this.panels.each(this.remove, this);
+        while(this.panels.getCount() > 0){
+             this.remove(this.panels.first());
+        }
     },
     
-    remove : function(panel){
+    
+    remove : function(panel, preservePanel){
         panel = this.getPanel(panel);
         if(!panel){
             return null;
         }
+        var e = {};
+        this.fireEvent('beforeremove', this, panel, e);
+        if(e.cancel === true){
+            return null;
+        }
+        preservePanel = (typeof preservePanel != 'undefined' ? preservePanel : (this.config.preservePanels === true || panel.preserve === true));
         var panelId = panel.getId();
         this.panels.removeKey(panelId);
+        if(preservePanel){
+            document.body.appendChild(panel.getEl().dom);
+        }
         if(this.tabs){
             this.tabs.removeTab(panel.getEl().id);
-        }else{
+        }else if (!preservePanel){
             this.bodyEl.dom.removeChild(panel.getEl().dom);
         }
         if(this.panels.getCount() == 1 && this.tabs && !this.config.alwaysShowTabs){
             var p = this.panels.first();
-            var tempEl = document.createElement('span'); // temp holder to keep IE from deleting the node
+            var tempEl = document.createElement('span'); 
             tempEl.appendChild(p.getEl().dom);
             this.bodyEl.update('');
             this.bodyEl.dom.appendChild(p.getEl().dom);
@@ -12521,20 +11067,26 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
         if(this.activePanel == panel){
             this.activePanel = null;
         }
+        if(this.config.autoDestroy !== false && preservePanel !== true){
+            try{panel.destroy();}catch(e){}
+        }
         this.fireEvent('panelremoved', this, panel);
         return panel;
     },
+    
     
     getTabs : function(){
         return this.tabs;    
     },
     
+    
     getPanel : function(id){
-        if(typeof id == 'object'){ // must be panel obj
+        if(typeof id == 'object'){ 
             return id;
         }
         return this.panels.get(id);
     },
+    
     
     getPosition: function(){
         return this.position;    
@@ -12542,18 +11094,11 @@ YAHOO.extendX(YAHOO.ext.LayoutRegion, YAHOO.ext.util.Observable, {
     
     createTool : function(parentEl, className){
         var btn = YAHOO.ext.DomHelper.append(parentEl, {tag: 'div', cls: 'ylayout-tools-button', 
-            children: [{tag: 'div', cls: 'ylayout-tools-button-inner ' + className, html: '&nbsp;'}]}, true);
-        btn.on('mouseover', btn.addClass.createDelegate(btn, ['ylayout-tools-button-over']));
-        btn.on('mouseout', btn.removeClass.createDelegate(btn, ['ylayout-tools-button-over']));
+            children: [{tag: 'div', cls: 'ylayout-tools-button-inner ' + className, html: '&#160;'}]}, true);
+        btn.addClassOnOver('ylayout-tools-button-over');
         return btn;
     }
 });
-
-/*
-------------------------------------------------------------------
-// File: layout\SplitLayoutRegion.js
-------------------------------------------------------------------
-*/
 
 YAHOO.ext.SplitLayoutRegion = function(mgr, config, pos, cursor){
     this.cursor = cursor;
@@ -12569,7 +11114,8 @@ YAHOO.extendX(YAHOO.ext.SplitLayoutRegion, YAHOO.ext.LayoutRegion, {
         if(config.split){
             if(!this.split){
                 var splitEl = YAHOO.ext.DomHelper.append(this.mgr.el.dom, 
-                        {tag: 'div', id: this.el.id + '-split', cls: 'ylayout-split ylayout-split-'+this.position, html: '&nbsp;'});
+                        {tag: 'div', id: this.el.id + '-split', cls: 'ylayout-split ylayout-split-'+this.position, html: '&#160;'});
+                
                 this.split = new YAHOO.ext.SplitBar(splitEl, this.el);
                 this.split.onMoved.subscribe(this.onSplitMove, this, true);
                 this.split.useShim = config.useShim === true;
@@ -12595,6 +11141,7 @@ YAHOO.extendX(YAHOO.ext.SplitLayoutRegion, YAHOO.ext.LayoutRegion, {
         this.fireEvent('resized', this, newSize);
     },
     
+    
     getSplitBar : function(){
         return this.split;
     },
@@ -12615,10 +11162,12 @@ YAHOO.extendX(YAHOO.ext.SplitLayoutRegion, YAHOO.ext.LayoutRegion, {
     },
     
     beforeSlide: function(){
-        if(YAHOO.ext.util.Browser.isGecko){// firefox overflow auto bug workaround
+        if(YAHOO.ext.util.Browser.isGecko){
+            this.bodyEl.clip();
             if(this.tabs) this.tabs.bodyEl.clip();
             if(this.activePanel){
                 this.activePanel.getEl().clip();
+                
                 if(this.activePanel.beforeSlide){
                     this.activePanel.beforeSlide();
                 }
@@ -12627,7 +11176,8 @@ YAHOO.extendX(YAHOO.ext.SplitLayoutRegion, YAHOO.ext.LayoutRegion, {
     },
     
     afterSlide : function(){
-        if(YAHOO.ext.util.Browser.isGecko){// firefox overflow auto bug workaround
+        if(YAHOO.ext.util.Browser.isGecko){
+            this.bodyEl.unclip();
             if(this.tabs) this.tabs.bodyEl.unclip();
             if(this.activePanel){
                 this.activePanel.getEl().unclip();
@@ -12661,15 +11211,12 @@ YAHOO.extendX(YAHOO.ext.SplitLayoutRegion, YAHOO.ext.LayoutRegion, {
             'left': this.el.getLeft(true),
             'top': this.el.getTop(true),
             'colbtn': this.collapseBtn.isVisible(),
-            'closebtn': this.closeBtn.isVisible(),
-            'elclip': this.el.getStyle('overflow')
+            'closebtn': this.closeBtn.isVisible()
         };
         this.collapseBtn.hide();
         this.closeBtn.hide();
-        this.beforeSlide();
         this.el.show();
         this.el.setLeftTop(0,0);
-        //sl.setStyle('background', 'red')
         sl.startCapture(true);
         var size;
         switch(this.position){
@@ -12697,8 +11244,14 @@ YAHOO.extendX(YAHOO.ext.SplitLayoutRegion, YAHOO.ext.LayoutRegion, {
         sl.dom.appendChild(this.el.dom);
         YAHOO.util.Event.on(document.body, 'click', this.slideInIf, this, true);
         sl.setSize(this.el.getWidth(), this.el.getHeight());
+        this.beforeSlide();
+        if(this.activePanel){
+            this.activePanel.setSize(this.bodyEl.getWidth(), this.bodyEl.getHeight());
+        }
         sl.slideShow(this.getAnchor(), size, this.slideDuration, null, false);
-        sl.play();
+        sl.play(function(){
+            this.afterSlide();
+        }.createDelegate(this));
     },
     
     slideInIf : function(e){
@@ -12713,6 +11266,7 @@ YAHOO.extendX(YAHOO.ext.SplitLayoutRegion, YAHOO.ext.LayoutRegion, {
             YAHOO.util.Event.removeListener(document.body, 'click', this.slideInIf, this, true);
             this.slideEl.startCapture(true);
             this.slideEl.slideHide(this.getAnchor(), this.slideDuration, null);
+            this.beforeSlide();
             this.slideEl.play(function(){
                 this.isSlid = false;
                 this.el.setPositioning(this.snapshot);
@@ -12821,15 +11375,10 @@ YAHOO.extendX(YAHOO.ext.SplitLayoutRegion, YAHOO.ext.LayoutRegion, {
     }
 });
 
-/*
-------------------------------------------------------------------
-// File: layout\BorderLayout.js
-------------------------------------------------------------------
-*/
-
 YAHOO.ext.BorderLayout = function(container, config){
     YAHOO.ext.BorderLayout.superclass.constructor.call(this, container);
     this.factory = config.factory || YAHOO.ext.BorderLayout.RegionFactory;
+    
     this.hideOnLayout = config.hideOnLayout || false;
     for(var i = 0, len = this.factory.validRegions.length; i < len; i++) {
     	var target = this.factory.validRegions[i];
@@ -12837,10 +11386,11 @@ YAHOO.ext.BorderLayout = function(container, config){
     	    this.addRegion(target, config[target]);
     	}
     }
-    //this.dragOverDelegate = YAHOO.ext.EventManager.wrap(this.onDragOver, this, true);
+    
 };
 
 YAHOO.extendX(YAHOO.ext.BorderLayout, YAHOO.ext.LayoutManager, {
+    
     addRegion : function(target, config){
         if(!this.regions[target]){
             var r = this.factory.create(target, this, config);
@@ -12856,10 +11406,11 @@ YAHOO.extendX(YAHOO.ext.BorderLayout, YAHOO.ext.LayoutManager, {
         return this.regions[target];
     },
     
+    
     layout : function(){
         if(this.updating) return;
-        //var bench = new YAHOO.ext.util.Bench();
-	    //bench.start('Layout...');
+        
+	    
         var size = this.getViewSize();
         var w = size.width, h = size.height;
         var centerW = w, centerH = h, centerY = 0, centerX = 0;
@@ -12924,10 +11475,10 @@ YAHOO.extendX(YAHOO.ext.BorderLayout, YAHOO.ext.LayoutManager, {
             }
             c.updateBox(this.safeBox(centerBox));
         }
-        //this.el.repaint();
+        this.el.repaint();
         this.fireEvent('layout', this);
-        //bench.stop();
-	    //alert(bench.toString());
+        
+	    
     },
     
     safeBox : function(box){
@@ -12936,19 +11487,19 @@ YAHOO.extendX(YAHOO.ext.BorderLayout, YAHOO.ext.LayoutManager, {
         return box;
     },
     
+    
     add : function(target, panel){
         target = target.toLowerCase();
         return this.regions[target].add(panel);
     },
+    
     
     remove : function(target, panel){
         target = target.toLowerCase();
         return this.regions[target].remove(panel);
     },
     
-    /**
-     * Searches all regions for a panel with the specified id
-     */
+    
     findPanel : function(panelId){
         var rs = this.regions;
         for(var target in rs){
@@ -12962,18 +11513,22 @@ YAHOO.extendX(YAHOO.ext.BorderLayout, YAHOO.ext.LayoutManager, {
         return null;
     },
     
+    
     showPanel : function(panelId) {
       var rs = this.regions;
       for(var target in rs){
-         if(typeof rs[target] != 'function'){
-            if(rs[target].getPanel(panelId)){
-               rs[target].showPanel(panelId);
+         var r = rs[target];
+         if(typeof r != 'function'){
+            if(r.hasPanel(panelId)){
+               return r.showPanel(panelId);
             }
          }
       }
+      return null;
    },
    
-   restoreState : function(provider){
+   
+    restoreState : function(provider){
         if(!provider){
             provider = YAHOO.ext.state.Manager;
         }
@@ -12985,6 +11540,9 @@ YAHOO.extendX(YAHOO.ext.BorderLayout, YAHOO.ext.LayoutManager, {
 YAHOO.ext.BorderLayout.RegionFactory = {};
 YAHOO.ext.BorderLayout.RegionFactory.validRegions = ['north','south','east','west','center'];
 YAHOO.ext.BorderLayout.RegionFactory.create = function(target, mgr, config){
+    if(config.lightweight){
+        return new YAHOO.ext.LayoutRegionLite(mgr, config);
+    }
     target = target.toLowerCase();
     switch(target){
         case 'north':
@@ -13001,12 +11559,6 @@ YAHOO.ext.BorderLayout.RegionFactory.create = function(target, mgr, config){
     throw 'Layout region "'+target+'" not supported.';
 };
 
-/*
-------------------------------------------------------------------
-// File: layout\BorderLayoutRegions.js
-------------------------------------------------------------------
-*/
-
 YAHOO.ext.CenterLayoutRegion = function(mgr, config){
     YAHOO.ext.CenterLayoutRegion.superclass.constructor.call(this, mgr, config, 'center');
     this.visible = true;
@@ -13016,11 +11568,11 @@ YAHOO.ext.CenterLayoutRegion = function(mgr, config){
 
 YAHOO.extendX(YAHOO.ext.CenterLayoutRegion, YAHOO.ext.LayoutRegion, {
     hide : function(){
-        // center panel can't be hidden
+        
     },
     
     show : function(){
-        // center panel can't be hidden
+        
     },
     
     getMinWidth: function(){
@@ -13157,7 +11709,8 @@ YAHOO.extendX(YAHOO.ext.EastLayoutRegion, YAHOO.ext.SplitLayoutRegion, {
         }
         if(this.collapsed){
             this.el.setHeight(box.height);
-            var bodyHeight = box.height - this.el.getBorderWidth('tb');
+            var bodyHeight = this.config.titlebar ? box.height - (this.titleEl.getHeight()||0) : box.height;
+            bodyHeight -= this.el.getBorderWidth('tb');
             this.bodyEl.setHeight(bodyHeight);
             if(this.activePanel && this.panelSize){
                 this.activePanel.setSize(this.panelSize.width, bodyHeight);
@@ -13200,7 +11753,8 @@ YAHOO.extendX(YAHOO.ext.WestLayoutRegion, YAHOO.ext.SplitLayoutRegion, {
         }
         if(this.collapsed){
             this.el.setHeight(box.height);
-            var bodyHeight = box.height - this.el.getBorderWidth('tb');
+            var bodyHeight = this.config.titlebar ? box.height - (this.titleEl.getHeight()||0) : box.height;
+            bodyHeight -= this.el.getBorderWidth('tb');
             this.bodyEl.setHeight(bodyHeight);
             if(this.activePanel && this.panelSize){
                 this.activePanel.setSize(this.panelSize.width, bodyHeight);
@@ -13211,11 +11765,6 @@ YAHOO.extendX(YAHOO.ext.WestLayoutRegion, YAHOO.ext.SplitLayoutRegion, {
 });
 
 
-/*
-------------------------------------------------------------------
-// File: layout\ContentPanels.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.ContentPanel = function(el, config, content){
     YAHOO.ext.ContentPanel.superclass.constructor.call(this);
     this.el = getEl(el, true);
@@ -13245,9 +11794,14 @@ YAHOO.ext.ContentPanel = function(el, config, content){
         this.resizeEl = this.el;
     }
     this.events = {
+        
         'activate' : new YAHOO.util.CustomEvent('activate'),
+        
         'deactivate' : new YAHOO.util.CustomEvent('deactivate') 
     };
+    if(this.autoScroll){
+        this.el.setStyle('overflow', 'auto');
+    }
     if(content){
         this.setContent(content);
     }
@@ -13263,6 +11817,7 @@ YAHOO.extendX(YAHOO.ext.ContentPanel, YAHOO.ext.util.Observable, {
         } 
     },
     
+    
     getToolbar : function(){
         return this.toolbar;
     },
@@ -13276,37 +11831,25 @@ YAHOO.extendX(YAHOO.ext.ContentPanel, YAHOO.ext.util.Observable, {
         }
     },
     
-    /**
-     * Updates this panel's element
-     */
     setContent : function(content, loadScripts){
         this.el.update(content, loadScripts);
     },
     
-    /**
-     * Get the {@link YAHOO.ext.UpdateManager} for this panel. Enables you to perform Ajax updates.
-     * @return {YAHOO.ext.UpdateManager} The UpdateManager
-     */
+    
     getUpdateManager : function(){
         return this.el.getUpdateManager();
     },
     
-    /**
-     * Set a URL to be used to load the content for this panel.
-     * @param {String/Function} url The url to load the content from or a function to call to get the url
-     * @param {<i>String/Object</i>} params (optional) The string params for the update call or an object of the params. See {@link YAHOO.ext.UpdateManager#update} for more details. (Defaults to null)
-     * @param {<i>Boolean</i>} loadOnce (optional) Whether to only load the content once. If this is false it makes the Ajax call every time this panel is activated. (Defaults to false)
-     * @return {YAHOO.ext.UpdateManager} The UpdateManager
-     */
+    
     setUrl : function(url, params, loadOnce){
         if(this.refreshDelegate){
             this.removeListener('activate', this.refreshDelegate);
         }
         this.refreshDelegate = this._handleRefresh.createDelegate(this, [url, params, loadOnce]);
         this.on('activate', this._handleRefresh.createDelegate(this, [url, params, loadOnce]));
+        return this.el.getUpdateManager();
     },
     
-    /** @private */
     _handleRefresh : function(url, params, loadOnce){
         if(!loadOnce || !this.loaded){
             var updater = this.el.getUpdateManager();
@@ -13314,22 +11857,27 @@ YAHOO.extendX(YAHOO.ext.ContentPanel, YAHOO.ext.util.Observable, {
         }
     },
     
-    /** @private */
     _setLoaded : function(){
         this.loaded = true;
     }, 
+    
     
     getId : function(){
         return this.el.id;
     },
     
+    
     getEl : function(){
         return this.el;
     },
-    
+    
     adjustForComponents : function(width, height){
         if(this.toolbar){
             height -= this.toolbar.getEl().getHeight();
+        }
+        if(this.adjustments){
+            width += this.adjustments[0];
+            height += this.adjustments[1];
         }
         return {'width': width, 'height': height};
     },
@@ -13337,13 +11885,15 @@ YAHOO.extendX(YAHOO.ext.ContentPanel, YAHOO.ext.util.Observable, {
     setSize : function(width, height){
         if(this.fitToFrame){
             var size = this.adjustForComponents(width, height);
-            this.resizeEl.setSize(size.width, size.height);
+            this.resizeEl.setSize(this.autoWidth ? 'auto' : size.width, size.height);
         }
     },
+    
     
     getTitle : function(){
         return this.title;
     },
+    
     
     setTitle : function(title){
         this.title = title;
@@ -13351,6 +11901,7 @@ YAHOO.extendX(YAHOO.ext.ContentPanel, YAHOO.ext.util.Observable, {
             this.region.updatePanelTitle(this, title);
         }
     },
+    
     
     isClosable : function(){
         return this.closable;
@@ -13364,19 +11915,38 @@ YAHOO.extendX(YAHOO.ext.ContentPanel, YAHOO.ext.util.Observable, {
     afterSlide : function(){
         this.el.unclip();
         this.resizeEl.unclip();
+    },
+    
+    
+    refresh : function(){
+        if(this.refreshDelegate){
+           this.loaded = false;
+           this.refreshDelegate();
+        }
+    },
+    
+    
+    destroy : function(){
+        this.el.removeAllListeners();
+        var tempEl = document.createElement('span');
+        tempEl.appendChild(this.el.dom);
+        tempEl.innerHTML = '';
+        this.el = null;
     }
 });
 
 
 YAHOO.ext.GridPanel = function(grid, config){
-    this.wrapper = YAHOO.ext.DomHelper.append(document.body, // wrapper for IE7 strict & safari scroll issue
+    this.wrapper = YAHOO.ext.DomHelper.append(document.body, 
         {tag: 'div', cls: 'ylayout-grid-wrapper ylayout-inactive-content'}, true);
     this.wrapper.dom.appendChild(grid.container.dom);
     YAHOO.ext.GridPanel.superclass.constructor.call(this, this.wrapper, config);
     if(this.toolbar){
         this.toolbar.el.insertBefore(this.wrapper.dom.firstChild);
     }
-    grid.monitorWindowResize = false; // turn off autosizing
+    grid.monitorWindowResize = false; 
+    grid.autoHeight = false;
+    grid.autoWidth = false;
     this.grid = grid;
     this.grid.container.replaceClass('ylayout-inactive-content', 'ylayout-component-panel');
 };
@@ -13385,6 +11955,7 @@ YAHOO.extendX(YAHOO.ext.GridPanel, YAHOO.ext.ContentPanel, {
     getId : function(){
         return this.grid.id;
     },
+    
     
     getGrid : function(){
         return this.grid;    
@@ -13403,13 +11974,20 @@ YAHOO.extendX(YAHOO.ext.GridPanel, YAHOO.ext.ContentPanel, {
     
     afterSlide : function(){
         this.grid.getView().wrapEl.unclip();
+    },
+    
+    destroy : function(){
+        this.grid.getView().unplugDataModel(this.grid.getDataModel());
+        this.grid.container.removeAllListeners();
+        YAHOO.ext.GridPanel.superclass.destroy.call(this);
     }
 });
 
 
+
 YAHOO.ext.NestedLayoutPanel = function(layout, config){
     YAHOO.ext.NestedLayoutPanel.superclass.constructor.call(this, layout.getEl(), config);
-    layout.monitorWindowResize = false; // turn off autosizing
+    layout.monitorWindowResize = false; 
     this.layout = layout;
     this.layout.getEl().addClass('ylayout-nested-layout');
 };
@@ -13421,18 +11999,14 @@ YAHOO.extendX(YAHOO.ext.NestedLayoutPanel, YAHOO.ext.ContentPanel, {
         this.layout.layout();
     },
     
+    
     getLayout : function(){
         return this.layout;
     }
 });
 
-/*
-------------------------------------------------------------------
-// File: layout\LayoutStateManager.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.LayoutStateManager = function(layout){
-     // default empty state
+     
      this.state = {
         north: {},
         south: {},
@@ -13497,84 +12071,53 @@ YAHOO.ext.LayoutStateManager.prototype = {
     }
 };
 
-/*
-------------------------------------------------------------------
-// File: widgets\BasicDialog.js
-------------------------------------------------------------------
-*/
-/*
- * YUI Extensions 0.33 beta
- * Copyright(c) 2006, Jack Slocum.
- * 
- * This code is licensed under BSD license. 
- * http://www.opensource.org/licenses/bsd-license.php
- */
-
-/**
- * @class YAHOO.ext.BasicDialog
- * Lightweight Dialog Class
- * Supports the following configuration options (listed with default value):
- * width: auto
- * height: auto
- * x: (center screen x)
- * y: (center screen y)
- * animateTarget: null (no animation) This is the id or element to animate from
- * resizable: true
- * minHeight: 80
- * minWidth: 200
- * modal: false
- * autoScroll: true
- * closable: true
- * constraintoviewport: true
- * draggable: true
- * autoTabs: false (if true searches child nodes for elements with class ydlg-tab and converts them to tabs)
- * proxyDrag: false (drag a proxy element rather than the dialog itself)
- * fixedcenter: false
- * shadow: false
- * minButtonWidth: 75 
- * 
- * It has the following events (with handlers arguments in parens):
- * keydown (this, e)
- * resize (this, width, height)
- * move (this, x, y)
- * beforehide (this) (this can be cancelled by returning false in a subscriber method)
- * hide (this)
- * beforeshow (this) (this can be cancelled by returning false in a subscriber method)
- * show (this)
- * 
- * @constructor
- * @param {String/HTMLElement/YAHOO.ext.Element} el The id of or container element
- * @param {Object} config configuration options
- */
 YAHOO.ext.BasicDialog = function(el, config){
-    this.el = getEl(el, true);
-    this.id = this.el.id;
-    this.el.addClass('ydlg');
+    this.el = getEl(el);
+    var dh = YAHOO.ext.DomHelper;
+    if(!this.el && config && config.autoCreate){
+        if(typeof config.autoCreate == 'object'){
+            if(!config.autoCreate.id){
+                config.autoCreate.id = el;
+            }
+            this.el = dh.append(document.body,
+                        config.autoCreate, true);
+        }else{
+            this.el = dh.append(document.body,
+                        {tag: 'div', id: el}, true);
+        }
+    }
+    el = this.el;
+    el.setDisplayed(true);
+    el.hide = this.hideAction;
+    this.id = el.id;
+    el.addClass('ydlg');
     this.shadowOffset = 3;
     this.minHeight = 80;
     this.minWidth = 200;
     this.minButtonWidth = 75;
+    this.defaultButton = null;
     
     YAHOO.ext.util.Config.apply(this, config);
     
-    this.proxy = this.el.createProxy('ydlg-proxy');
-    this.proxy.enableDisplayMode('block');
+    this.proxy = el.createProxy('ydlg-proxy');
+    this.proxy.hide = this.hideAction;
     this.proxy.setOpacity(.5);
+    this.proxy.hide();
     
     if(config.width){
-        this.el.setWidth(config.width);
+        el.setWidth(config.width);
     }
     if(config.height){
-        this.el.setHeight(config.height);
+        el.setHeight(config.height);
     }
-    this.size = this.el.getSize();
+    this.size = el.getSize();
     if(typeof config.x != 'undefined' && typeof config.y != 'undefined'){
         this.xy = [config.x,config.y];
     }else{
-        this.xy = this.el.getCenterXY(true);
+        this.xy = el.getCenterXY(true);
     }
-    // find the header, body and footer
-    var cn = this.el.dom.childNodes;
+    
+    var cn = el.dom.childNodes;
     for(var i = 0, len = cn.length; i < len; i++) {
     	var node = cn[i];
     	if(node && node.nodeType == 1){
@@ -13583,24 +12126,29 @@ YAHOO.ext.BasicDialog = function(el, config){
     	    }else if(YAHOO.util.Dom.hasClass(node, 'ydlg-bd')){
     	        this.body = getEl(node, true);
     	    }else if(YAHOO.util.Dom.hasClass(node, 'ydlg-ft')){
-    	        this.footer = getEl(node, true);
+    	        
+                this.footer = getEl(node, true);
     	    }
     	}
     }
     
-    var dh = YAHOO.ext.DomHelper;
     if(!this.header){
-        this.header = dh.append(this.el.dom, {tag: 'div', cls:'ydlg-hd'}, true);
+        
+        this.header = dh.append(el.dom, {tag: 'div', cls:'ydlg-hd'}, true);
+    }
+    if(this.title){
+        this.header.update(this.title);
     }
     if(!this.body){
-        this.body = dh.append(this.el.dom, {tag: 'div', cls:'ydlg-bd'}, true);
+        
+        this.body = dh.append(el.dom, {tag: 'div', cls:'ydlg-bd'}, true);
     }
-    // wrap the header for special rendering
+    
     var hl = dh.insertBefore(this.header.dom, {tag: 'div', cls:'ydlg-hd-left'});
     var hr = dh.append(hl, {tag: 'div', cls:'ydlg-hd-right'});
     hr.appendChild(this.header.dom);
     
-    // wrap the body and footer for special rendering
+    
     this.bwrap = dh.insertBefore(this.body.dom, {tag: 'div', cls:'ydlg-dlg-body'}, true);
     this.bwrap.dom.appendChild(this.body.dom);
     if(this.footer) this.bwrap.dom.appendChild(this.footer.dom);
@@ -13610,52 +12158,58 @@ YAHOO.ext.BasicDialog = function(el, config){
     }
     if(this.closable !== false){
         this.el.addClass('ydlg-closable');
-        this.close = dh.append(this.el.dom, {tag: 'div', cls:'ydlg-close'}, true);
+        this.close = dh.append(el.dom, {tag: 'div', cls:'ydlg-close'}, true);
         this.close.mon('click', function(){
             this.hide();
         }, this, true);
     }
     if(this.resizable !== false){
-        this.el.addClass('yresizable-pinned');
         this.el.addClass('ydlg-resizable');
-        this.resizer = new YAHOO.ext.Resizable(this.el, {
+        this.resizer = new YAHOO.ext.Resizable(el, {
             minWidth: this.minWidth || 80, 
             minHeight:this.minHeight || 80, 
-            disableTrackOver:true, 
-            multiDirectional: true
+            handles: 'all',
+            pinned: true
         });
-        this.resizer.proxy.setStyle('z-index', parseInt(this.el.getStyle('z-index'),10)+1);
         this.resizer.on('beforeresize', this.beforeResize, this, true);
-        this.resizer.delayedListener('resize', this.onResize, this, true);
+        this.resizer.on('resize', this.onResize, this, true);
     }
     if(this.draggable !== false){
-        this.el.addClass('ydlg-draggable');
+        el.addClass('ydlg-draggable');
         if (!this.proxyDrag) {
-            var dd = new YAHOO.util.DD(this.el.dom, 'WindowDrag');
+            var dd = new YAHOO.util.DD(el.dom.id, 'WindowDrag');
         }
         else {
-            var dd = new YAHOO.util.DDProxy(this.el.dom, 'WindowDrag', {dragElId: this.proxy.id});
+            var dd = new YAHOO.util.DDProxy(el.dom.id, 'WindowDrag', {dragElId: this.proxy.id});
         }
         dd.setHandleElId(this.header.id);
         dd.endDrag = this.endMove.createDelegate(this);
         dd.startDrag = this.startMove.createDelegate(this);
-        dd.onDrag = this.adjustShadow.createDelegate(this);
+        dd.onDrag = this.onDrag.createDelegate(this);
         this.dd = dd;
     }
     if(this.modal){
         this.mask = dh.append(document.body, {tag: 'div', cls:'ydlg-mask'}, true);
-        this.mask.originalDisplay = 'block';
-        this.mask.enableDisplayMode();
+        this.mask.enableDisplayMode('block');
+        this.mask.hide();
     }
     if(this.shadow){
-        this.shadow = dh.append(document.body, {tag: 'div', cls:'ydlg-shadow'}, true);
+        this.shadow = el.createProxy({tag: 'div', cls:'ydlg-shadow'});
         this.shadow.setOpacity(.3);
-        this.shadow.setAbsolutePositioned(10000);
-        this.shadow.enableDisplayMode('block');
+        this.shadow.setVisibilityMode(YAHOO.ext.Element.VISIBILITY);
+        this.shadow.setDisplayed('block');
+        this.shadow.hide = this.hideAction;
         this.shadow.hide();
+    }else{
+        this.shadowOffset = 0;
+    }
+    if(this.shim){
+        this.shim = this.el.createShim();
+        this.shim.hide = this.hideAction;
+        this.shim.hide();
     }
     if(this.autoTabs){
-        var tabEls = YAHOO.util.Dom.getElementsByClassName('ydlg-tab', 'div', this.el.dom);
+        var tabEls = YAHOO.util.Dom.getElementsByClassName('ydlg-tab', this.tabTag || 'div', el.dom);
         if(tabEls.length > 0){
             this.body.addClass(this.tabPosition == 'bottom' ? 'ytabs-bottom' : 'ytabs-top');
             this.tabs = new YAHOO.ext.TabPanel(this.body.dom, this.tabPosition == 'bottom');
@@ -13669,20 +12223,27 @@ YAHOO.ext.BasicDialog = function(el, config){
     }
     this.syncBodyHeight();
     this.events = {
+        
         'keydown' : new YAHOO.util.CustomEvent('keydown'),
+        
         'move' : new YAHOO.util.CustomEvent('move'),
+        
         'resize' : new YAHOO.util.CustomEvent('resize'),
+        
         'beforehide' : new YAHOO.util.CustomEvent('beforehide'),
+        
         'hide' : new YAHOO.util.CustomEvent('hide'),
+        
         'beforeshow' : new YAHOO.util.CustomEvent('beforeshow'),
+        
         'show' : new YAHOO.util.CustomEvent('show')
     };
-    
-    this.keyDownDelegate = YAHOO.ext.EventManager.wrap(this.onKeyDown, this, true);
+    el.mon('keydown', this.onKeyDown, this, true);
+    el.mon("mousedown", this.toFront, this, true);
+
     YAHOO.ext.EventManager.onWindowResize(this.adjustViewport, this, true);
-    this.preloaded = false;
-    this.el.setDisplayed(false);
-    this.defaultButton = null;
+    this.el.hide();
+    YAHOO.ext.DialogManager.register(this);
 };
 
 YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
@@ -13693,7 +12254,7 @@ YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
     onResize : function(){
         this.refreshSize();
         this.syncBodyHeight();
-        this.adjustShadow();
+        this.adjustAssets();
         this.fireEvent('resize', this, this.size.width, this.size.height);
     },
     
@@ -13701,17 +12262,25 @@ YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
         this.fireEvent('keydown', this, e);
     },
     
-    /**
-     * @method addKeyListener
-     * Adds a key listener for when this dialog is displayed
-     * @param {Number/Array/Object} key Either the numeric key code, array of key codes or an object with the following options: 
-     *                                  {key: (number or array), shift: (true/false), ctrl: (true/false), alt: (true/false)}
-     * @param {Function} fn The function to call
-     * @param {Object} scope (optional) The scope of the function
-     */
+    
+    resizeTo : function(width, height){
+        this.el.setSize(width, height);
+        this.size = {width: width, height: height};
+        this.syncBodyHeight();
+        if(this.fixedcenter){
+            this.center();
+        }
+        if(this.isVisible()){
+            this.constrainXY();
+            this.adjustAssets();
+        }
+        return this;
+    },
+    
+    
     addKeyListener : function(key, fn, scope){
         var keyCode, shift, ctrl, alt;
-        if(typeof key == 'object'){
+        if(typeof key == 'object' && !(key instanceof Array)){
             keyCode = key['key'];
             shift = key['shift'];
             ctrl = key['ctrl'];
@@ -13737,12 +12306,10 @@ YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
             }
         };
         this.on('keydown', handler);
+        return this; 
     },
     
-    /**
-     * @method getTabs
-     * Returns the TabPanel component (if autoTabs)
-     */
+    
     getTabs : function(){
         if(!this.tabs){
             this.body.addClass(this.tabPosition == 'bottom' ? 'ytabs-bottom' : 'ytabs-top');
@@ -13751,13 +12318,7 @@ YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
         return this.tabs;    
     },
     
-    /**
-     * @method addButton
-     * Adds a button.
-     * @param {String/Object} config A string becomes the button text, an object is expected to be a valid YAHOO.ext.DomHelper element config
-     * @param {Function} handler The function called when the button is clicked
-     * @param {Object} scope The scope of the handler function
-     */
+    
     addButton : function(config, handler, scope){
         var dh = YAHOO.ext.DomHelper;
         if(!this.footer){
@@ -13766,30 +12327,23 @@ YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
         var btn;
         if(typeof config == 'string'){
             if(!this.buttonTemplate){
-                // hideous table template
-                this.buttonTemplate = new YAHOO.ext.DomHelper.Template('<a href="#" class="ydlg-button-focus"><table border="0" cellpadding="0" cellspacing="0" class="ydlg-button-wrap"><tr><td class="ydlg-button-left">&nbsp;</td><td class="ydlg-button-center" unselectable="on">{0}</td><td class="ydlg-button-right">&nbsp;</td></tr></table></a>');
+                
+                this.buttonTemplate = new YAHOO.ext.DomHelper.Template('<a href="#" class="ydlg-button-focus"><table border="0" cellpadding="0" cellspacing="0" class="ydlg-button-wrap"><tbody><tr><td class="ydlg-button-left">&#160;</td><td class="ydlg-button-center" unselectable="on">{0}</td><td class="ydlg-button-right">&#160;</td></tr></tbody></table></a>');
             }
             var btn = this.buttonTemplate.append(this.footer.dom, [config], true);
             var tbl = getEl(btn.dom.firstChild, true);
             if(this.minButtonWidth){
-                 tbl.beginMeasure();
+                 
                  if(tbl.getWidth() < this.minButtonWidth){
                        tbl.setWidth(this.minButtonWidth);
                  }
-                 tbl.endMeasure();
+                 
             }
         }else{
             btn = dh.append(this.footer.dom, config, true);
         }
         var bo = new YAHOO.ext.BasicDialog.Button(btn, handler, scope);
         this.syncBodyHeight();
-        if(!this.preloaded){ // preload images
-            btn.addClass('ydlg-button-over');
-            btn.removeClass('ydlg-button-over');
-            btn.addClass('ydlg-button-click');
-            btn.removeClass('ydlg-button-click');
-            this.preloaded = true;
-        }
         if(!this.buttons){
             this.buttons = [];
         }
@@ -13797,12 +12351,13 @@ YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
         return bo;
     },
     
+    
     setDefaultButton : function(btn){
         this.defaultButton = btn;  
+        return this;
     },
     
     getHeaderFooterHeight : function(safe){
-        if(safe)this.el.beginMeasure();
         var height = 0;
         if(this.header){
            height += this.header.getHeight();
@@ -13811,13 +12366,11 @@ YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
             var fm = this.footer.getMargins();
             height += (this.footer.getHeight()+fm.top+fm.bottom);
         }
-        if(safe)this.el.endMeasure();
         height += this.bwrap.getPadding('tb')+this.bwrap.getBorderWidth('tb');
         return height;
     },
     
     syncBodyHeight : function(){
-        this.el.beginMeasure();
         var height = this.size.height - this.getHeaderFooterHeight(false);
         var bm = this.body.getMargins();
         this.body.setHeight(height-(bm.top+bm.bottom));
@@ -13825,216 +12378,391 @@ YAHOO.extendX(YAHOO.ext.BasicDialog, YAHOO.ext.util.Observable, {
             this.tabs.syncHeight();
         }
         this.bwrap.setHeight(this.size.height-this.header.getHeight());
-        // 11/07/06 jvs update to set fixed width for IE7
+        
         this.body.setWidth(this.el.getWidth(true)-this.bwrap.getBorderWidth('lr')-this.bwrap.getPadding('lr'));
-        this.el.endMeasure();
     },
     
-    /**
-     * @method restoreState
-     * Restores the previous state of the dialog if YAHOO.ext.state is configured
-     */
+    
     restoreState : function(){
         var box = YAHOO.ext.state.Manager.get(this.el.id + '-state');
         if(box && box.width){
             this.xy = [box.x, box.y];
-            this.size = box;
-            this.el.setLocation(box.x, box.y);
-            this.resizer.resizeTo(box.width, box.height);
-            this.adjustViewport();
-        }else{
-            this.resizer.resizeTo(this.size.width, this.size.height);
-            this.adjustViewport();
+            this.resizeTo(box.width, box.height);
         }
+        return this; 
     },
     
     beforeShow : function(){
-        YAHOO.util.Event.on(document, 'keydown', this.keyDownDelegate);
-        
-        if (this.fixedcenter) {
-            this.el.beginMeasure();
-            this.xy = this.el.getCenterXY();
-            this.el.endMeasure();
+        if(this.fixedcenter) {
+            this.xy = this.el.getCenterXY(true);
         }
         if(this.modal){
             YAHOO.util.Dom.addClass(document.body, 'masked');
-            this.mask.setSize(YAHOO.util.Dom.getViewportWidth(), YAHOO.util.Dom.getViewportHeight());
+            this.mask.setSize(YAHOO.util.Dom.getDocumentWidth(), YAHOO.util.Dom.getDocumentHeight());
             this.mask.show();
         }
-                
+        this.constrainXY();
     },
     
-    /**
-     * @method show
-     * Shows the dialog.
-     * @param {String/HTMLElement/YAHOO.ext.Element} animateTarget Reset the animation target
-     */
+    animShow : function(){
+        var b = getEl(this.animateTarget, true).getBox();
+        this.proxy.setSize(b.width, b.height);
+        this.proxy.setLocation(b.x, b.y);
+        this.proxy.show();
+        this.proxy.setBounds(this.xy[0], this.xy[1], this.size.width, this.size.height, 
+                    true, .35, this.showEl.createDelegate(this));
+    },
+    
+    
     show : function(animateTarget){
-        if (this.fireEvent('beforeshow', this) === false)
+        if (this.fireEvent('beforeshow', this) === false){
             return;
-        
+        }
+        if(this.syncHeightBeforeShow){
+            this.syncBodyHeight();
+        }
         this.animateTarget = animateTarget || this.animateTarget;
         if(!this.el.isVisible()){
             this.beforeShow();
             if(this.animateTarget){
-                var b = getEl(this.animateTarget, true).getBox();
-                this.proxy.setLocation(b.x, b.y);
-                this.proxy.setSize(b.width, b.height);
-                this.proxy.show();
-                this.proxy.setBounds(this.xy[0], this.xy[1], this.size.width, this.size.height, true, .35, this.showEl.createDelegate(this));
+                this.animShow();
             }else{
-                this.el.setDisplayed(true);
-                this.el.setXY(this.xy);
-                this.el.show();
-                var box = this.el.getBox();
-                if(this.shadow){
-                    this.shadow.show();
-                    this.shadow.setSize(box.width, box.height);
-                    this.shadow.setLocation(box.x + this.shadowOffset, box.y + this.shadowOffset);
+                this.showEl();
+            }
+        }
+        return this; 
+    },
+    
+    showEl : function(){
+        this.proxy.hide();
+        this.el.setXY(this.xy);
+        this.el.show();
+        this.adjustAssets(true);
+        this.toFront();
+        if(this.defaultButton){
+            this.defaultButton.focus();
+        }
+        this.fireEvent('show', this);
+    },
+    
+    constrainXY : function(){
+        if(this.contraintoviewport !== false){
+            if(!this.viewSize){
+                this.viewSize = [YAHOO.util.Dom.getViewportWidth(), YAHOO.util.Dom.getViewportHeight()];
+            }
+            var x = this.xy[0], y = this.xy[1];
+            var w = this.size.width, h = this.size.height;
+            var vw = this.viewSize[0], vh = this.viewSize[1];
+            
+            var moved = false;
+            
+            if(x + w > vw){
+                x = vw - w;
+                moved = true;
+            }
+            if(y + h > vh){
+                y = vh - h;
+                moved = true;
+            }
+            
+            if(x < 0){
+                x = 0;
+                moved = true;
+            }
+            if(y < 0){
+                y = 0;
+                moved = true;
+            }
+            if(moved){
+                
+                this.xy = [x, y];
+                if(this.isVisible()){
+                    this.el.setLocation(x, y);
+                    this.adjustAssets();
                 }
-                if(this.defaultButton) this.defaultButton.focus();
-                this.fireEvent('show', this);
             }
         }
     },
     
-    showEl : function(){
-        var box = this.proxy.getBox();
-        this.el.setDisplayed(true);
-        this.el.setBox(box);
-        this.el.show();
-        this.proxy.hide();
-        if(this.shadow){
-            this.shadow.show();
-            this.shadow.setSize(box.width, box.height);
-            this.shadow.setLocation(box.x + this.shadowOffset, box.y + this.shadowOffset);
-        }
-        if(this.defaultButton) this.defaultButton.focus();
-        this.fireEvent('show', this);
+    onDrag : function(){
+        if(!this.proxyDrag){
+            this.xy = this.el.getXY();
+            this.adjustAssets();
+        }   
     },
     
-    adjustViewport : function(width, height){
-        this.viewSize = [width, height];
+    adjustAssets : function(doShow){
+        var x = this.xy[0], y = this.xy[1];
+        var w = this.size.width, h = this.size.height;
+        if(doShow === true){
+            if(this.shadow){
+                this.shadow.show();
+            }
+            if(this.shim){
+                this.shim.show();
+            }
+        }
+        if(this.shadow && this.shadow.isVisible()){
+            this.shadow.setBounds(x + this.shadowOffset, y + this.shadowOffset, w, h);
+        }
+        if(this.shim && this.shim.isVisible()){
+            this.shim.setBounds(x, y, w, h);
+        }
+    },
+    
+    
+    adjustViewport : function(w, h){
+        if(!w || !h){
+            w = YAHOO.util.Dom.getViewportWidth();
+            h = YAHOO.util.Dom.getViewportHeight();
+        }
+        
+        this.viewSize = [w, h];
         if(this.modal && this.mask.isVisible()){
-            this.mask.setSize(width, height);
+            this.mask.setSize(w, h); 
+            this.mask.setSize(YAHOO.util.Dom.getDocumentWidth(), YAHOO.util.Dom.getDocumentHeight());
         }
-        var moved = false;
-        if(this.xy[0] + this.size.width > this.viewSize[0]){
-            this.xy[0] = Math.max(0, this.viewSize[0] - this.size.width);
-            moved = true;
-        }
-        if(this.xy[1] + this.size.height > this.viewSize[1]){
-            this.xy[1] = Math.max(0, this.viewSize[1] - this.size.height);
-            moved = true;
-        }
-        if(moved){
-            this.el.setXY(this.xy);
-            this.adjustShadow();
+        if(this.isVisible()){
+            this.constrainXY();
         }
     },
     
-    adjustShadow : function(){
-        if(this.shadow){
-            var box = this.el.getBox();
-            box.x += this.shadowOffset;
-            box.y += this.shadowOffset;
-            this.shadow.setBox(box);
+    
+    destroy : function(removeEl){
+        YAHOO.ext.EventManager.removeResizeListener(this.adjustViewport, this);
+        if(this.tabs){
+            this.tabs.destroy(removeEl);
         }
+        if(removeEl === true){
+            this.el.update('');
+            this.el.remove();
+        }
+        YAHOO.ext.DialogManager.unregister(this);
     },
     
     startMove : function(){
-        if(this.constraintoviewport != false){
-            this.dd.resetConstraints();
-            this.viewSize = [YAHOO.util.Dom.getViewportWidth(),YAHOO.util.Dom.getViewportHeight()];
-            this.dd.setXConstraint(this.xy[0], this.viewSize[0]-this.xy[0]-this.el.getWidth()-this.shadowOffset);
-            this.dd.setYConstraint(this.xy[1], this.viewSize[1]-this.xy[1]-this.el.getHeight()-this.shadowOffset);
+        if(this.proxyDrag){
+            this.proxy.show();
+        }
+        if(this.constraintoviewport !== false){
+            this.dd.constrainTo(document.body, {right: this.shadowOffset, bottom: this.shadowOffset});
         }
     },
     
     endMove : function(){
-        YAHOO.util.DDProxy.prototype.endDrag.apply(this.dd, arguments);
+        if(!this.proxyDrag){
+            YAHOO.util.DD.prototype.endDrag.apply(this.dd, arguments);
+        }else{
+            YAHOO.util.DDProxy.prototype.endDrag.apply(this.dd, arguments);
+            this.proxy.hide();
+        }
         this.refreshSize();
-        this.adjustShadow();
+        this.adjustAssets();
         this.fireEvent('move', this, this.xy[0], this.xy[1])
     },
-   
     
-    /**
-     * @method isVisible
-     * Returns true if the dialog is visible
-     */
+    
+    toFront : function(){
+        YAHOO.ext.DialogManager.bringToFront(this);  
+        return this; 
+    },
+    
+    
+    toBack : function(){
+        YAHOO.ext.DialogManager.sendToBack(this);  
+        return this; 
+    },
+    
+    
+    center : function(){
+        this.moveTo(this.el.getCenterXY(true));
+        return this; 
+    },
+    
+    
+    moveTo : function(x, y){
+        this.xy = [x,y];
+        if(this.isVisible()){
+            this.el.setXY(this.xy);
+            this.adjustAssets();
+        }
+        return this; 
+    },
+    
+    
     isVisible : function(){
         return this.el.isVisible();    
     },
     
-    beforeHide : function(){
-        YAHOO.util.Event.removeListener(document, 'keydown', this.keyDownDelegate);
-        if(this.modal){
-            this.mask.hide();
-            YAHOO.util.Dom.removeClass(document.body, 'masked');
-        }
+    animHide : function(callback){
+        var b = getEl(this.animateTarget, true).getBox();
+        this.proxy.show();
+        this.proxy.setBounds(this.xy[0], this.xy[1], this.size.width, this.size.height);
+        this.el.hide();
+        this.proxy.setBounds(b.x, b.y, b.width, b.height, true, .35, 
+                    this.hideEl.createDelegate(this, [callback]));
     },
     
-    /**
-     * @method hide
-     * Hides the dialog.
-     * @param {Function} callback Function to call when the dialog is hidden
-     */
+    
     hide : function(callback){
         if (this.fireEvent('beforehide', this) === false)
             return;
         
-        this.beforeHide();
         if(this.shadow){
             this.shadow.hide();
         }
-        if(this.animateTarget){
-            this.proxy.setBounds(this.xy[0], this.xy[1], this.size.width, this.size.height);
-            var b = getEl(this.animateTarget, true).getBox();
-            this.proxy.show();
-            this.el.setDisplayed(false);
-            this.el.hide();
-            this.proxy.setBounds(b.x, b.y, b.width, b.height, true, .35, this.hideEl.createDelegate(this, [callback]));
-        }else{
-            this.proxy.hide();
-            this.el.setDisplayed(false);
-            this.el.hide();
-            this.fireEvent('hide', this);
+        if(this.shim) {
+          this.shim.hide();
         }
+        if(this.animateTarget){
+           this.animHide(callback);
+        }else{
+            this.el.hide();
+            this.hideEl(callback);
+        }
+        return this; 
     },
     
     hideEl : function(callback){
         this.proxy.hide();
+        if(this.modal){
+            this.mask.hide();
+            YAHOO.util.Dom.removeClass(document.body, 'masked');
+        }
         this.fireEvent('hide', this);
         if(typeof callback == 'function'){
             callback();
         }
     },
     
+    hideAction : function(){
+        this.setLeft('-10000px');  
+        this.setTop('-10000px');
+        this.setStyle('visibility', 'hidden'); 
+    },
+    
     refreshSize : function(){
         this.size = this.el.getSize();
         this.xy = this.el.getXY();
         YAHOO.ext.state.Manager.set(this.el.id + '-state', this.el.getBox());
+    },
+    
+    setZIndex : function(index){
+        if(this.modal){
+            this.mask.setStyle('z-index', index);
+        }
+        if(this.shadow){
+            this.shadow.setStyle('z-index', ++index);
+        }
+        if(this.shim){
+            this.shim.setStyle('z-index', ++index);
+        }
+        this.el.setStyle('z-index', ++index);
+        if(this.proxy){
+            this.proxy.setStyle('z-index', ++index);
+        }
+        if(this.resizer){
+            this.resizer.proxy.setStyle('z-index', ++index);
+        }
+        
+        this.lastZIndex = index;
+    },
+    
+    
+    getEl : function(){
+        return this.el;
     }
 });
+
+
+YAHOO.ext.DialogManager = function(){
+    var list = {};
+    var accessList = [];
+    var front = null;
+    
+    var sortDialogs = function(d1, d2){
+        return (!d1._lastAccess || d1._lastAccess < d2._lastAccess) ? -1 : 1;
+    };
+    
+    var orderDialogs = function(){
+        accessList.sort(sortDialogs);
+        var seed = YAHOO.ext.DialogManager.zseed;
+        for(var i = 0, len = accessList.length; i < len; i++){
+            if(accessList[i]){
+                accessList[i].setZIndex(seed + (i*10));
+            }  
+        }
+    };
+    
+    return {
+        
+        zseed : 10000,
+        
+        
+        register : function(dlg){
+            list[dlg.id] = dlg;
+            accessList.push(dlg);
+        },
+        
+        unregister : function(dlg){
+            delete list[dlg.id];
+            if(!accessList.indexOf){
+                for(var i = 0, len = accessList.length; i < len; i++){
+                    accessList.splice(i, 1);
+                    return;
+                }
+            }else{
+                var i = accessList.indexOf(dlg);
+                if(i != -1){
+                    accessList.splice(i, 1);
+                }
+            }
+        },
+        
+        
+        get : function(id){
+            return typeof id == 'object' ? id : list[id];
+        },
+        
+        
+        bringToFront : function(dlg){
+            dlg = this.get(dlg);
+            if(dlg != front){
+                front = dlg;
+                dlg._lastAccess = new Date().getTime();
+                orderDialogs();
+            }
+            return dlg;
+        },
+        
+        
+        sendToBack : function(dlg){
+            dlg = this.get(dlg);
+            dlg._lastAccess = -(new Date().getTime());
+            orderDialogs();
+            return dlg;
+        }
+    };
+}();
+
 
 YAHOO.ext.LayoutDialog = function(el, config){
     config.autoTabs = false;
     YAHOO.ext.LayoutDialog.superclass.constructor.call(this, el, config);
     this.body.setStyle({overflow:'hidden', position:'relative'});
-    this.el.setDisplayed(true);
     this.layout = new YAHOO.ext.BorderLayout(this.body.dom, config);
     this.layout.monitorWindowResize = false;
 };
 YAHOO.extendX(YAHOO.ext.LayoutDialog, YAHOO.ext.BasicDialog, {
+    
     endUpdate : function(){
         this.layout.endUpdate();
-        this.el.setDisplayed(false);
     },
+    
     beginUpdate : function(){
         this.layout.beginUpdate();
-        this.el.setDisplayed(true);
     },
+    
     getLayout : function(){
         return this.layout;
     },
@@ -14059,18 +12787,52 @@ YAHOO.ext.BasicDialog.Button = function(el, handler, scope){
 };
 
 YAHOO.ext.BasicDialog.Button.prototype = {
+    
     getEl : function(){
         return this.el;  
     },
+    
+    
+    setHandler : function(handler, scope){
+        this.handler = handler;
+        this.scope = scope;  
+    },
+    
+    
+    setText : function(text){
+        this.el.dom.firstChild.firstChild.firstChild.childNodes[1].innerHTML = text;    
+    },
+    
+    
+    show: function(){
+        this.el.setStyle('display', '');
+    },
+    
+    
+    hide: function(){
+        this.el.setStyle('display', 'none'); 
+    },
+    
+    
+    setVisible: function(visible){
+        if(visible) {
+            this.show();
+        }else{
+            this.hide();
+        }
+    },
+    
     
     focus : function(){
         this.el.focus();    
     },
     
+    
     disable : function(){
         this.el.addClass('ydlg-button-disabled');
         this.disabled = true;
     },
+    
     
     enable : function(){
         this.el.removeClass('ydlg-button-disabled');
@@ -14101,11 +12863,6 @@ YAHOO.ext.BasicDialog.Button.prototype = {
     }    
 };
 
-/*
-------------------------------------------------------------------
-// File: widgets\TemplateView.js
-------------------------------------------------------------------
-*/
 YAHOO.ext.View = function(container, tpl, dataModel, config){
     this.el = getEl(container, true);
     this.nodes = this.el.dom.childNodes;
@@ -14113,25 +12870,33 @@ YAHOO.ext.View = function(container, tpl, dataModel, config){
         tpl = new YAHOO.ext.Template(tpl);
     }
     tpl.compile();
+    
     this.tpl = tpl;
     this.setDataModel(dataModel);
-    
     var CE = YAHOO.util.CustomEvent;
-	/** @private */
+	
 	this.events = {
-	    'click' : new CE('click'),
-	    'dblclick' : new CE('dblclick'),
-	    'contextmenu' : new CE('contextmenu'),
-	    'selectionchange' : new CE('selectionchange')
+	    
+        'click' : new CE('click'),
+	    
+        'dblclick' : new CE('dblclick'),
+	    
+        'contextmenu' : new CE('contextmenu'),
+	    
+        'selectionchange' : new CE('selectionchange')
 	};
 	this.el.mon("click", this.onClick, this, true);
     this.el.mon("dblclick", this.onDblClick, this, true);
     this.el.mon("contextmenu", this.onContextMenu, this, true);
-    this.el.swallowEvent("selectstart", true);
+    
+    
     this.selectedClass = 'ydataview-selected';
     
     this.selections = [];
     this.lastSelection = null;
+    
+    
+    this.jsonRoot = null;
     YAHOO.ext.util.Config.apply(this, config);
     if(this.renderUpdates || this.jsonRoot){
         var um = this.el.getUpdateManager();
@@ -14140,9 +12905,11 @@ YAHOO.ext.View = function(container, tpl, dataModel, config){
 };
 
 YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
+    
     getEl : function(){
         return this.el;  
     },
+    
     render : function(el, response){
         this.clearSelections();
         this.el.update('');
@@ -14153,28 +12920,33 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
                 o = eval('o.' + this.jsonRoot);
             }
         }catch(e){}
-        if(o && o.length){
-            this.html = [];
-            for(var i = 0, len = o.length; i < len; i++) {
-            	this.renderEach(o[i]);
-            }
-            this.el.update(this.html.join(''));
-            this.html = null;
-            this.nodes = this.el.dom.childNodes;
-            this.updateIndexes(0);
-        }
+        
+        this.jsonData = o;
+        this.fireEvent('beforerender', this, o);
+        this.refresh();
     },
     
-    refresh : function(){
+    
+     refresh : function(){
         this.clearSelections();
         this.el.update('');
         this.html = [];
-        this.dataModel.each(this.renderEach, this);
+        if(this.renderUpdates || this.jsonRoot){
+            var o = this.jsonData;
+            if(o){
+                for(var i = 0, len = o.length; i < len; i++) {
+                	this.renderEach(o[i]);
+                }
+            }
+        }else{
+           this.dataModel.each(this.renderEach, this);
+        }
         this.el.update(this.html.join(''));
         this.html = null;
         this.nodes = this.el.dom.childNodes;
         this.updateIndexes(0);
     },
+    
     
     prepareData : function(data, index){
         return data;  
@@ -14183,6 +12955,7 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
     renderEach : function(data){
         this.html[this.html.length] = this.tpl.applyTemplate(this.prepareData(data));
     },
+    
     
     refreshNode : function(index){
         this.refreshNodes(index, index);
@@ -14249,7 +13022,9 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         }
     },
     
-    setDataModel : function(dm){
+    
+     setDataModel : function(dm){
+        if(!dm) return;
         this.unplugDataModel(this.dataModel);
         this.dataModel = dm;
         dm.on('cellupdated', this.refreshNode, this, true);
@@ -14261,6 +13036,7 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         this.refresh();
     },
     
+    
     unplugDataModel : function(dm){
         if(!dm) return;
         dm.removeListener('cellupdated', this.refreshNode, this);
@@ -14271,6 +13047,7 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         dm.removeListener('rowssorted', this.refresh, this);
         this.dataModel = null;
     },
+    
     
     findItemFromChild : function(node){
         var el = this.el.dom;
@@ -14287,7 +13064,7 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
 	    return null;
     },
     
-    /** @ignore */
+    
     onClick : function(e){
         var item = this.findItemFromChild(e.getTarget());
         if(item){
@@ -14299,7 +13076,7 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         }
     },
 
-    /** @ignore */
+    
     onContextMenu : function(e){
         var item = this.findItemFromChild(e.getTarget());
         if(item){
@@ -14307,7 +13084,7 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         }
     },
 
-    /** @ignore */
+    
     onDblClick : function(e){
         var item = this.findItemFromChild(e.getTarget());
         if(item){
@@ -14326,13 +13103,16 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         }
     },
     
-    getSelectionCount : function(){
+    
+     getSelectionCount : function(){
         return this.selections.length;
     },
+    
     
     getSelectedNodes : function(){
         return this.selections;
     },
+    
     
     getSelectedIndexes : function(){
         var indexes = [];
@@ -14341,6 +13121,7 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         }
         return indexes;
     },
+    
     
     clearSelections : function(suppressEvent){
         if(this.multiSelect || this.singleSelect){
@@ -14351,6 +13132,7 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
             }
         }
     },
+    
     
     select : function(nodeInfo, keepExisting, suppressEvent){
         if(!keepExisting){
@@ -14372,16 +13154,18 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         }
     },
     
-    getNode : function(nodeInfo){
+    
+     getNode : function(nodeInfo){
         if(typeof nodeInfo == 'object'){
             return nodeInfo;
-        }else if(typeof nodeInfo == 'strong'){
+        }else if(typeof nodeInfo == 'string'){
             return document.getElementById(nodeInfo);
         }else if(typeof nodeInfo == 'number'){
             return this.nodes[nodeInfo];
         }
         return null;
     },
+    
     
     getNodes : function(start, end){
         var ns = this.nodes;
@@ -14394,7 +13178,8 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
         return nodes;
     },
     
-    indexOf : function(node){
+    
+     indexOf : function(node){
         node = this.getNode(node);
         if(typeof node.nodeIndex == 'number'){
             return node.nodeIndex;
@@ -14409,11 +13194,19 @@ YAHOO.extendX(YAHOO.ext.View, YAHOO.ext.util.Observable, {
     }
 });
 
-/**
- * Shortcut to class create a JSON UpdateManager View
- */ 
+ 
 YAHOO.ext.JsonView = function(container, tpl, config){
     var cfg = config || {};
     cfg.renderUpdates = true;
-    return new YAHOO.ext.View(container, tpl, null, config); 
+    YAHOO.ext.JsonView.superclass.constructor.call(this, container, tpl, null, cfg);
+            
+        
+     this.events['beforerender'] = new YAHOO.util.CustomEvent('beforerender');
 };
+YAHOO.extendX(YAHOO.ext.JsonView, YAHOO.ext.View, {
+    
+    load : function(){
+        var um = this.el.getUpdateManager();
+        um.update.apply(um, arguments);
+    }
+});

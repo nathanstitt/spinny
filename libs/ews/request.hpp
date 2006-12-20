@@ -25,7 +25,7 @@ namespace ews {
 	public:
 		request( const connection *conn );
 
-		User::ptr user;
+		Spinny::User::ptr user;
 
 		const connection *conn;
 
@@ -68,6 +68,17 @@ namespace ews {
 				return T();
 			}
 
+		}
+
+		std::string
+		svalue( const std::string &name ) const {
+			varibles_t::const_iterator var=varibles.find( name );
+			varible_t::iterator val;
+			if ( varibles.end() != var && ! var->second.empty() ){
+				return var->second.front();
+			} else {
+				return std::string();
+			}
 		}
 	};
 

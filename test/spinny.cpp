@@ -10,6 +10,7 @@
 #define sleep Sleep
 #endif
 
+using namespace Spinny;
 
 SUITE(SpinnySuite) {
 
@@ -47,7 +48,7 @@ TEST( DB ){
 
 TEST( Config ){
 	Spin s;
-	CHECK_EQUAL( s.db_path.string(), Spinny::instance()->config<string>( "db" ) );
+	CHECK_EQUAL( s.db_path.string(), Spinny::App::instance()->config<string>( "db" ) );
 }
 
 

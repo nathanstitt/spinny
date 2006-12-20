@@ -27,6 +27,11 @@ namespace handlers {
 		JsonUnknown	     = 'z' 
 	};
 
+	void
+	requireAuth( Spinny::User::ptr, Spinny::User::Role );
+
+	std::string
+	json_q( const std::string& );
 
 } // handlers
 

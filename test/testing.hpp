@@ -64,7 +64,7 @@ public:
 			args[11]= "--music_dir";
 			args[12]= music_path.string().c_str();
 
-			Spinny::run( ARGS_SIZE, const_cast<char**>(args) );
+			Spinny::App::run( ARGS_SIZE, const_cast<char**>(args) );
 			con=sqlite::db();
 			con->exec<sqlite::none>("create table testing( col1 int, col2 string, col3 int )");
 		}
@@ -110,7 +110,7 @@ public:
 	}
 
 	~DummyApp() {
-		Spinny::stop();
+		Spinny::App::stop();
 		filesystem::remove_all( fixtures_path );
 	}
 
@@ -143,9 +143,9 @@ struct EnableLogging {
 template<typename T> inline
 bool
 DummyApp::test_table_obj(){
-	T table;
+//	T table;
 
-	const sqlite::table::description *desc = table.m_table_description();
+	const sqlite::table::description *desc = T::table_description();
 	std::vector< std::string > vals;
 	*con << "insert into " << desc->table_name() << " (";
 	for ( int i=0; i< desc->num_fields(); ++i ){

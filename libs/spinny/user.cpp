@@ -9,10 +9,19 @@
 #include "boost/nondet_random.hpp"
 #include <boost/generator_iterator.hpp>
 
+namespace Spinny {
 
 
 class user_desc : public sqlite::table::description {
 public:
+	void checked_callback( bool ) {
+		if ( ! sqlite::db()->exec<int>( "select count(*) from users") ){
+			User::ptr u = User::create( "Admin", "admin" );
+			u->set_role( User::AdminRole );
+			u->save();
+		}
+	}
+
 	virtual const char* table_name() const {
 		return "users";
 	};
@@ -43,7 +52,7 @@ public:
 
 static user_desc table_desc;
 
-User::User() : role_(GuestRole)
+User::User() : role_(ReadOnlyRole)
 { }
 
 const sqlite::table::description*
@@ -78,15 +87,25 @@ User::initialize_from_db( const sqlite::reader *reader ) {
 	password_   = reader->get<std::string>(1);
 	ticket	   = reader->get<std::string>(2);
 	last_visit = boost::posix_time::from_iso_string( reader->get<std::string>(3) );
-	role_	   = static_cast<Role_t>( reader->get<int>(4) );
+	role_	   = static_cast<Role>( reader->get<int>(4) );
 }
 
 
 User::ptr
-User::with_ticket( std::string &ticket ){
+User::with_ticket( const std::string &ticket ){
 	return sqlite::db()->load_one<User>( "ticket", ticket );
 }
 
+User::ptr
+User::with_login( const std::string &login ){
+	return sqlite::db()->load_one<User>( "login", login );
+}
+
+
+User::ptr
+User::load( sqlite::id_t db_id ){
+	return sqlite::db()->load<User>( db_id );
+}
 
 User::ptr
 User::create( const std::string &login, const std::string &password ){
@@ -98,26 +117,52 @@ User::create( const std::string &login, const std::string &password ){
 	return user;
 }
 
+User::result_set
+User::list( int first, int count, const std::string &sort, bool descending  ){
+	sqlite::connection *con = sqlite::db();
+	*con << "select ";
+	table_desc.insert_fields( *con );
+	*con << ",rowid from users";
+	if ( sort != "" ){
+		*con << " order by " << sort << ' ' << ( descending ? "desc" : "asc" );
+	}
+	if ( first ){
+		*con << " limit " << first << ',' << count;
+	}
+	return sqlite::db()->load_stored<User>();
+}
 
+unsigned int
+User::count(){
+	return sqlite::db()->exec<unsigned int>( "select count(*) from users" );
+}
 
 bool
 User::is_admin() const {
-	return AdminRole == role_;
+	return has_at_least( AdminRole );
 }
+
 
 bool
-User::is_guest() const {
-	return GuestRole == role_;
+User::has_modify_role() const {
+	return has_at_least( ModifyRole );
 }
+
 
 bool
-User::is_trusted() const {
-	return TrustedRole == role_;
+User::has_at_least( Role r ) const {
+	return (role_ >= r);
 }
 
-User::Role_t
-User::set_role( Role_t role ){
+User::Role
+User::role() const {
+	return role_;
+}
+
+User::Role
+User::set_role( Role role ){
 	return role_=role;
+
 }
 
 std::string
@@ -129,6 +174,7 @@ bool
 User::authen( const std::string &pass ){
 	if ( pass == password_ ){
 		this->generate_new_ticket();
+		this->save();
 		return true;
 	} else {
 		return false;
@@ -164,3 +210,5 @@ bool
 User::save() const {
 	return sqlite::db()->save<User>(*this);
 }
+
+} // namespace Spinny

@@ -2,12 +2,14 @@
  */
 
 #include <config.h>
-#include "artist.hpp"
-#include "song.hpp"
-#include "album.hpp"
+#include "spinny/artist.hpp"
+#include "spinny/song.hpp"
+#include "spinny/album.hpp"
 
 #include "boost/filesystem/operations.hpp"
 #include "id3lib/tag.h"
+
+namespace Spinny {
 
 class artist_desc : public sqlite::table::description {
 public:
@@ -220,3 +222,5 @@ std::string
 Artist::name() const {
 	return name_;
 }
+
+} // namespace Spinny

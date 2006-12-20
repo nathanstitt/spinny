@@ -1,15 +1,19 @@
 /* @(#)song.hpp
  */
 
-#ifndef _SONG_H
-#define _SONG_H 1
+#ifndef _SPINNY_SONG_H
+#define _SPINNY_SONG_H 1
 
-#include "spinny.hpp"
-#include "music_dir.hpp"
+#include "spinny/spinny.hpp"
+#include "spinny/music_dir.hpp"
 
 #include <boost/filesystem/path.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
+
+
+namespace Spinny {
+
 
 class MusicDir;
 class Album;
@@ -33,18 +37,21 @@ class Song : public sqlite::table {
 	virtual void table_insert_values( std::ostream &str ) const;
 	virtual void table_update_values( std::ostream &str ) const;
 	void initialize_from_db( const sqlite::reader *reader );
- 	static const sqlite::table::description* table_description();
  	virtual const description* m_table_description() const;
 
 	Song();
 
 public:
+ 	static const sqlite::table::description* table_description();
+
+
 	typedef ::sqlite::result_set<Song> result_set;
 	typedef boost::shared_ptr<Song> ptr;
 
-	static bool is_interesting( const boost::filesystem::path &path );
-	static ptr create_from_file( const MusicDir &md, const std::string name );
-	static sqlite::id_t count();
+	static bool		is_interesting( const boost::filesystem::path &path );
+	static ptr		create_from_file( const MusicDir &md, const std::string name );
+	static sqlite::id_t	count();
+	static ptr		load( sqlite::id_t db_id );
 
 	bool save() const;
 
@@ -88,6 +95,7 @@ public:
 
 };
 
+} // namespace Spinny
 
-#endif /* _SONG_H */
+#endif /* _SPINNY_SONG_H */
 

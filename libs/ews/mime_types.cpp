@@ -11,7 +11,7 @@ namespace ews {
 		} mappings[] =
 		{
 			 { "css",  "text/css" },
-			 { "html", "text/html" },
+			 { "html", "text/html; charset=utf-8" },
 			 { "png",  "image/png" },
 			 { "gif",  "image/gif" },
 			 { "xml",  "text/xml" },

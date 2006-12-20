@@ -8,6 +8,7 @@
 #include "boost/filesystem/operations.hpp"
 
 
+using namespace Spinny;
 
 SUITE(SpinnyPlayList){
 
@@ -32,7 +33,7 @@ TEST( Create ){
  	CHECK_EQUAL( "128 Kbs", pl->name() );
 }
 
-TEST( PushBack ){
+TEST( Insert ){
  	DummyApp da;
 	da.populate_music_fixtures();
 
@@ -44,7 +45,7 @@ TEST( PushBack ){
  	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
-		pl->push_back( *s );
+		pl->insert( s.shared_ptr(), 0 );
 	}
 
 	CHECK_EQUAL( pl->size(), songs.size() );
@@ -62,7 +63,7 @@ TEST( Clear ){
  	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
-		pl->push_back( *s );
+		pl->insert( s.shared_ptr(), 0 );
 	}
 
 	CHECK_EQUAL( pl->size(), songs.size() );
@@ -85,7 +86,7 @@ TEST( Remove ){
  	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
-		pl->push_back( *s );
+		pl->insert( s.shared_ptr(),0 );
 	}
 
 	CHECK_EQUAL( songs.size(),pl->size() );
@@ -93,7 +94,7 @@ TEST( Remove ){
 	unsigned int every_other=0;
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
 		if ( ++every_other % 2 ){
-			pl->remove( *s );
+			pl->remove( s->db_id() );
 		}
 	}
 

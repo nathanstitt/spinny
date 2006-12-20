@@ -671,7 +671,7 @@ Value::asString() const
    case realValue:
    case arrayValue:
    case objectValue:
-      JSON_ASSERT( "Type is not convertible to double" && false );
+      JSON_ASSERT( "Type is not convertible to string" && false );
    default:
       JSON_ASSERT_UNREACHABLE;
    }

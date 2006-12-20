@@ -2,6 +2,7 @@
 #include "testing.hpp"
 #include "sqlite_testing.hpp"
 
+using namespace Spinny;
 
 SUITE(SqliteTables) {
 

@@ -22,6 +22,8 @@ table::db_id() const {
 };
 
 
+
+
 bool
 table::operator == ( const table &other ) const {
 	return  ( this->db_id() == other.db_id() );
@@ -56,6 +58,10 @@ table::description::~description(){
 
 }
 
+void
+table::description::checked_callback( bool ) {
+
+};
 
 table::description::description(){
 	sqlite::register_db_table_check( this );

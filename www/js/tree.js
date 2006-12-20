@@ -1,7 +1,9 @@
 
-TreeDDNode = function(id ) {
-    if (id) {
-        this.init(id, 'GridDD');
+
+
+TreeDDNode = function( obj ) {
+    if ( obj ) {
+        this.init( obj.type + obj.id, 'GridDD');
         this.initFrame();
     }
     var s = this.getDragEl().style;
@@ -14,8 +16,13 @@ TreeDDNode = function(id ) {
 // extend proxy so we don't move the whole object around
 TreeDDNode.prototype = new YAHOO.util.DDProxy();
 
-TreeDDNode.prototype.onDragDrop = function(e, id) {
-	alert("dd " + this.id + " was dropped on " + id + ' row: ' + Layout.plGrid.getTargetRow( e ) );
+
+TreeDDNode.prototype.onDragDrop = function(e, id, foo ) {
+    if ( id == "playlists" ){
+	Playlists.songDropped( e, this.id.substring(2) );
+    } else {
+	Songs.songDropped( e, this.id.substring(2) );
+    }
 }
 
 TreeDDNode.prototype.startDrag = function(x, y) {
@@ -27,32 +34,18 @@ TreeDDNode.prototype.startDrag = function(x, y) {
     dragEl.style.width = '30em';
     dragEl.style.padding = '0.4em';
     dragEl.style.border = "1px solid red";
-};
+}
 
-
-// TreeDDNode.prototype.onDragEnter = function(e, id) {
-// 	this.currentRow=plGrid.grid.getTargetRow( e );
-// 	if ( this.currentRow != null ){
-// 		row = plGrid.grid.getRow( this.currentRow );
-// 		row.style.border = '1px solid red';
-// 	}
-// };
 
 
 TreeDDNode.prototype.onDragOver = function(e, id) {
-/* 	row=Layout.plGrid.getTargetRow( e ); */
-/* 	if ( row != this.currentRow ){ */
-/*  		if ( this.currentRow != null ){ */
-/*  			old_row = Layout.plGrid.getRow( this.currentRow ); */
-/*  			old_row.style.borderTop = ''; */
-/*  		} */
-/* 		if ( row != null ){ */
-/* 			new_row = Layout.plGrid.getRow( row ); */
-/* 			new_row.style.borderTop = '1px solid red'; */
-/* 		} */
-/* 		this.currentRow = row; */
-/* 	} */
-};
+	if ( id == "playlists" ){
+		Playlists.elementOver( e );
+	} else {
+		Songs.elementOver( e );
+
+	}
+}
 
 TreeDDNode.prototype.onDragOut = function(e, id) {
 	if ( this.currentRow != null ){
@@ -62,7 +55,7 @@ TreeDDNode.prototype.onDragOut = function(e, id) {
 }
 
 TreeDDNode.prototype.endDrag = function(e) {
-   // override so source object doesn't move when we are done
+		// override so source object doesn't move when we are done
 }
 
 
@@ -75,8 +68,6 @@ function Trees() {
 }
 
 
-Trees.prototype.draw=function(){
-}
 
 
 Trees.loadNodeData=function(node, completeCallback ){
@@ -104,10 +95,11 @@ Trees.loadNodeData=function(node, completeCallback ){
 }
 
 Trees.addNode=function(obj,parent){
+//	obj.type = parent.type;
 	var newnode=new YAHOO.widget.TextNode( obj, parent , false );
 	if ( obj.type == 's' ){
 		newnode.label = '<span id="dd'+obj.id+'"><img src="/img/tree/song_add.png"> '+obj.label+'</span>';
-		new TreeDDNode('dd' + obj.id );
+		new TreeDDNode( obj );
 	} else if ( obj.ch ){
 		newnode.label = obj.label + " <sup>" + String(obj.ch) + "</sup>";
 		newnode.setDynamicLoad( Trees.loadNodeData,1 );

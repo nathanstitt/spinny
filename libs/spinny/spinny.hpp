@@ -11,12 +11,13 @@
 
 BOOST_DECLARE_LOG(app)
 
+namespace Spinny {
 
-class Spinny {
+class App {
+	App( int argc, char **argv );
 	int _argc;
 	char **_argv;
 	boost::program_options::variables_map _vm;
-	Spinny( int argc, char **argv );
 	void startup_threads();
 	void stop_threads();
 public:
@@ -26,7 +27,7 @@ public:
 
 	static void stop();
 
-	static Spinny* instance();
+	static App* instance();
 
 	template<typename T>
  	const T& config( const std::string &name ) const {
@@ -35,6 +36,7 @@ public:
 
 };
 
+}
 
 #endif /* _SPINNY_H */
 

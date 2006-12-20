@@ -8,6 +8,8 @@
 #include <list>
 #include <iterator>
 
+namespace Spinny {
+
 class md_desc : public sqlite::table::description {
 public:
 	virtual const char* table_name() const {
@@ -309,3 +311,4 @@ MusicDir::destroy(){
 	sqlite::table::destroy();
 }
 
+} // namespace Spinny

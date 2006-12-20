@@ -17,7 +17,7 @@ public:
 		: argv_(argv), argc_(argc )
     { }
     void operator()() const {
-	    Spinny::run( argv_, argc_ );
+	    Spinny::App::run( argv_, argc_ );
     }
 private:
 	int argv_;
@@ -86,7 +86,7 @@ int main(int argv , char** argc ) {
 	sigwait(&wait_mask, &sig);
 
 
-	Spinny::stop();
+	Spinny::App::stop();
 	
 	thread.join();
 }

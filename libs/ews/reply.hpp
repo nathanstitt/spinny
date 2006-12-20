@@ -44,7 +44,7 @@ namespace ews {
 	public:
 		const char *tmpl_results_;
 
-		User::ptr user;
+		Spinny::User::ptr user;
 
 		/// The content to be sent in the reply.
 		stream content;
