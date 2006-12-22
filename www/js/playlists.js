@@ -255,7 +255,7 @@ Playlists = function(){
 	selected : function(){
 	    return dm.getRowId( selectedRow );
 	},
-	songsDropped : function( event, song_ids ){
+	songDropped : function( event, song_ids ){
 	    row=grid.getTargetRow( event );
 	    YAHOO.log("Song id " + song_ids + " Dropped on PL row " + row );
 	    pl_id=dm.getRowId( row );

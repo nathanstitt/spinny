@@ -1,9 +1,18 @@
 
 
+
+IconPanel = function(el, config){
+    if(config.icon){
+        config.title = '<img src="' + config.icon + '"> ' + config.title;
+    }
+    IconPanel.superclass.constructor.call(this, el, config);
+};
+YAHOO.extendX(IconPanel, YAHOO.ext.ContentPanel); 
+
+
 Layout = function(){
     var layout;
-    var songsGrid;
-    var plGrid;
+    var innerLayout;
     return {
 	init : function(){
 	    this.layout = new YAHOO.ext.BorderLayout(document.body, {
@@ -42,13 +51,14 @@ Layout = function(){
 
 		}
 	    });
-	    var innerLayout = new YAHOO.ext.BorderLayout('center-content', {
+	    innerLayout = new YAHOO.ext.BorderLayout('center-content', {
 		north: {
 		    autoScroll:true,
 		    tabPosition: 'top',
 		    split: false,
 		    initialSize: 300,
-		    split:true
+		    split:true,
+		    closeOnTab:true
 		},
 		center: {
 		    minSize: 100,
@@ -71,8 +81,10 @@ Layout = function(){
 		    titlebar: false
 		}
 	    });
-	    innerLayout.add( 'north', new YAHOO.ext.ContentPanel('center1', {title: 'Info Panel #1', closable: false}));
-	    innerLayout.add( 'north', new YAHOO.ext.ContentPanel('center2', {title: 'Info Panel #2', closable: false}));
+	    lyricsPanel = new YAHOO.ext.ContentPanel('center1', {title: 'Lyrics', closable: false});
+	    innerLayout.add( 'north', lyricsPanel );
+	    artistPanel = new YAHOO.ext.ContentPanel('center2', {title: 'Artist Info', closable: true})
+	    innerLayout.add( 'north', artistPanel );
 
 	    innerLayout.add( 'center', new YAHOO.ext.GridPanel( Songs.getGrid() ) );
 
@@ -124,13 +136,25 @@ Layout = function(){
 	},
 	handleDrop : function( dst_id, src_id, event, ids ){
 	    HighlightEvents.cancel();
-	    if ( dst_id == 'playlists' && src_id == 'songs' ){
+	    if ( dst_id == 'playlists' ){
 		Playlists.songsDropped( event, ids );
 	    } else if ( dst_id == 'songs' && src_id == 'playlists' ){
 		Songs.playlistDropped( event, ids );
+	    } else if ( dst_id == 'songs' && src_id == 'song' ){
+		Songs.songDropped( event, ids );
 	    }
-	}
-	
+	},
+	showSongInfo : function( song_id, artist ){
+	    link = 'http://en.wikipedia.org/wiki/' + encodeURIComponent( artist );
+
+	    id='art-'+song_id;	    
+  	    var iframe = YAHOO.ext.DomHelper.append( document.body, 
+    		            {tag: 'iframe', frameBorder: 0, src: link, id: 'frm'+id } );
+
+ 	    panel = new YAHOO.ext.ContentPanel(iframe,{
+		title: artist, fitToFrame:true, closable:true } );
+	    innerLayout.add( 'north', panel );
+	}	
     }
 }();
 

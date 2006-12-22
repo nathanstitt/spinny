@@ -145,7 +145,6 @@ Tree::handle( const ews::request& req, ews::reply& rep ) const {
 		break;
 	}
 
-
 	case JsonArtistsAlbum: {
 		Spinny::Artist::ptr artist = Spinny::Artist::load( boost::lexical_cast<sqlite::id_t>( req.u3 ) );
 		BOOST_LOGL( www, info ) << "Tree loading albums and songs for artist " << artist->name() << " id: " << artist->db_id();
@@ -163,7 +162,7 @@ Tree::handle( const ews::request& req, ews::reply& rep ) const {
 	}
 
 	rep.content << "\n]";
-	rep.set_header( "X-HANDLED-BY", "TreeHandler" );
+
 	rep.set_basic_headers( "json" );
 
 	return Stop;

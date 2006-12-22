@@ -123,8 +123,9 @@ Songs = function() {
 	    return grid;
 	},
 
-	songDropped : function( event, song_id ){
-	    YAHOO.log("Song id " + song_id + " Dropped on row " + lastHighlighted );
+	songDropped : function( event, song_ids ){
+	    YAHOO.log("Song ids " + song_ids + " Dropped on row " + lastHighlighted );
+	    position = grid.getTargetRow( event );
 	    if ( position == null ){
 		position=dm.getRowCount();
 	    }

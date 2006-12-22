@@ -2,10 +2,8 @@
 
 
 TreeDDNode = function( obj ) {
-    if ( obj ) {
-        this.init( obj.type + obj.id, 'GridDD');
-        this.initFrame();
-    }
+    this.init( obj.p + obj.id, 'GridDD');
+    this.initFrame();
     var s = this.getDragEl().style;
     s.borderColor = "transparent";
     s.backgroundColor = "#f6f5e5";
@@ -18,11 +16,7 @@ TreeDDNode.prototype = new YAHOO.util.DDProxy();
 
 
 TreeDDNode.prototype.onDragDrop = function(e, id, foo ) {
-    if ( id == "playlists" ){
-	Playlists.songDropped( e, this.id.substring(2) );
-    } else {
-	Songs.songDropped( e, this.id.substring(2) );
-    }
+    Layout.handleDrop( id, 'song', e, [ this.id.substring(1) ] );
 }
 
 TreeDDNode.prototype.startDrag = function(x, y) {
@@ -37,21 +31,15 @@ TreeDDNode.prototype.startDrag = function(x, y) {
 }
 
 
-
 TreeDDNode.prototype.onDragOver = function(e, id) {
-	if ( id == "playlists" ){
-		Playlists.elementOver( e );
-	} else {
-		Songs.elementOver( e );
-
-	}
+    Layout.handleDrag( this, id, 'song', e );
 }
 
 TreeDDNode.prototype.onDragOut = function(e, id) {
-	if ( this.currentRow != null ){
-		old_row = Layout.plGrid.getRow( this.currentRow );
-		old_row.style.borderTop = '';
-	}
+    if ( this.currentRow != null ){
+	old_row = Layout.plGrid.getRow( this.currentRow );
+	old_row.style.borderTop = '';
+    }
 }
 
 TreeDDNode.prototype.endDrag = function(e) {
@@ -60,50 +48,62 @@ TreeDDNode.prototype.endDrag = function(e) {
 
 
 
-
-
-
 function Trees() {
 
 }
 
+Trees.labelClick = function( node ){
+    YAHOO.log( "Node " + node.data.label + " clicked" );
+    var cb = { 
+	success: function(o){
+	    Layout.showSongInfo( o.argument.song_id, o.responseText );
+	},
+	failure: function(){
+	    alert("Tree Label Click Failed AJAX Req");
+	},
+	argument: {'song_id':node.data.id }
+    };
+    url="/info/song/" + node.data.id + "/artist";
+    YAHOO.util.Connect.asyncRequest('GET', url, cb, null);
+}
 
 
+// 
 
 Trees.loadNodeData=function(node, completeCallback ){
-	var cb = { 
+    var cb = { 
 	success: function(o){
-			YAHOO.log("AJAX Tree node load: " + o.responseText );
-			var parent = o.argument.node;
-			var treecallback = o.argument.callback;
-			var ary=eval('('+o.responseText+')');
-			for ( var indx in ary ){
-				var obj=ary[indx];
-				obj.iconMode = 0;
-				Trees.addNode( obj, parent );
-			}
-			o.argument.callback();
-		},
+	    var parent = o.argument.node;
+	    var treecallback = o.argument.callback;
+	    var ary=eval('('+o.responseText+')');
+	    for ( var indx in ary ){
+		var obj=ary[indx];
+		obj.iconMode = 0;
+		Trees.addNode( obj, parent );
+	    }
+	    o.argument.callback();
+	},
 	failure: function(){
-			alert("Tree Failed AJAX Req");
-			o.argument.callback()
-		},
+	    alert("Tree Failed AJAX Req");
+	    o.argument.callback()
+	},
 	argument: {'node':node,'callback': completeCallback }
-	};
-	url="/tree/" + node.data.type + "/" + node.data.id
-	var transaction = YAHOO.util.Connect.asyncRequest('GET', url, cb, null); 
+    };
+    url="/tree/" + node.data.type + "/" + node.data.id
+    var transaction = YAHOO.util.Connect.asyncRequest('GET', url, cb, null); 
 }
 
 Trees.addNode=function(obj,parent){
-//	obj.type = parent.type;
-	var newnode=new YAHOO.widget.TextNode( obj, parent , false );
-	if ( obj.type == 's' ){
-		newnode.label = '<span id="dd'+obj.id+'"><img src="/img/tree/song_add.png"> '+obj.label+'</span>';
-		new TreeDDNode( obj );
-	} else if ( obj.ch ){
-		newnode.label = obj.label + " <sup>" + String(obj.ch) + "</sup>";
-		newnode.setDynamicLoad( Trees.loadNodeData,1 );
-	}
+    obj.p = parent.p;
+    var newnode=new YAHOO.widget.TextNode( obj, parent , false );
+    if ( obj.type == 's' ){
+	newnode.label = '<span id="'+obj.p+obj.id+'"><img src="/img/tree/song_add.png"> '+obj.label+'</span>';
+	newnode.onLabelClick = Trees.labelClick;
+	new TreeDDNode( obj );
+    } else if ( obj.ch ){
+	newnode.label = obj.label + " <sup>" + String(obj.ch) + "</sup>";
+	newnode.setDynamicLoad( Trees.loadNodeData,1 );
+    }
 }
 
 

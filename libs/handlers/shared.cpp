@@ -11,6 +11,7 @@
 #include "handlers/file_system.hpp"
 #include "handlers/login.hpp"
 #include "handlers/users.hpp"
+#include "handlers/info.hpp"
 
 void
 handlers::link_up(){
@@ -21,6 +22,7 @@ handlers::link_up(){
 	static handlers::Files files_;
 	static handlers::Login login_;
 	static handlers::Users users_;
+	static handlers::Info info_;
 
 	BOOST_LOGL(www,info) << "LINKING UP HANDLERS";
 };
