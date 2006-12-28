@@ -52,6 +52,8 @@ public:
 	static ptr		create_from_file( const MusicDir &md, const std::string name );
 	static sqlite::id_t	count();
 	static ptr		load( sqlite::id_t db_id );
+	static result_set       find( const std::string &query, int first, int count );
+	static unsigned int     num_matching( const std::string &query );
 
 	bool save() const;
 

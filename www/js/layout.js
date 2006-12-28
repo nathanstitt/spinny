@@ -1,15 +1,5 @@
 
 
-
-IconPanel = function(el, config){
-    if(config.icon){
-        config.title = '<img src="' + config.icon + '"> ' + config.title;
-    }
-    IconPanel.superclass.constructor.call(this, el, config);
-};
-YAHOO.extendX(IconPanel, YAHOO.ext.ContentPanel); 
-
-
 Layout = function(){
     var layout;
     var innerLayout;
@@ -93,10 +83,13 @@ Layout = function(){
 
 	    this.layout.add('east', new YAHOO.ext.ContentPanel('console', {title: 'Message Console', closable: true}));
 
-	    westLayout.add('center', new YAHOO.ext.ContentPanel( 'searchSongs', {title: 'Find'}));
 	    westLayout.add('center', new YAHOO.ext.ContentPanel( 'albumsTree', {title: 'Album' }));
 	    westLayout.add('center', new YAHOO.ext.ContentPanel('artistsTree', {title: 'Artist' }));
 	    westLayout.add('center', new YAHOO.ext.ContentPanel( 'dirsTree', {title: 'Dir'}));
+
+	    SongSearch.init();
+
+	    westLayout.add('center', new YAHOO.ext.GridPanel( SongSearch.getGrid(), {title: 'Find'}));
 	    
 	    westLayout.add('north',  new YAHOO.ext.GridPanel( Playlists.getGrid() ) );
 	    this.layout.add('center', new YAHOO.ext.NestedLayoutPanel(innerLayout) );

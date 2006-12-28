@@ -104,7 +104,7 @@ Songs = function() {
 		view=this.getView();
 		width = view.wrap.clientWidth;
 
-		YAHOO.log("Autosize songs, width="+width);
+//		YAHOO.log("Autosize songs, width="+width);
 		view.fitColumns.defer( 50, view );
 // 		model.setColumnWidth(1, width*0.05 );
 // 		model.setColumnWidth(2, width*0.40 );

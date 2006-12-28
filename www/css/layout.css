@@ -725,7 +725,6 @@ top: 0px;
   cursor:pointer;
   }
 
-
 .ylayout-collapsed-east
 {
   background-image:url(/img/messages.gif);
@@ -857,6 +856,22 @@ top: 0px;
 #users-grid .ygrid-col-4{
 }
 
+#song-search-results .ygrid-col-0{
+}
+#song-search-results .ygrid-col-1{
+}
+#song-search-results .ygrid-col-2{
+}
+#song-search-results .ygrid-col-3{
+}
+#song-search-results .ygrid-col-4{
+}
+
+#song-search-field
+{
+ padding-left:0.2em;
+ font:normal 10px tahoma, verdana, helvetica;
+}
 
 
 .ygrid-mso .ygrid-row{

@@ -195,6 +195,24 @@ Song::load( sqlite::id_t db_id ){
 	return sqlite::db()->load<Song>( db_id );
 }
 
+unsigned int
+Song::num_matching( const std::string &query ){
+	sqlite::connection *con = sqlite::db();
+	*con << "select count(*) from songs where title like '%" << sqlite::q( query, false ) << "%'";
+	return con->exec<unsigned int>();
+}
+
+Song::result_set
+Song::find( const std::string &query, int first, int count ){
+	sqlite::connection *con = sqlite::db();
+	*con << "select ";
+	Song::table_description()->insert_fields( *con );
+	*con << " from songs where title like '%" << sqlite::q( query, false ) << "%' order by lower(title) limit "
+	     << first << ',' << count;
+	cout << con->current_statement() << endl;
+	return con->load_stored<Song>();
+}
+
 
 boost::filesystem::path
 Song::path() const{
@@ -211,7 +229,6 @@ Song::directory() const {
 boost::shared_ptr<Album>
 Song::album() const {
 	Album::ptr al = sqlite::db()->load<Album>( _album_id );
-	BOOST_LOG(sql) << "LOADING: " << _album_id << " : " << al->name();
 	return al;
 }
 
