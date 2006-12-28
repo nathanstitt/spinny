@@ -209,7 +209,6 @@ Song::find( const std::string &query, int first, int count ){
 	Song::table_description()->insert_fields( *con );
 	*con << " from songs where title like '%" << sqlite::q( query, false ) << "%' order by lower(title) limit "
 	     << first << ',' << count;
-	cout << con->current_statement() << endl;
 	return con->load_stored<Song>();
 }
 
