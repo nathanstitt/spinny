@@ -4,10 +4,10 @@ SongSearch = function() {
     var initialText = 'Search Terms...';
     handleKey = function(){
 	YAHOO.log("Key Press " + input.dom.value );
+	dm.baseParams = { 'q':input.dom.value};
 	if ( input.dom.value == "" ){
 	    dm.removeAll();
 	} else {
-	    dm.baseParams = { 'q':input.dom.value};
 	    dm.loadPage( 1 );
 	}
     }
@@ -57,7 +57,7 @@ SongSearch = function() {
 	   grid.selfTarget = true;
 	   pgv=new YAHOO.ext.grid.PagedGridView();
 	   pgv.beforePageText='';
-	   pgv.afterPageText='';
+	   pgv.afterPageText='&nbsp;/&nbsp;%0';
 	   grid.view = pgv;
 	   dm.initPaging('/info/find',10 );
 	   grid.render();

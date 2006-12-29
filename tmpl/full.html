@@ -43,21 +43,20 @@
 
       this.artists=new YAHOO.widget.TreeView(document.getElementById("artistsTree"));
       var artistRoot = this.artists.getRoot();
-      artistRoot.p='a';
+//      artistRoot.data.p='a';
 //      artistRoot.data.type='artist';
       <?cs each:item = Artists ?>
-      Trees.addNode( { p:'a',type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, artistRoot );<?cs /each ?>
+      Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, artistRoot );<?cs /each ?>
 
       this.albums=new YAHOO.widget.TreeView(document.getElementById("albumsTree"));
       var albumRoot = this.albums.getRoot();
-      albumRoot.p = 'b';
-//      albumRoot.data.type='album';
+//      albumRoot.data.p = 'b';
       <?cs each:item = Albums ?>
       Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, albumRoot );<?cs /each ?>
 
       this.dirs=new YAHOO.widget.TreeView(document.getElementById("dirsTree"));
       var dirRoot = this.dirs.getRoot();
-      dirRoot.p = 'c';
+//      dirRoot.data.p = 'c';
       <?cs each:item = RootDirectories ?>
       Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, dirRoot );<?cs /each ?>
 

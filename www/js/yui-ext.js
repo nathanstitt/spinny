@@ -9003,10 +9003,10 @@ YAHOO.extendX(YAHOO.ext.grid.JSONDataModel, YAHOO.ext.grid.LoadableDataModel, {
     		  this.removeAll();
     		}
             this.addRows(rowData);
-        	this.fireLoadEvent();
     		if(typeof callback == 'function'){
     	    	callback(this, true);
     	    }
+        	this.fireLoadEvent();
         }catch(e){
     		this.fireLoadException(e, null);
     		if(typeof callback == 'function'){

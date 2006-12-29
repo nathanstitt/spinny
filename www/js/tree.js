@@ -89,15 +89,16 @@ Trees.loadNodeData=function(node, completeCallback ){
 	},
 	argument: {'node':node,'callback': completeCallback }
     };
+YAHOO.log("Load Node: " + node.data.p + ' : ' + node.label  );
     url="/tree/" + node.data.type + "/" + node.data.id
     var transaction = YAHOO.util.Connect.asyncRequest('GET', url, cb, null); 
 }
 
 Trees.addNode=function(obj,parent){
-    obj.p = parent.p;
+    obj.data.p = parent.data.p;
     var newnode=new YAHOO.widget.TextNode( obj, parent , false );
     if ( obj.type == 's' ){
-	newnode.label = '<span id="'+obj.p+obj.id+'"><img src="/img/tree/song_add.png"> '+obj.label+'</span>';
+	newnode.label = '<span id="'+obj.p+obj.id+'"><img src="/img/tree/song_add.png"> '+obj.type + ' : ' + obj.p + ' : ' + obj.label+'</span>';
 	newnode.onLabelClick = Trees.labelClick;
 	new TreeDDNode( obj );
     } else if ( obj.ch ){

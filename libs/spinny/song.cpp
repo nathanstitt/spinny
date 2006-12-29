@@ -207,7 +207,7 @@ Song::find( const std::string &query, int first, int count ){
 	sqlite::connection *con = sqlite::db();
 	*con << "select ";
 	Song::table_description()->insert_fields( *con );
-	*con << " from songs where title like '%" << sqlite::q( query, false ) << "%' order by lower(title) limit "
+	*con << ",rowid from songs where title like '%" << sqlite::q( query, false ) << "%' order by lower(title) limit "
 	     << first << ',' << count;
 	return con->load_stored<Song>();
 }

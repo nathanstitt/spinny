@@ -133,7 +133,7 @@ Layout = function(){
 		Playlists.songsDropped( event, ids );
 	    } else if ( dst_id == 'songs' && src_id == 'playlists' ){
 		Songs.playlistDropped( event, ids );
-	    } else if ( dst_id == 'songs' && src_id == 'song' ){
+	    } else if ( dst_id == 'songs' ) {
 		Songs.songDropped( event, ids );
 	    }
 	},
