@@ -95,7 +95,7 @@ YAHOO.log("Load Node: " + node.data.p + ' : ' + node.label  );
 }
 
 Trees.addNode=function(obj,parent){
-    obj.data.p = parent.data.p;
+ //   obj.data.p = parent.data.p;
     var newnode=new YAHOO.widget.TextNode( obj, parent , false );
     if ( obj.type == 's' ){
 	newnode.label = '<span id="'+obj.p+obj.id+'"><img src="/img/tree/song_add.png"> '+obj.type + ' : ' + obj.p + ' : ' + obj.label+'</span>';
