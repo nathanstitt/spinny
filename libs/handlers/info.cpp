@@ -39,7 +39,6 @@ Info::handle( const ews::request& req, ews::reply& rep ) const {
 
 		rep.content  << "]}\n";
 
-
 	}
 
 	rep.set_basic_headers( "json" );

@@ -12,6 +12,10 @@
 #include "boost/algorithm/string/predicate.hpp"
 #include "boost/algorithm/string/classification.hpp"
 
+#include "boost/filesystem/path.hpp"
+#include "boost/filesystem/exception.hpp" 
+#include "boost/filesystem/fstream.hpp"
+
 using namespace handlers;
 
 void
@@ -83,6 +87,7 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 			
 		}
 	} else if ( req.u2 == "list" ){
+
 		BOOST_LOGL(www,info) << "Loading PL";
 		rep.content << "{Playlists: [";
 		Spinny::PlayList::result_set rs = Spinny::PlayList::all();
@@ -122,7 +127,7 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 		rep.content << "{Playlists: [";
 		insert( pl, comma, rep );
 		rep.content << "]}";
-	} else if ( req.u2 == "reorder" ) {
+	} else if ( req.u2 == "reorder" )  {
 		for ( ews::request::varibles_t::const_iterator var=req.varibles.begin();
 		      req.varibles.end() != var; ++var ){
 			if ( boost::all( var->first, boost::is_digit() ) ) {
@@ -130,7 +135,6 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 				Spinny::PlayList::set_order(  boost::lexical_cast<sqlite::id_t>(var->first), boost::lexical_cast<int>( var->second.front() ) );
 			}
 		}
-
 
 	}
 

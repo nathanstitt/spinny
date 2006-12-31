@@ -1,8 +1,8 @@
 
 
-
-TreeDDNode = function( obj ) {
-    this.init( obj.p + obj.id, 'GridDD');
+TreeDDNode = function( obj,tid ) {
+    YAHOO.log( "New DDNode " + tid + " : " + obj.id );
+    this.init( tid + obj.id, 'GridDD');
     this.initFrame();
     var s = this.getDragEl().style;
     s.borderColor = "transparent";
@@ -95,12 +95,12 @@ YAHOO.log("Load Node: " + node.data.p + ' : ' + node.label  );
 }
 
 Trees.addNode=function(obj,parent){
- //   obj.data.p = parent.data.p;
     var newnode=new YAHOO.widget.TextNode( obj, parent , false );
     if ( obj.type == 's' ){
-	newnode.label = '<span id="'+obj.p+obj.id+'"><img src="/img/tree/song_add.png"> '+obj.type + ' : ' + obj.p + ' : ' + obj.label+'</span>';
+	var tid=newnode.tree.tid;
+	newnode.label = '<span id="'+tid+obj.id+'"><img src="/img/tree/song_add.png"> '+obj.label+'</span>';
 	newnode.onLabelClick = Trees.labelClick;
-	new TreeDDNode( obj );
+	new TreeDDNode( obj, tid );
     } else if ( obj.ch ){
 	newnode.label = obj.label + " <sup>" + String(obj.ch) + "</sup>";
 	newnode.setDynamicLoad( Trees.loadNodeData,1 );

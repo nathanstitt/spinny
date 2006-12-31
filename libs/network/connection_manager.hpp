@@ -1,11 +1,11 @@
-#ifndef EWS_CONNECTION_MANAGER_HPP
-#define EWS_CONNECTION_MANAGER_HPP
+#ifndef NETWORK_CONNECTION_MANAGER_HPP
+#define NETWORK_CONNECTION_MANAGER_HPP
 
 #include <set>
 #include <boost/noncopyable.hpp>
-#include "ews/connection.hpp"
+#include "network/connection.hpp"
 
-namespace ews {
+namespace network {
 
 /// Manages open connections so that they may be cleanly stopped when the server
 /// needs to shut down.
@@ -14,7 +14,7 @@ namespace ews {
 	{
 	public:
 		/// Add the specified connection to the manager and start it.
-		void start(connection_ptr c);
+		void start( connection_ptr c );
 
 		/// Stop the specified connection.
 		void stop(connection_ptr c);
@@ -28,6 +28,6 @@ namespace ews {
 	};
 
 
-} // namespace ews
+} // namespace network
 
-#endif // EWS_CONNECTION_MANAGER_HPP
+#endif // NETWORK_CONNECTION_MANAGER_HPP
