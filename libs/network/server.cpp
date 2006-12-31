@@ -2,7 +2,7 @@
 #include <boost/bind.hpp>
 #include <boost/log/log.hpp>
 
-BOOST_DEFINE_LOG( strm, "strm" )
+BOOST_DEFINE_LOG( netwk, "netwk" )
 
 
 namespace network {
@@ -26,7 +26,7 @@ namespace network {
 				       boost::bind(&server::handle_accept, this,
 						   asio::placeholders::error));
 
-		BOOST_LOGL( strm,info ) << "Server running on: " 
+		BOOST_LOGL( netwk,info ) << "Server running on: " 
 					 << address
 					<< ":" << port;
 	}

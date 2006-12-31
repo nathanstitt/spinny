@@ -8,7 +8,7 @@
 #include <boost/log/log.hpp>
 #include "network/connection_manager.hpp"
 
-BOOST_DECLARE_LOG( strm );
+BOOST_DECLARE_LOG( netwk );
 
 namespace network {
 

@@ -12,7 +12,7 @@ namespace network {
 		: socket_(io_service),
 		  connection_manager_(manager)
 	{
-		BOOST_LOGL(strm,debug) << "NEW CONNECTION: " << (int)this << std::endl;
+		BOOST_LOGL(netwk,debug) << "NEW CONNECTION: " << (int)this << std::endl;
 	}
 
 	asio::ip::tcp::socket& connection::socket() {
@@ -33,7 +33,7 @@ namespace network {
 	void connection::handle_read( const asio::error& e,
 				      std::size_t bytes_transferred )
 	{
-		BOOST_LOGL(strm,debug) << "Server Handle Read: " << e;
+		BOOST_LOGL(netwk,debug) << "Server Handle Read: " << e;
 		if ( !e )	{
 			bytes_transferred=0; // fix for unused warning
 		} else if (e != asio::error::operation_aborted) {
@@ -47,7 +47,7 @@ namespace network {
 		if (e != asio::error::operation_aborted) {
 			connection_manager_.stop(shared_from_this());
 		}
-		BOOST_LOGL( strm,debug )
+		BOOST_LOGL( netwk,debug )
 			<< "Wrote " << bytes_transferred << " bytes on connection "
 			<< (int)this << " result: " << e.what();
 	}
