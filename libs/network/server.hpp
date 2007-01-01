@@ -21,6 +21,11 @@ namespace network {
 		void run();
 
 		void stop();
+
+		virtual connection* new_connection( asio::io_service& io_service,
+						    connection_manager& manager ) const = 0;
+
+		virtual ~server();
 	private:
 		/// Handle completion of an asynchronous accept operation.
 		void handle_accept(const asio::error& e);

@@ -12,10 +12,9 @@ namespace network {
 
 	class connection_manager;
 
-/// Represents a single connection from a client.
+	/// Represents a single connection from a client.
 	class connection
-		: public boost::enable_shared_from_this<connection>,
-		  private boost::noncopyable
+		: private boost::noncopyable
 	{
 	public:
 		/// Construct a connection with the given io_service.
@@ -23,29 +22,27 @@ namespace network {
 				    connection_manager& manager
 			);
 
+
+		/// Start the first asynchronous operation for the connection.
+		virtual void start();
+
+		/// Stop all asynchronous operations associated with the connection.
+		virtual void stop();
+
 		/// Get the socket associated with the connection.
 		asio::ip::tcp::socket& socket();
 
-		/// Start the first asynchronous operation for the connection.
-		void start();
+		/// Get the manager associated with the connection.
+		connection_manager& manager();
 
-		/// Stop all asynchronous operations associated with the connection.
-		void stop();
+		virtual ~connection();
 	private:
-		/// Handle completion of a read operation.
-		void handle_read(const asio::error& e, std::size_t bytes_transferred);
-
-		/// Handle completion of a write operation.
-		void handle_write(const asio::error& e, std::size_t bytes_transferred );
 
 		/// Socket for the connection.
 		asio::ip::tcp::socket socket_;
 
 		/// The manager for this connection.
-		connection_manager& connection_manager_;
-
-		/// Buffer for incoming data.
-		boost::array<char, 8192> buffer_;
+		connection_manager& manager_;
 	};
 
 	typedef boost::shared_ptr<connection> connection_ptr;
