@@ -3,10 +3,10 @@
 #include <sstream>
 #include <string>
 #include <boost/lexical_cast.hpp>
-#include "ews/mime_types.hpp"
-#include "ews/reply.hpp"
-#include "ews/request.hpp"
-#include "ews/server.hpp"
+#include "network/mime_types.hpp"
+#include "network/reply.hpp"
+#include "network/request.hpp"
+#include "network/server.hpp"
 #include <list>
 #include "boost/date_time/posix_time/posix_time.hpp"
 

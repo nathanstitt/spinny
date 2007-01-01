@@ -2,8 +2,8 @@
  */
 
 
-#include "ews/request.hpp"
-#include "ews/server.hpp"
+#include "network/request.hpp"
+#include "network/server.hpp"
 #include "boost/algorithm/string/case_conv.hpp"
 
 namespace ews{

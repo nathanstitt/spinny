@@ -1,8 +1,7 @@
-#include "ews/connection.hpp"
-
-#include "ews/request_handler.hpp"
-#include "ews/request_parser.hpp"
-#include "ews/server.hpp"
+#include "network/http_connection.hpp"
+#include "network/http_request_handler.hpp"
+#include "network/http_request_parser.hpp"
+#include "network/http_server.hpp"
 #include <vector>
 #include <boost/bind.hpp>
 

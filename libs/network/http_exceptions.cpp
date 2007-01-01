@@ -1,5 +1,5 @@
 
-#include "ews/exceptions.hpp"
+#include "network/http_exceptions.hpp"
 
 ews::error::error( const char *msg ) : runtime_error(msg){}
 

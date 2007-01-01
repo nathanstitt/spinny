@@ -1,5 +1,7 @@
-	#include "ews/mime_types.hpp"
-#include "ews/server.hpp"
+
+
+#include "network/http_mime_types.hpp"
+
 
 namespace ews {
 	namespace mime_types {

@@ -7,8 +7,7 @@
 
 #include "boost/lexical_cast.hpp"
 #include "boost/algorithm/string/find.hpp"
-#include "ews/request_parser.hpp"
-#include "ews/header.hpp"
+#include "network/http_request_parser.hpp"
 #include "spinny/user.hpp"
 #include "cs/cs.h"
 

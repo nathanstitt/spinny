@@ -4,7 +4,7 @@
 #include "boost/logic/tribool.hpp"
 #include "boost/tuple/tuple.hpp"
 #include <string>
-#include "ews/request.hpp"
+#include "network/http_request.hpp"
 
 namespace ews {
 

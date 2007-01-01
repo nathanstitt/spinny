@@ -2,11 +2,12 @@
 #define _EWS_SERVER_HPP
 
 #include "network/server.hpp"
-#include "ews/connection.hpp"
-#include "ews/exceptions.hpp"
-#include "ews/connection_manager.hpp"
-#include "ews/mime_types.hpp"
-#include "ews/request_handler.hpp"
+#include "network/http_connection.hpp"
+#include "network/http_exceptions.hpp"
+#include "network/connection_manager.hpp"
+#include "network/http_mime_types.hpp"
+#include "network/http_mime_types.hpp"
+#include "network/http_request_handler.hpp"
 #include <boost/log/log.hpp>
 
 BOOST_DECLARE_LOG(www);

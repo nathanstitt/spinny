@@ -1,8 +1,8 @@
-#include "reply.hpp"
+#include "network/http_reply.hpp"
 #include <string>
 #include "boost/lexical_cast.hpp"
-#include "ews/mime_types.hpp"
-#include "ews/server.hpp"
+#include "network/http_mime_types.hpp"
+#include "network/http_server.hpp"
 
 namespace ews {
 

@@ -8,9 +8,9 @@
 #include "boost/enable_shared_from_this.hpp"
 #include "boost/filesystem/path.hpp"
 
-#include "ews/reply.hpp"
-#include "ews/request.hpp"
-#include "ews/request_parser.hpp"
+#include "network/http_reply.hpp"
+#include "network/http_request.hpp"
+#include "network/http_request_parser.hpp"
 
 #include "network/connection.hpp"
 

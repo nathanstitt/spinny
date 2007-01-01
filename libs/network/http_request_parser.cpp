@@ -1,6 +1,6 @@
-#include "ews/request_parser.hpp"
-#include "ews/request.hpp"
-#include "ews/server.hpp"
+#include "network/request_parser.hpp"
+#include "network/request.hpp"
+#include "network/server.hpp"
 #include <sstream>
 #include "boost/algorithm/string/case_conv.hpp"
 #include "boost/algorithm/string/split.hpp"
