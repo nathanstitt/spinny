@@ -10,11 +10,10 @@ namespace network {
 	server::server( const std::string& address, const std::string& port )
 		: io_service_(),
 		  acceptor_(io_service_),
-		  connection_manager_()
+		  connection_manager_(),
+		  new_connection_( new connection( io_service_,
+						   connection_manager_ ) )
 	{
-		new_connection_.reset( this->new_connection(io_service_,
-							    connection_manager_ ) );
-
 		// Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
 		asio::ip::tcp::resolver resolver(io_service_);
 		asio::ip::tcp::resolver::query query(address, port);
@@ -55,9 +54,8 @@ namespace network {
 		if (!e)
 		{
 			connection_manager_.start(new_connection_);
-
-			new_connection_.reset( this->new_connection(io_service_,
-							    connection_manager_ ) );
+			new_connection_.reset( new connection(io_service_,
+							      connection_manager_ ));
 			acceptor_.async_accept(new_connection_->socket(),
 					       boost::bind(&server::handle_accept, this,
 							   asio::placeholders::error));
@@ -72,9 +70,6 @@ namespace network {
 		acceptor_.close();
 		connection_manager_.stop_all();
 	}
-
-	server::~server()
-	{}
 
 } // namespace network
 
