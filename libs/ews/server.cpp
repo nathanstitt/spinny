@@ -1,6 +1,5 @@
 #include "ews/server.hpp"
 #include <boost/bind.hpp>
-#include <boost/log/log.hpp>
 
 BOOST_DEFINE_LOG( www, "www" )
 

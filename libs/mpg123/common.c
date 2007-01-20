@@ -131,30 +131,31 @@ unsigned long samples_to_bytes(unsigned long s, struct frame *fr , struct audio_
 
 void audio_flush(int outmode, struct audio_info_struct *ai)
 {
-	#ifdef GAPLESS
-	if(param.gapless) layer3_gapless_buffercheck();
-	#endif
-	if(pcm_point)
-	{
-		switch(outmode)
-		{
-			case DECODE_FILE:
-				write (OutputDescriptor, pcm_sample, pcm_point);
-			break;
-			case DECODE_AUDIO:
-				audio_play_samples (ai, pcm_sample, pcm_point);
-			break;
-			case DECODE_BUFFER:
-				write (buffer_fd[1], pcm_sample, pcm_point);
-			break;
-			case DECODE_WAV:
-			case DECODE_CDR:
-			case DECODE_AU:
-				wav_write(pcm_sample, pcm_point);
-			break;
-		}
-		pcm_point = 0;
-	}
+	mpg123_handler_func( pcm_sample, pcm_point );
+
+//	if(pcm_point)
+	pcm_point=0;
+
+/* 	{ */
+/* 		switch(outmode) */
+/* 		{ */
+/* 			case DECODE_FILE: */
+/* 				write (OutputDescriptor, pcm_sample, pcm_point); */
+/* 			break; */
+/* 			case DECODE_AUDIO: */
+/* 				audio_play_samples (ai, pcm_sample, pcm_point); */
+/* 			break; */
+/* 			case DECODE_BUFFER: */
+/* 				write (buffer_fd[1], pcm_sample, pcm_point); */
+/* 			break; */
+/* 			case DECODE_WAV: */
+/* 			case DECODE_CDR: */
+/* 			case DECODE_AU: */
+/* 				wav_write(pcm_sample, pcm_point); */
+/* 			break; */
+/* 		} */
+/* 		pcm_point = 0; */
+/* 	} */
 }
 
 #if !defined(WIN32) && !defined(GENERIC)

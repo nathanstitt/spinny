@@ -141,6 +141,7 @@ typedef unsigned char byte;
 #define         MPG_MD_DUAL_CHANNEL     2
 #define         MPG_MD_MONO             3
 
+
 /* I suspect that 32767 would be a better idea here, but Michael put this in... */
 #define MAXOUTBURST 32768
 
@@ -440,6 +441,16 @@ extern int synth_1to1_3dnow(real *,int,unsigned char *,int *);
 /* avoid the SIGINT in terminal control */
 void next_track(void);
 extern long outscale;
+
+extern void initMP3();
+
+extern void closeMP3();
+
+typedef void(*mpg123_data_handler)(unsigned char *, unsigned int);
+extern mpg123_data_handler mpg123_handler_func;
+
+extern unsigned int decodeMP3(char *file_name, mpg123_data_handler );
+
 
 #if defined(__cplusplus)
 }

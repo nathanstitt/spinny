@@ -123,7 +123,7 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 
 	if ( ! boost::filesystem::exists( path ) || ! is_interesting( path ) ) {
 		BOOST_LOG(app) << "Can't load " << path.string() << " as it doesn't exist, or we can't handle that type of file." ;
-		throw file_error("doesn't exist, or not equipped to handle");
+		throw file_error( "doesn't exist, or not equipped to handle" );
 	}
 
 	Song::ptr song = Song::ptr( new Song );

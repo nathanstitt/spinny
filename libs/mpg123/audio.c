@@ -183,7 +183,7 @@ int audio_fit_capabilities(struct audio_info_struct *ai,int c,int r)
 	int rn;
 	int f0=0;
 //	ai->output=AUDIO_OUT_INTERNAL_SPEAKER;	
-	printf("Audio Fit output format %i, rate %i, output %i  chan %i : stream - rate %i chan: %i\n",ai->format, ai->rate,ai->output,ai->channels, r,c);
+//	printf("Audio Fit output format %i, rate %i, output %i  chan %i : stream - rate %i chan: %i\n",ai->format, ai->rate,ai->output,ai->channels, r,c);
 	if(param.force_8bit) {
 		f0 = 2;
 	}

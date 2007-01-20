@@ -31,9 +31,7 @@
 #include "getlopt.h"
 #include "buffer.h"
 #include "term.h"
-#ifdef GAPLESS
 #include "layer3.h"
-#endif
 #include "playlist.h"
 #include "id3.h"
 #include "icy.h"
@@ -74,9 +72,7 @@ struct parameter param = {
 #endif
 	FALSE,  /* try to run process in 'realtime mode' */   
 	{ 0,},  /* wav,cdr,au Filename */
-#ifdef GAPLESS
-	0, /* gapless off per default - yet */
-#endif
+	1, /* NAS - on */
 	0, /* default is to play all titles in playlist */
 	0, /* do not use rva per default */
 	NULL, /* no playlist per default */
@@ -138,7 +134,7 @@ void init_output(void)
 	if (init_done)
 		return;
 	init_done = TRUE;
-#ifndef NOXFERMEM
+
 	/*
 	 * Only DECODE_AUDIO and DECODE_FILE are sanely handled by the
 	 * buffer process. For now, we just ignore the request
@@ -164,9 +160,6 @@ void init_output(void)
 		sigemptyset (&newsigset);
 		sigaddset (&newsigset, SIGUSR1);
 		sigprocmask (SIG_BLOCK, &newsigset, &oldsigset);
-#if !defined(WIN32) && !defined(GENERIC)
-		catchsignal (SIGCHLD, catch_child);
-#endif
 		switch ((buffer_pid = fork())) {
 		case -1: /* error */
 			perror("fork()");
@@ -183,16 +176,11 @@ void init_output(void)
 			xfermem_init_writer (buffermem);
 			param.outmode = DECODE_BUFFER;
 		}
-	}
-	else {
-#endif
-		/* + 1024 for NtoM rate converter */
+	} else {	/* + 1024 for NtoM rate converter */
 		if (!(pcm_sample = (unsigned char *) malloc(audiobufsize * 2 + 1024))) {
 			perror ("malloc()");
 			safe_exit (1);
-#ifndef NOXFERMEM
 		}
-#endif
 	}
 
 	switch(param.outmode) {
@@ -335,9 +323,6 @@ topt opts[] = {
 	{'o', "output",      GLO_ARG | GLO_CHAR, set_output, 0,  0},
 	{'f', "scale",       GLO_ARG | GLO_LONG, 0, &outscale,   0},
 	{'n', "frames",      GLO_ARG | GLO_LONG, 0, &numframes,  0},
-#ifdef HAVE_TERMIOS
-	{'C', "control",     GLO_INT,  0, &param.term_ctrl, TRUE},
-#endif
 	{'b', "buffer",      GLO_ARG | GLO_LONG, 0, &param.usebuffer,  0},
 	{'R', "remote",      GLO_INT,  0, &param.remote, TRUE},
 	{0,   "remote-err",  GLO_INT,  0, &param.remote_err, TRUE},
@@ -349,30 +334,12 @@ topt opts[] = {
 	{'z', "shuffle",     GLO_INT,  0, &param.shuffle, 1},
 	{'Z', "random",      GLO_INT,  0, &param.shuffle, 2},
 	{'E', "equalizer",	 GLO_ARG | GLO_CHAR, 0, &equalfile,1},
-#ifdef HAVE_SETPRIORITY
-	{0,   "aggressive",	 GLO_INT,  0, &param.aggressive, 2},
-#endif
-#ifdef USE_3DNOW
-	{0,   "force-3dnow", GLO_INT,  0, &param.stat_3dnow, 1},
-	{0,   "no-3dnow",    GLO_INT,  0, &param.stat_3dnow, 2},
-	{0,   "test-3dnow",  GLO_INT,  0, &param.test_3dnow, TRUE},
-#endif
-#if !defined(WIN32) && !defined(GENERIC)
-	{'u', "auth",        GLO_ARG | GLO_CHAR, 0, &httpauth,   0},
-#endif
-#ifdef HAVE_SCHED_SETSCHEDULER
-	/* check why this should be a long variable instead of int! */
-	{'T', "realtime",    GLO_LONG,  0, &param.realtime, TRUE },
-#else
 	{'T', "realtime",    0,  realtime_not_compiled, 0,           0 },    
-#endif
 	{0, "title",         GLO_INT,  0, &param.xterm_title, TRUE },
 	{'w', "wav",         GLO_ARG | GLO_CHAR, set_wav, 0 , 0 },
 	{0, "cdr",           GLO_ARG | GLO_CHAR, set_cdr, 0 , 0 },
 	{0, "au",            GLO_ARG | GLO_CHAR, set_au, 0 , 0 },
-#ifdef GAPLESS
 	{0,   "gapless",	 GLO_INT,  0, &param.gapless, 1},
-#endif
 	{'?', "help",            0,  want_usage, 0,           0 },
 	{0 , "longhelp" ,        0,  want_long_usage, 0,      0 },
 	{0 , "version" ,         0,  give_version, 0,         0 },
@@ -433,12 +400,12 @@ static void reset_audio(void)
   precog the audio rate that will be set before output begins
   this is needed to give gapless code a chance to keep track for firstframe != 0
 */
-void prepare_audioinfo(struct frame *fr, struct audio_info_struct *nai)
-{
-	long newrate = freqs[fr->sampling_frequency]>>(param.down_sample);
-	fr->down_sample = param.down_sample;
-	if(!audio_fit_capabilities(nai,fr->stereo,newrate)) safe_exit(1);
-}
+/* void prepare_audioinfo(struct frame *fr, struct audio_info_struct *nai) */
+/* { */
+/* 	long newrate = freqs[fr->sampling_frequency]>>(param.down_sample); */
+/* 	fr->down_sample = param.down_sample; */
+/* 	if(!audio_fit_capabilities(nai,fr->stereo,newrate)) safe_exit(1); */
+/* } */
 
 /*
  * play a frame read by read_frame();
@@ -467,11 +434,11 @@ int play_frame(int init,struct frame *fr)
 			old_channels = ai.channels;
 
 			newrate = freqs[fr->sampling_frequency]>>(param.down_sample);
-			prepare_audioinfo(fr, &ai);
+//			prepare_audioinfo(fr, &ai);
 			if(param.verbose > 1) fprintf(stderr, "Note: audio output rate = %li\n", ai.rate);
-#ifdef GAPLESS
+
 			if(param.gapless && (fr->lay == 3)) layer3_gapless_bytify(fr, &ai);
-#endif
+
 			
 			/* check, whether the fitter set our proposed rate */
 			if(ai.rate != newrate) {
@@ -667,24 +634,10 @@ void set_synth_functions(struct frame *fr)
 	}
 
 
-	int mpg123main(int argc, char *argv[])
-	{
+	void
+	initMP3(){
 		int result;
-		char *fname;
-#if !defined(WIN32) && !defined(GENERIC)
-		struct timeval start_time, now;
-		unsigned long secdiff;
-#endif	
-		int init;
-#ifdef GAPLESS
-		int pre_init;
-#endif
 		int j;
-
-#ifdef OS2
-		_wildcard(&argc,&argv);
-#endif
-
 		if(sizeof(short) != 2) {
 			fprintf(stderr,"Ouch SHORT has size of %d bytes (required: '2')\n",(int)sizeof(short));
 			safe_exit(1);
@@ -693,56 +646,14 @@ void set_synth_functions(struct frame *fr)
 			fprintf(stderr,"Ouch LONG has size of %d bytes (required: at least 4)\n",(int)sizeof(long));
 		}
 
-		(prgName = strrchr(argv[0], '/')) ? prgName++ : (prgName = argv[0]);
+		prgName = "MPG123FUN";
 
 		audio_info_struct_init(&ai);
 
-		while ((result = getlopt(argc, argv, opts)))
-			switch (result) {
-			case GLO_UNKNOWN:
-				fprintf (stderr, "%s: Unknown option \"%s\".\n", 
-					 prgName, loptarg);
-				usage(1);
-			case GLO_NOARG:
-				fprintf (stderr, "%s: Missing argument for option \"%s\".\n",
-					 prgName, loptarg);
-				usage(1);
-			}
-#ifdef USE_3DNOW
-		if (param.test_3dnow) {
-			int cpuflags = getcpuflags();
-			fprintf(stderr,"CPUFLAGS = %08x\n",cpuflags);
-			if ((cpuflags & 0x00800000) == 0x00800000) {
-				fprintf(stderr,"MMX instructions are supported.\n");
-			}
-			if ((cpuflags & 0x80000000) == 0x80000000) {
-				fprintf(stderr,"3DNow! instructions are supported.\n");
-			}
-			safe_exit(0);
-		}
-#endif
+		while ( (result = getlopt(0, 0, opts)))
+		{}
 
-		if (loptind >= argc && !param.listname && !param.remote)
-			usage(1);
-
-#if !defined(WIN32) && !defined(GENERIC)
-		if (param.remote) {
-			param.verbose = 0;        
-			param.quiet = 1;
-		}
-#endif
-
-		if (!(param.listentry < 0) && !param.quiet)
-			print_title(stderr); /* do not pollute stdout! */
-
-		if(param.force_mono >= 0) {
-			fr.single = param.force_mono;
-		}
-
-		if(param.force_rate && param.down_sample) {
-			fprintf(stderr,"Down sampling and fixed rate options not allowed together!\n");
-			safe_exit(1);
-		}
+		SetOutStdout("");
 
 		audio_capabilities(&ai);
 		/* equalizer initialization regardless of equalfile */
@@ -750,302 +661,34 @@ void set_synth_functions(struct frame *fr)
 			equalizer[0][j] = equalizer[1][j] = 1.0;
 			equalizer_sum[0][j] = equalizer_sum[1][j] = 0.0;
 		}
-		if(equalfile != NULL) { /* tst; ThOr: not TRUE or FALSE: allocated or not... */
-			FILE *fe;
-			int i;
-
-			equalizer_cnt = 0;
-
-			fe = fopen(equalfile,"r");
-			if(fe) {
-				char line[256];
-				for(i=0;i<32;i++) {
-					float e1,e0; /* %f -> float! */
-					line[0]=0;
-					fgets(line,255,fe);
-					if(line[0]=='#')
-						continue;
-					sscanf(line,"%f %f",&e0,&e1);
-					equalizer[0][i] = e0;
-					equalizer[1][i] = e1;	
-				}
-				fclose(fe);
-				have_eq_settings = TRUE;			
-			}
-			else
-				fprintf(stderr,"Can't open equalizer file '%s'\n",equalfile);
-		}
-
-#ifdef HAVE_SETPRIORITY
-		if(param.aggressive) { /* tst */
-			int mypid = getpid();
-			setpriority(PRIO_PROCESS,mypid,-20);
-		}
-#endif
-
-#ifdef HAVE_SCHED_SETSCHEDULER
-		if (param.realtime) {  /* Get real-time priority */
-			struct sched_param sp;
-			fprintf(stderr,"Getting real-time priority\n");
-			memset(&sp, 0, sizeof(struct sched_param));
-			sp.sched_priority = sched_get_priority_min(SCHED_FIFO);
-			if (sched_setscheduler(0, SCHED_RR, &sp) == -1)
-				fprintf(stderr,"Can't get real-time priority\n");
-		}
-#endif
 
 		set_synth_functions(&fr);
 
-		if(!param.remote) prepare_playlist(argc, argv);
+
+		//	prepare_playlist(argc, argv);
 
 		make_decode_tables(outscale);
+
 		init_layer2(); /* inits also shared tables with layer1 */
 		init_layer3(fr.down_sample);
 
-#if !defined(WIN32) && !defined(GENERIC)
-		/* This ctrl+c for title skip only when not in some control mode */
-		if
-			(
-				!param.remote 
-#ifdef HAVE_TERMIOS
-				&& !param.term_ctrl
-#endif
-				)
-			catchsignal (SIGINT, catch_interrupt);
-
-		if(param.remote) {
-			int ret;
-			init_id3();
-			init_icy();
-			ret = control_generic(&fr);
-			clear_icy();
-			exit_id3();
-			safe_exit(ret);
-		}
-#endif
 
 		init_icy();
 		init_id3(); /* prepare id3 memory */
-		while ((fname = get_next_file())) {
-			char *dirname, *filename;
-			long leftFrames,newFrame;
+	}
 
-			if(!*fname || !strcmp(fname, "-"))
-				fname = NULL;
-			if (open_stream(fname,-1) < 0)
-				continue;
-      
-			if (!param.quiet) {
-				if (split_dir_file(fname ? fname : "standard input",
-						   &dirname, &filename))
-					fprintf(stderr, "\nDirectory: %s", dirname);
-				fprintf(stderr, "\nPlaying MPEG stream %lu of %lu: %s ...\n", (unsigned long)pl.pos, (unsigned long)pl.fill, filename);
-
-#if !defined(GENERIC)
-				{
-					const char *term_type;
-					term_type = getenv("TERM");
-					if (term_type && param.xterm_title &&
-					    (!strncmp(term_type,"xterm",5) || !strncmp(term_type,"rxvt",4)))
-					{
-						fprintf(stderr, "\033]0;%s\007", filename);
-					}
-				}
-#endif
-
-			}
-
-#if !defined(WIN32) && !defined(GENERIC)
-#ifdef HAVE_TERMIOS
-			if(!param.term_ctrl)
-#endif
-				gettimeofday (&start_time, NULL);
-#endif
-			read_frame_init(&fr);
-
-			init = 1;
-#ifdef GAPLESS
-			pre_init = 1;
-#endif
-			newFrame = startFrame;
-		
-#ifdef HAVE_TERMIOS
-			debug1("param.term_ctrl: %i", param.term_ctrl);
-			if(param.term_ctrl)
-				term_init();
-#endif
-			leftFrames = numframes;
-			/* read_frame is counting the frames! */
-			for(;read_frame(&fr) && leftFrames && !intflag;) {
-#ifdef HAVE_TERMIOS			
-			tc_hack:
-#endif
-				if(fr.num < startFrame || (param.doublespeed && (fr.num % param.doublespeed))) {
-					if(fr.lay == 3)
-					{
-						set_pointer(512);
-#ifdef GAPLESS
-						if(param.gapless)
-						{
-							if(pre_init)
-							{
-								prepare_audioinfo(&fr, &pre_ai);
-								pre_init = 0;
-							}
-							/* keep track... */
-							layer3_gapless_set_position(fr.num, &fr, &pre_ai);
-						}
-#endif
-					}
-					continue;
-				}
-				if(leftFrames > 0)
-					leftFrames--;
-				if(!play_frame(init,&fr))
-				{
-					error("frame playback failed, skipping rest of track");
-					break;
-				}
-				init = 0;
-
-				if(param.verbose) {
-#ifndef NOXFERMEM
-					if (param.verbose > 1 || !(fr.num & 0x7))
-						print_stat(&fr,fr.num,xfermem_get_usedspace(buffermem),&ai); 
-					if(param.verbose > 2 && param.usebuffer)
-						fprintf(stderr,"[%08x %08x]",buffermem->readindex,buffermem->freeindex);
-#else
-					if (param.verbose > 1 || !(fr.num & 0x7))
-						print_stat(&fr,fr.num,0,&ai);
-#endif
-				}
-#ifdef HAVE_TERMIOS
-				if(!param.term_ctrl) {
-					continue;
-				} else {
-					long offset;
-					if((offset=term_control(&fr,&ai))) {
-						if(!rd->back_frame(rd, &fr, -offset)) {
-							debug1("seeked to %lu", fr.num);
-#ifdef GAPLESS
-							if(param.gapless && (fr.lay == 3))
-								layer3_gapless_set_position(fr.num, &fr, &ai);
-#endif
-						} else { error("seek failed!"); }
-					}
-				}
-#endif
-
-			}
-#ifdef GAPLESS
-			/* make sure that the correct padding is skipped after track ended */
-			if(param.gapless) audio_flush(param.outmode, &ai);
-#endif
-
-#ifndef NOXFERMEM
-			if(param.usebuffer) {
-				int s;
-				while ((s = xfermem_get_usedspace(buffermem))) {
-					struct timeval wait170 = {0, 170000};
-
-					buffer_ignore_lowmem();
-			
-					if(param.verbose)
-						print_stat(&fr,fr.num,s,&ai);
-#ifdef HAVE_TERMIOS
-					if(param.term_ctrl) {
-						long offset;
-						if((offset=term_control(&fr,&ai))) {
-							if((!rd->back_frame(rd, &fr, -offset)) 
-							   && read_frame(&fr))
-							{
-								debug1("seeked to %lu", fr.num);
-#ifdef GAPLESS
-								if(param.gapless && (fr.lay == 3))
-									layer3_gapless_set_position(fr.num, &fr, &ai);
-#endif
-								goto tc_hack;	/* Doh! Gag me with a spoon! */
-							} else { error("seek failed!"); }
-						}
-					}
-#endif
-					select(0, NULL, NULL, NULL, &wait170);
-				}
-			}
-#endif
-			if(param.verbose)
-				print_stat(&fr,fr.num,xfermem_get_usedspace(buffermem),&ai); 
-#ifdef HAVE_TERMIOS
-			if(param.term_ctrl)
-				term_restore();
-#endif
-
-			if (!param.quiet) {
-				/* 
-				 * This formula seems to work at least for
-				 * MPEG 1.0/2.0 layer 3 streams.
-				 */
-				int secs = get_songlen(&fr,fr.num);
-				fprintf(stderr,"\n[%d:%02d] Decoding of %s finished.\n", secs / 60,
-					secs % 60, filename);
-			}
-
-			rd->close(rd);
-#if 0
-			if(param.remote)
-				fprintf(stderr,"@R MPG123\n");        
-			if (remflag) {
-				intflag = FALSE;
-				remflag = FALSE;
-			}
-#endif
-	
-			if (intflag) {
-
-/* 
- * When HAVE_TERMIOS is defined, there is 'q' to terminate a list of songs, so
- * no pressing need to keep up this first second SIGINT hack that was too
- * often mistaken as a bug. [dk]
- * ThOr: Yep, I deactivated the Ctrl+C hack for active control modes.
- */
-#if !defined(WIN32) && !defined(GENERIC)
-#ifdef HAVE_TERMIOS
-				if(!param.term_ctrl)
-#endif
-				{
-					gettimeofday (&now, NULL);
-					secdiff = (now.tv_sec - start_time.tv_sec) * 1000;
-					if (now.tv_usec >= start_time.tv_usec)
-						secdiff += (now.tv_usec - start_time.tv_usec) / 1000;
-					else
-						secdiff -= (start_time.tv_usec - now.tv_usec) / 1000;
-					if (secdiff < 1000)
-						break;
-				}
-#endif
-				intflag = FALSE;
-
-#ifndef NOXFERMEM
-				if(param.usebuffer) buffer_resync();
-#endif
-			}
-		} /* end of loop over input files */
+	void closeMP3(){
 		clear_icy();
 		exit_id3(); /* free id3 memory */
-#ifndef NOXFERMEM
 		if (param.usebuffer) {
 			buffer_end();
 			xfermem_done_writer (buffermem);
 			waitpid (buffer_pid, NULL, 0);
 			xfermem_done (buffermem);
-		}
-		else {
-#endif
+		} else {
 			audio_flush(param.outmode, &ai);
 			free (pcm_sample);
-#ifndef NOXFERMEM
 		}
-#endif
 
 		switch(param.outmode) {
 		case DECODE_AUDIO:
@@ -1061,8 +704,90 @@ void set_synth_functions(struct frame *fr)
 			cdr_close();
 			break;
 		}
-		if(!param.remote) free_playlist();
-		return 0;
+	/* 	if(!param.remote) free_playlist(); */
+/* 		return 0; */
+	}
+
+/* 	unsigned char *pcm_buffer; */
+/* 	unsigned int pcm_buffer_size; */
+/* 	unsigned int pcm_buffer_pos; */
+
+	mpg123_data_handler mpg123_handler_func;
+
+	unsigned int decodeMP3( char *fname, mpg123_data_handler func ) {
+
+		mpg123_handler_func=func;
+
+		int init;
+		int pre_init;
+	
+		long leftFrames,newFrame;
+
+ 		if(!*fname || !strcmp(fname, "-")) 
+ 			fname = NULL; 
+
+ 		if (open_stream(fname,-1) < 0) 
+ 			return 0;
+      
+		read_frame_init(&fr);
+
+		init = 1;
+		pre_init = 1;
+		newFrame = startFrame;
+
+		leftFrames = numframes;
+		/* read_frame is counting the frames! */
+		for(;read_frame(&fr) && leftFrames && !intflag;) {
+			if( fr.num < startFrame || (param.doublespeed && (fr.num % param.doublespeed))) {
+				if(fr.lay == 3) {
+					set_pointer(512);
+					if(param.gapless) {
+						if(pre_init) {
+//							prepare_audioinfo(&fr, &pre_ai);
+							pre_init = 0;
+						}
+						/* keep track... */
+						layer3_gapless_set_position(fr.num, &fr, &pre_ai);
+					}
+
+				}
+				continue;
+			}
+			if(leftFrames > 0)
+				leftFrames--;
+			if(!play_frame(init,&fr))
+			{
+				error("frame playback failed, skipping rest of track");
+				break;
+			}
+			init = 0;
+
+
+		}
+		/* make sure that the correct padding is skipped after track ended */
+		if(param.gapless) audio_flush(param.outmode, &ai);
+
+		if(param.usebuffer) {
+			int s;
+			while ((s = xfermem_get_usedspace(buffermem))) {
+				struct timeval wait170 = {0, 170000};
+
+				buffer_ignore_lowmem();
+			
+				if(param.verbose)
+					print_stat(&fr,fr.num,s,&ai);
+				select(0, NULL, NULL, NULL, &wait170);
+			}
+		}
+
+		rd->close(rd);
+	
+		if (intflag) {
+			intflag = FALSE;
+			if(param.usebuffer) buffer_resync();
+		}
+
+		return 1;
 	}
 
 	static void print_title(FILE *o)
@@ -1109,11 +834,8 @@ void set_synth_functions(struct frame *fr)
 #endif
 		fprintf(o,"   -z    shuffle play (with wildcards)  -Z    random play\n");
 		fprintf(o,"   -u a  HTTP authentication string     -E f  Equalizer, data from file\n");
-#ifdef GAPLESS
+
 		fprintf(o,"   -C    enable control keys            --gapless  skip junk/padding in some mp3s\n");
-#else
-		fprintf(o,"   -C    enable control keys\n");
-#endif
 		fprintf(o,"   -?    this help                      --version  print name + version\n");
 		fprintf(o,"See the manpage %s(1) or call %s with --longhelp for more parameters and information.\n", prgName,prgName);
 		safe_exit(err);
@@ -1172,9 +894,7 @@ void set_synth_functions(struct frame *fr)
 		fprintf(o," -d     --doublespeed      play only every second frame\n");
 		fprintf(o," -h     --halfspeed        play every frame twice\n");
 		fprintf(o,"        --equalizer        exp.: scales freq. bands acrd. to 'equalizer.dat'\n");
-#ifdef GAPLESS
 		fprintf(o,"        --gapless          remove padding/junk added by encoder/decoder\n");
-#endif
 		fprintf(o,"                           (experimental, needs Lame tag, layer 3 only)\n");
 		fprintf(o," -o h   --headphones       (aix/hp/sun) output on headphones\n");
 		fprintf(o," -o s   --speaker          (aix/hp/sun) output on speaker\n");
