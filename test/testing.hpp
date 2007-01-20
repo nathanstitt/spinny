@@ -73,7 +73,7 @@ public:
 		filesystem::directory_iterator end_itr;
 		boost::filesystem::create_directory( fixtures_path / lib );
 		boost::filesystem::directory_iterator file( filesystem::path( SRC_PATH,boost::filesystem::native ) / "libs" / lib / "test-files" );
-		for (  file ;file != end_itr; ++file ){
+		for (  ;file != end_itr; ++file ){
 			if ( file->leaf() != ".svn" ){
 				try {
 					boost::filesystem::copy_file( *file, fixtures_path / lib / file->leaf() );
@@ -88,7 +88,7 @@ public:
 	populate_web(){
 		filesystem::directory_iterator end_itr;
 		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH,boost::filesystem::native ) / "libs" / "cs" / "test-files" );
-		for (  file ;file != end_itr; ++file ){
+		for ( ;file != end_itr; ++file ){
 			if ( file->leaf() != ".svn" ){
 				try {
 					boost::filesystem::copy_file( *file, template_path / file->leaf() );
@@ -102,9 +102,12 @@ public:
 	populate_music_fixtures(){
 		filesystem::directory_iterator end_itr;
 		boost::filesystem::directory_iterator file( filesystem::path( SRC_PATH ) / "libs" / "id3lib" / "test-files" );
-		for (  file ;file != end_itr; ++file ){
+		for ( ;file != end_itr; ++file ){
 			if ( file->leaf() != ".svn" ){
-				boost::filesystem::copy_file( *file, music_path / file->leaf() );
+				try {
+					boost::filesystem::copy_file( *file, music_path / file->leaf() );
+				}
+				catch ( std::exception & ){}
 			}
 		}
 	}

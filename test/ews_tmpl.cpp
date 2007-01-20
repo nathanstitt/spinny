@@ -63,7 +63,7 @@ TEST( All ){
 	boost::filesystem::directory_iterator file( template_path );
 	std::string req="/tmpl/";
 	filesystem::directory_iterator end_itr;
-	for ( file ;file != end_itr; ++file ){
+	for (  ;file != end_itr; ++file ){
 		if ( boost::ends_with( file->leaf(), ".cs") ){
 
 //  			if ( file->leaf() != "test_exists.cs" ){
@@ -105,7 +105,7 @@ TEST( All ){
 
 
 int
-ews_tmpl( int argc, char * argv[] ) 
+ews_tmpl( int , char **  ) 
 {
 	return UnitTest::RunAllTests("EwsTmpl");
 }

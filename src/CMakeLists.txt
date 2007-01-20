@@ -1,7 +1,8 @@
 
-IF(CMAKE_COMPILER_IS_GNUCXX)
+IF(NOT WIN32)
+  SET(CMAKE_C_FLAGS "-Wall -Wextra -g")
   SET(CMAKE_CXX_FLAGS "-Wall -Wextra -g")
-ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+ENDIF(NOT WIN32)
 
 INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -16,7 +17,7 @@ ELSE(CMAKE_COMPILER_IS_GNUCXX)
    ADD_EXECUTABLE( spinny win_main.cpp )
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
-TARGET_LINK_LIBRARIES( spinny handlers json ews libspinny id3lib zlib sqlite boost unit_test cs )
+TARGET_LINK_LIBRARIES( spinny handlers json ews libspinny id3lib zlib sqlite boost unit_test cs lame )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( spinny pthread )
