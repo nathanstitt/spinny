@@ -84,7 +84,7 @@
 #cmakedefine HAVE_MEMORY_H 1
 
 /* build with mpglib support */
-#define HAVE_MPGLIB 1
+#undef HAVE_MPGLIB
 
 /* have nasm */
 /* #undef HAVE_NASM */
