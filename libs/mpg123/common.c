@@ -289,24 +289,24 @@ int read_frame_recover(struct frame* fr)
 int read_frame(struct frame *fr)
 {
 	/* TODO: rework this thing */
-  unsigned long newhead;
-  static unsigned char ssave[34];
+	unsigned long newhead;
+	static unsigned char ssave[34];
 	off_t framepos;
-  int give_note = param.verbose > 1 ? 1 : (do_recover ? 0 : 1 );
-  fsizeold=fr->framesize;       /* for Layer3 */
+	int give_note = param.verbose > 1 ? 1 : (do_recover ? 0 : 1 );
+	fsizeold=fr->framesize;       /* for Layer3 */
 
-  if (param.halfspeed) {
-    static int halfphase = 0;
-    if (halfphase--) {
-      bsi.bitindex = 0;
-      bsi.wordpointer = (unsigned char *) bsbuf;
-      if (fr->lay == 3)
-        memcpy (bsbuf, ssave, ssize);
-      return 1;
-    }
-    else
-      halfphase = param.halfspeed - 1;
-  }
+	if (param.halfspeed) {
+		static int halfphase = 0;
+		if (halfphase--) {
+			bsi.bitindex = 0;
+			bsi.wordpointer = (unsigned char *) bsbuf;
+			if (fr->lay == 3)
+				memcpy (bsbuf, ssave, ssize);
+			return 1;
+		}
+		else
+			halfphase = param.halfspeed - 1;
+	}
 
 read_again:
 	
@@ -316,210 +316,210 @@ read_again:
 	}
 
 	/* this if wrap looks like dead code... */
-  if(1 || oldhead != newhead || !oldhead)
-  {
+	if(1 || oldhead != newhead || !oldhead)
+	{
 
-init_resync:
+	init_resync:
 
-    fr->header_change = 2;
-    if(oldhead) {
-      if((oldhead & 0xc00) == (newhead & 0xc00)) {
-        if( (oldhead & 0xc0) == 0 && (newhead & 0xc0) == 0)
-    	  fr->header_change = 1; 
-        else if( (oldhead & 0xc0) > 0 && (newhead & 0xc0) > 0)
-	  fr->header_change = 1;
-      }
-    }
+		fr->header_change = 2;
+		if(oldhead) {
+			if((oldhead & 0xc00) == (newhead & 0xc00)) {
+				if( (oldhead & 0xc0) == 0 && (newhead & 0xc0) == 0)
+					fr->header_change = 1; 
+				else if( (oldhead & 0xc0) > 0 && (newhead & 0xc0) > 0)
+					fr->header_change = 1;
+			}
+		}
 
 #ifdef SKIP_JUNK
-	/* watch out for junk/tags on beginning of stream by invalid header */
-	if(!firsthead && !head_check(newhead) && !free_format_header(newhead)) {
-		int i;
+		/* watch out for junk/tags on beginning of stream by invalid header */
+		if(!firsthead && !head_check(newhead) && !free_format_header(newhead)) {
+			int i;
 
-		/* check for id3v2; first three bytes (of 4) are "ID3" */
-		if((newhead & (unsigned long) 0xffffff00) == (unsigned long) 0x49443300)
-		{
-			int id3length = 0;
-			id3length = parse_new_id3(newhead, rd);
-			goto read_again;
-		}
-		else if(param.verbose > 1) fprintf(stderr,"Note: Junk at the beginning (0x%08lx)\n",newhead);
+			/* check for id3v2; first three bytes (of 4) are "ID3" */
+			if((newhead & (unsigned long) 0xffffff00) == (unsigned long) 0x49443300)
+			{
+				int id3length = 0;
+				id3length = parse_new_id3(newhead, rd);
+				goto read_again;
+			}
+			else if(param.verbose > 1) fprintf(stderr,"Note: Junk at the beginning (0x%08lx)\n",newhead);
 
-		/* I even saw RIFF headers at the beginning of MPEG streams ;( */
-		if(newhead == ('R'<<24)+('I'<<16)+('F'<<8)+'F') {
-			if(param.verbose > 1) fprintf(stderr, "Note: Looks like a RIFF header.\n");
-			if(!rd->head_read(rd,&newhead))
-				return 0;
-			while(newhead != ('d'<<24)+('a'<<16)+('t'<<8)+'a') {
+			/* I even saw RIFF headers at the beginning of MPEG streams ;( */
+			if(newhead == ('R'<<24)+('I'<<16)+('F'<<8)+'F') {
+				if(param.verbose > 1) fprintf(stderr, "Note: Looks like a RIFF header.\n");
+				if(!rd->head_read(rd,&newhead))
+					return 0;
+				while(newhead != ('d'<<24)+('a'<<16)+('t'<<8)+'a') {
+					if(!rd->head_shift(rd,&newhead))
+						return 0;
+				}
+				if(!rd->head_read(rd,&newhead))
+					return 0;
+				if(param.verbose > 1) fprintf(stderr,"Note: Skipped RIFF header!\n");
+				goto read_again;
+			}
+			/* unhandled junk... just continue search for a header */
+			/* step in byte steps through next 64K */
+			for(i=0;i<65536;i++) {
 				if(!rd->head_shift(rd,&newhead))
 					return 0;
+				/* if(head_check(newhead)) */
+				if(head_check(newhead) && decode_header(fr, newhead))
+					break;
 			}
-			if(!rd->head_read(rd,&newhead))
+			if(i == 65536) {
+				if(!param.quiet) error("Giving up searching valid MPEG header after 64K of junk.");
 				return 0;
-			if(param.verbose > 1) fprintf(stderr,"Note: Skipped RIFF header!\n");
-			goto read_again;
+			}
+			/* 
+			 * should we additionaly check, whether a new frame starts at
+			 * the next expected position? (some kind of read ahead)
+			 * We could implement this easily, at least for files.
+			 */
 		}
-		/* unhandled junk... just continue search for a header */
-		/* step in byte steps through next 64K */
-		for(i=0;i<65536;i++) {
-			if(!rd->head_shift(rd,&newhead))
-				return 0;
-			/* if(head_check(newhead)) */
-			if(head_check(newhead) && decode_header(fr, newhead))
-			break;
-		}
-		if(i == 65536) {
-			if(!param.quiet) error("Giving up searching valid MPEG header after 64K of junk.");
-			return 0;
-		}
-		/* 
-		 * should we additionaly check, whether a new frame starts at
-		 * the next expected position? (some kind of read ahead)
-		 * We could implement this easily, at least for files.
-		 */
-	}
 #endif
 
-	/* first attempt of read ahead check to find the real first header; cannot believe what junk is out there! */
-	/* for now, a spurious first free format header screws up here; need free format support for detecting false free format headers... */
-	if(!firsthead && rd->flags & READER_SEEKABLE && head_check(newhead) && decode_header(fr, newhead))
-	{
-		unsigned long nexthead = 0;
-		int hd = 0;
-		off_t start = rd->tell(rd);
-		debug1("doing ahead check with BPF %d", fr->framesize+4);
-		/* step framesize bytes forward and read next possible header*/
-		if(rd->back_bytes(rd, -fr->framesize))
+		/* first attempt of read ahead check to find the real first header; cannot believe what junk is out there! */
+		/* for now, a spurious first free format header screws up here; need free format support for detecting false free format headers... */
+		if(!firsthead && rd->flags & READER_SEEKABLE && head_check(newhead) && decode_header(fr, newhead))
 		{
-			error("cannot seek!");
-			return 0;
-		}
-		hd = rd->head_read(rd,&nexthead);
-		if(rd->back_bytes(rd, rd->tell(rd)-start))
-		{
-			error("cannot seek!");
-			return 0;
-		}
-		if(!hd)
-		{
-			warning("cannot read next header, a one-frame stream? Duh...");
-		}
-		else
-		{
-			debug2("does next header 0x%08lx match first 0x%08lx?", nexthead, newhead);
-			/* not allowing free format yet */
-			if(!head_check(nexthead) || (nexthead & HDRCMPMASK) != (newhead & HDRCMPMASK))
+			unsigned long nexthead = 0;
+			int hd = 0;
+			off_t start = rd->tell(rd);
+			debug1("doing ahead check with BPF %d", fr->framesize+4);
+			/* step framesize bytes forward and read next possible header*/
+			if(rd->back_bytes(rd, -fr->framesize))
 			{
-				debug("No, the header was not valid, start from beginning...");
-				/* try next byte for valid header */
-				if(rd->back_bytes(rd, 3))
+				error("cannot seek!");
+				return 0;
+			}
+			hd = rd->head_read(rd,&nexthead);
+			if(rd->back_bytes(rd, rd->tell(rd)-start))
+			{
+				error("cannot seek!");
+				return 0;
+			}
+			if(!hd)
+			{
+				warning("cannot read next header, a one-frame stream? Duh...");
+			}
+			else
+			{
+				debug2("does next header 0x%08lx match first 0x%08lx?", nexthead, newhead);
+				/* not allowing free format yet */
+				if(!head_check(nexthead) || (nexthead & HDRCMPMASK) != (newhead & HDRCMPMASK))
 				{
-					error("cannot seek!");
+					debug("No, the header was not valid, start from beginning...");
+					/* try next byte for valid header */
+					if(rd->back_bytes(rd, 3))
+					{
+						error("cannot seek!");
+						return 0;
+					}
+					goto read_again;
+				}
+			}
+		}
+
+		/* why has this head check been avoided here before? */
+		if(!head_check(newhead))
+		{
+			if(!firsthead && free_format_header(newhead))
+			{
+				error1("Header 0x%08lx seems to indicate a free format stream; I do not handle that yet", newhead);
+				goto read_again;
+				return 0;
+			}
+			/* and those ugly ID3 tags */
+			if((newhead & 0xffffff00) == ('T'<<24)+('A'<<16)+('G'<<8)) {
+				rd->skip_bytes(rd,124);
+				if (param.verbose > 1) fprintf(stderr,"Note: Skipped ID3 Tag!\n");
+				goto read_again;
+			}
+			/* duplicated code from above! */
+			/* check for id3v2; first three bytes (of 4) are "ID3" */
+			if((newhead & (unsigned long) 0xffffff00) == (unsigned long) 0x49443300)
+			{
+				int id3length = 0;
+				id3length = parse_new_id3(newhead, rd);
+				goto read_again;
+			}
+			else if (give_note)
+			{
+				fprintf(stderr,"Note: Illegal Audio-MPEG-Header 0x%08lx at offset 0x%lx.\n", newhead,rd->tell(rd)-4);
+			}
+
+			if(give_note && (newhead & 0xffffff00) == ('b'<<24)+('m'<<16)+('p'<<8)) fprintf(stderr,"Note: Could be a BMP album art.\n");
+			if (param.tryresync || do_recover) {
+				int try = 0;
+				/* TODO: make this more robust, I'd like to cat two mp3 fragments together (in a dirty way) and still have mpg123 beign able to decode all it somehow. */
+				if(give_note) fprintf(stderr, "Note: Trying to resync...\n");
+				/* Read more bytes until we find something that looks
+				   reasonably like a valid header.  This is not a
+				   perfect strategy, but it should get us back on the
+				   track within a short time (and hopefully without
+				   too much distortion in the audio output).  */
+				do {
+					if(!rd->head_shift(rd,&newhead))
+						return 0;
+					/* debug2("resync try %i, got newhead 0x%08lx", try, newhead); */
+					if (!oldhead)
+					{
+						debug("going to init_resync...");
+						goto init_resync;       /* "considered harmful", eh? */
+					}
+					/* we should perhaps collect a list of valid headers that occured in file... there can be more */
+					/* Michael's new resync routine seems to work better with the one frame readahead (and some input buffering?) */
+				} while
+						(
+							++try < RESYNC_LIMIT
+							&& (newhead & HDRCMPMASK) != (oldhead & HDRCMPMASK)
+							&& (newhead & HDRCMPMASK) != (firsthead & HDRCMPMASK)
+							);
+				/* too many false positives 
+				   }while (!(head_check(newhead) && decode_header(fr, newhead))); */
+				if(try == RESYNC_LIMIT)
+				{
+					error("giving up resync - your stream is not nice... perhaps an improved routine could catch up");
 					return 0;
 				}
+
+				if (give_note)
+					fprintf (stderr, "Note: Skipped %d bytes in input.\n", try);
+			}
+			else
+			{
+				error("not attempting to resync...");
+				return (0);
+			}
+		}
+
+		if (!firsthead) {
+			if(!decode_header(fr,newhead))
+			{
+				error("decode header failed before first valid one, going to read again");
 				goto read_again;
 			}
 		}
+		else
+			if(!decode_header(fr,newhead))
+			{
+				error("decode header failed - goto resync");
+				/* return 0; */
+				goto init_resync;
+			}
 	}
+	else
+		fr->header_change = 0;
 
-    /* why has this head check been avoided here before? */
-    if(!head_check(newhead))
-    {
-      if(!firsthead && free_format_header(newhead))
-      {
-        error1("Header 0x%08lx seems to indicate a free format stream; I do not handle that yet", newhead);
-        goto read_again;
-        return 0;
-      }
-    /* and those ugly ID3 tags */
-      if((newhead & 0xffffff00) == ('T'<<24)+('A'<<16)+('G'<<8)) {
-           rd->skip_bytes(rd,124);
-	   if (param.verbose > 1) fprintf(stderr,"Note: Skipped ID3 Tag!\n");
-           goto read_again;
-      }
-      /* duplicated code from above! */
-      /* check for id3v2; first three bytes (of 4) are "ID3" */
-      if((newhead & (unsigned long) 0xffffff00) == (unsigned long) 0x49443300)
-      {
-        int id3length = 0;
-        id3length = parse_new_id3(newhead, rd);
-        goto read_again;
-      }
-      else if (give_note)
-      {
-        fprintf(stderr,"Note: Illegal Audio-MPEG-Header 0x%08lx at offset 0x%lx.\n", newhead,rd->tell(rd)-4);
-      }
-
-      if(give_note && (newhead & 0xffffff00) == ('b'<<24)+('m'<<16)+('p'<<8)) fprintf(stderr,"Note: Could be a BMP album art.\n");
-      if (param.tryresync || do_recover) {
-        int try = 0;
-        /* TODO: make this more robust, I'd like to cat two mp3 fragments together (in a dirty way) and still have mpg123 beign able to decode all it somehow. */
-        if(give_note) fprintf(stderr, "Note: Trying to resync...\n");
-            /* Read more bytes until we find something that looks
-               reasonably like a valid header.  This is not a
-               perfect strategy, but it should get us back on the
-               track within a short time (and hopefully without
-               too much distortion in the audio output).  */
-        do {
-          if(!rd->head_shift(rd,&newhead))
-		return 0;
-          /* debug2("resync try %i, got newhead 0x%08lx", try, newhead); */
-          if (!oldhead)
-          {
-            debug("going to init_resync...");
-            goto init_resync;       /* "considered harmful", eh? */
-          }
-         /* we should perhaps collect a list of valid headers that occured in file... there can be more */
-         /* Michael's new resync routine seems to work better with the one frame readahead (and some input buffering?) */
-         } while
-         (
-           ++try < RESYNC_LIMIT
-           && (newhead & HDRCMPMASK) != (oldhead & HDRCMPMASK)
-           && (newhead & HDRCMPMASK) != (firsthead & HDRCMPMASK)
-         );
-         /* too many false positives 
-         }while (!(head_check(newhead) && decode_header(fr, newhead))); */
-         if(try == RESYNC_LIMIT)
-         {
-           error("giving up resync - your stream is not nice... perhaps an improved routine could catch up");
-           return 0;
-         }
-
-        if (give_note)
-          fprintf (stderr, "Note: Skipped %d bytes in input.\n", try);
-      }
-      else
-      {
-        error("not attempting to resync...");
-        return (0);
-      }
-    }
-
-    if (!firsthead) {
-      if(!decode_header(fr,newhead))
-      {
-         error("decode header failed before first valid one, going to read again");
-         goto read_again;
-      }
-    }
-    else
-      if(!decode_header(fr,newhead))
-      {
-        error("decode header failed - goto resync");
-        /* return 0; */
-        goto init_resync;
-      }
-  }
-  else
-    fr->header_change = 0;
-
-  /* flip/init buffer for Layer 3 */
-  bsbufold = bsbuf;
-  bsbuf = bsspace[bsnum]+512;
-  bsnum = (bsnum + 1) & 1;
+	/* flip/init buffer for Layer 3 */
+	bsbufold = bsbuf;
+	bsbuf = bsspace[bsnum]+512;
+	bsnum = (bsnum + 1) & 1;
 	/* if filepos is invalid, so is framepos */
 	framepos = rd->filepos - 4;
-  /* read main data into memory */
+	/* read main data into memory */
 	/* 0 is error! */
 	if(!rd->read_frame_body(rd,bsbuf,fr->framesize))
 		return 0;
@@ -529,13 +529,13 @@ init_resync:
 		if(fr->lay == 3)
 		{
 			/*
-				going to look for Xing or Info at some position after the header
-				                                    MPEG 1  MPEG 2/2.5 (LSF)
-				Stereo, Joint Stereo, Dual Channel  32      17
-				Mono                                17       9
+			  going to look for Xing or Info at some position after the header
+			  MPEG 1  MPEG 2/2.5 (LSF)
+			  Stereo, Joint Stereo, Dual Channel  32      17
+			  Mono                                17       9
 				
-				Also, how to avoid false positives? I guess I should interpret more of the header to rule that out(?).
-				I hope that ensuring all zeros until tag start is enough.
+			  Also, how to avoid false positives? I guess I should interpret more of the header to rule that out(?).
+			  I hope that ensuring all zeros until tag start is enough.
 			*/
 			size_t lame_offset = (fr->stereo == 2) ? (fr->lsf ? 17 : 32 ) : (fr->lsf ? 9 : 17);
 			if(fr->framesize >= 120+lame_offset) /* traditional Xing header is 120 bytes */
@@ -547,22 +547,22 @@ init_resync:
 				if(i == lame_offset)
 				{
 					if
-					(
-					       (bsbuf[lame_offset] == 'I')
-						&& (bsbuf[lame_offset+1] == 'n')
-						&& (bsbuf[lame_offset+2] == 'f')
-						&& (bsbuf[lame_offset+3] == 'o')
-					)
+						(
+							(bsbuf[lame_offset] == 'I')
+							&& (bsbuf[lame_offset+1] == 'n')
+							&& (bsbuf[lame_offset+2] == 'f')
+							&& (bsbuf[lame_offset+3] == 'o')
+							)
 					{
 						lame_type = 1; /* We still have to see what there is */
 					}
 					else if
-					(
-					       (bsbuf[lame_offset] == 'X')
-						&& (bsbuf[lame_offset+1] == 'i')
-						&& (bsbuf[lame_offset+2] == 'n')
-						&& (bsbuf[lame_offset+3] == 'g')
-					)
+						(
+							(bsbuf[lame_offset] == 'X')
+							&& (bsbuf[lame_offset+1] == 'i')
+							&& (bsbuf[lame_offset+2] == 'n')
+							&& (bsbuf[lame_offset+3] == 'g')
+							)
 					{
 						lame_type = 2;
 						vbr = VBR; /* Xing header means always VBR */
@@ -577,40 +577,40 @@ init_resync:
 						/* there are 4 bytes for flags, but only the last byte contains known ones */
 						lame_offset += 4; /* now first byte after Xing/Name */
 						/* 4 bytes dword for flags */
-						#define make_long(a, o) ((((unsigned long) a[o]) << 24) | (((unsigned long) a[o+1]) << 16) | (((unsigned long) a[o+2]) << 8) | ((unsigned long) a[o+3]))
+#define make_long(a, o) ((((unsigned long) a[o]) << 24) | (((unsigned long) a[o+1]) << 16) | (((unsigned long) a[o+2]) << 8) | ((unsigned long) a[o+3]))
 						/* 16 bit */
-						#define make_short(a,o) ((((unsigned short) a[o]) << 8) | ((unsigned short) a[o+1]))
+#define make_short(a,o) ((((unsigned short) a[o]) << 8) | ((unsigned short) a[o+1]))
 						xing_flags = make_long(bsbuf, lame_offset);
 						lame_offset += 4;
 						debug1("Xing: flags 0x%08lx", xing_flags);
 						if(xing_flags & 1) /* frames */
 						{
 							/*
-								In theory, one should use that value for skipping...
-								When I know the exact number of samples I could simply count in audio_flush,
-								but that's problematic with seeking and such.
-								I still miss the real solution for detecting the end.
+							  In theory, one should use that value for skipping...
+							  When I know the exact number of samples I could simply count in audio_flush,
+							  but that's problematic with seeking and such.
+							  I still miss the real solution for detecting the end.
 							*/
 							track_frames = make_long(bsbuf, lame_offset);
 							if(track_frames > TRACK_MAX_FRAMES) track_frames = 0; /* endless stream? */
-							#ifdef GAPLESS
+#ifdef GAPLESS
 							/* if no further info there, remove/add at least the decoder delay */
 							if(param.gapless)
 							{
 								unsigned long length = track_frames * spf(fr);
 								if(length > 1)
-								layer3_gapless_init(DECODER_DELAY+GAP_SHIFT, length+DECODER_DELAY+GAP_SHIFT);
+									layer3_gapless_init(DECODER_DELAY+GAP_SHIFT, length+DECODER_DELAY+GAP_SHIFT);
 							}
-							#endif
+#endif
 							debug1("Xing: %lu frames", track_frames);
 							lame_offset += 4;
 						}
 						if(xing_flags & 0x2) /* bytes */
 						{
-							#ifdef DEBUG
+#ifdef DEBUG
 							unsigned long xing_bytes = make_long(bsbuf, lame_offset);
 							debug1("Xing: %lu bytes", xing_bytes);
-							#endif
+#endif
 							lame_offset += 4;
 						}
 						if(xing_flags & 0x4) /* TOC */
@@ -619,10 +619,10 @@ init_resync:
 						}
 						if(xing_flags & 0x8) /* VBR quality */
 						{
-							#ifdef DEBUG
+#ifdef DEBUG
 							unsigned long xing_quality = make_long(bsbuf, lame_offset);
 							debug1("Xing: quality = %lu", xing_quality);
-							#endif
+#endif
 							lame_offset += 4;
 						}
 						/* I guess that either 0 or LAME extra data follows */
@@ -651,11 +651,11 @@ init_resync:
 							switch(lame_vbr)
 							{
 								/* from rev1 proposal... not sure if all good in practice */
-								case 1:
-								case 8: vbr = CBR; break;
-								case 2:
-								case 9: vbr = ABR; break;
-								default: vbr = VBR; /* 00==unknown is taken as VBR */
+							case 1:
+							case 8: vbr = CBR; break;
+							case 2:
+							case 9: vbr = ABR; break;
+							default: vbr = VBR; /* 00==unknown is taken as VBR */
 							}
 							/* skipping: lowpass filter value */
 							lame_offset += 1;
@@ -663,12 +663,12 @@ init_resync:
 							/* 32bit float: peak amplitude -- why did I parse it as int before??*/
 							/* Ah, yes, lame seems to store it as int since some day in 2003; I've only seen zeros anyway until now, bah! */
 							if
-							(
-								   (bsbuf[lame_offset] != 0)
-								|| (bsbuf[lame_offset+1] != 0)
-								|| (bsbuf[lame_offset+2] != 0)
-								|| (bsbuf[lame_offset+3] != 0)
-							)
+								(
+									(bsbuf[lame_offset] != 0)
+									|| (bsbuf[lame_offset+1] != 0)
+									|| (bsbuf[lame_offset+2] != 0)
+									|| (bsbuf[lame_offset+3] != 0)
+									)
 							{
 								debug("Wow! Is there _really_ a non-zero peak value? Now is it stored as float or int - how should I know?");
 								peak = *(float*) (bsbuf+lame_offset);
@@ -677,11 +677,11 @@ init_resync:
 							peak = 0; /* until better times arrived */
 							lame_offset += 4;
 							/*
-								ReplayGain values - lame only writes radio mode gain...
-								16bit gain, 3 bits name, 3 bits originator, sign (1=-, 0=+), dB value*10 in 9 bits (fixed point)
-								ignore the setting if name or originator == 000!
-								radio 0 0 1 0 1 1 1 0 0 1 1 1 1 1 0 1
-								audiophile 0 1 0 0 1 0 0 0 0 0 0 1 0 1 0 0
+							  ReplayGain values - lame only writes radio mode gain...
+							  16bit gain, 3 bits name, 3 bits originator, sign (1=-, 0=+), dB value*10 in 9 bits (fixed point)
+							  ignore the setting if name or originator == 000!
+							  radio 0 0 1 0 1 1 1 0 0 1 1 1 1 1 0 1
+							  audiophile 0 1 0 0 1 0 0 0 0 0 0 1 0 1 0 0
 							*/
 							
 							for(i =0; i < 2; ++i)
@@ -717,21 +717,21 @@ init_resync:
 							}
 							lame_offset += 1;
 							/* encoder delay and padding, two 12 bit values... lame does write them from int ...*/
-							#ifdef GAPLESS
+#ifdef GAPLESS
 							if(param.gapless)
 							{
 								/*
-									Temporary hack that doesn't work with seeking and also is not waterproof but works most of the time;
-									in future the lame delay/padding and frame number info should be passed to layer3.c and the junk samples avoided at the source.
+								  Temporary hack that doesn't work with seeking and also is not waterproof but works most of the time;
+								  in future the lame delay/padding and frame number info should be passed to layer3.c and the junk samples avoided at the source.
 								*/
 								unsigned long length = track_frames * spf(fr);
 								unsigned long skipbegin = DECODER_DELAY + ((((int) bsbuf[lame_offset]) << 4) | (((int) bsbuf[lame_offset+1]) >> 4));
 								unsigned long skipend = -DECODER_DELAY + (((((int) bsbuf[lame_offset+1]) << 8) | (((int) bsbuf[lame_offset+2]))) & 0xfff);
 								debug3("preparing gapless mode for layer3: length %lu, skipbegin %lu, skipend %lu", length, skipbegin, skipend);
 								if(length > 1)
-								layer3_gapless_init(skipbegin+GAP_SHIFT, (skipend < length) ? length-skipend+GAP_SHIFT : length+GAP_SHIFT);
+									layer3_gapless_init(skipbegin+GAP_SHIFT, (skipend < length) ? length-skipend+GAP_SHIFT : length+GAP_SHIFT);
 							}
-							#endif
+#endif
 						}
 						/* switch buffer back ... */
 						bsbuf = bsspace[bsnum]+512;
@@ -753,11 +753,11 @@ init_resync:
 			if(icy.url.fill) fprintf(stderr, "ICY-URL: %s\n", icy.url.p);
 		}
 	}
-  bsi.bitindex = 0;
-  bsi.wordpointer = (unsigned char *) bsbuf;
+	bsi.bitindex = 0;
+	bsi.wordpointer = (unsigned char *) bsbuf;
 
-  if (param.halfspeed && fr->lay == 3)
-    memcpy (ssave, bsbuf, ssize);
+	if (param.halfspeed && fr->lay == 3)
+		memcpy (ssave, bsbuf, ssize);
 
 	if(++mean_frames != 0)
 	{
@@ -787,7 +787,7 @@ init_resync:
 		}
 	}
 	++fr->num;
-  return 1;
+	return 1;
 }
 
 void print_frame_index(FILE* out)

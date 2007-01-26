@@ -139,6 +139,7 @@ public:
     void* do_handler_allocate(std::size_t size)
     {
       BOOST_ASSERT(size <= impl_.handler_storage_.size);
+      size=0;
       return impl_.handler_storage_.address();
     }
 

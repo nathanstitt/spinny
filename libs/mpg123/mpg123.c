@@ -400,12 +400,12 @@ static void reset_audio(void)
   precog the audio rate that will be set before output begins
   this is needed to give gapless code a chance to keep track for firstframe != 0
 */
-/* void prepare_audioinfo(struct frame *fr, struct audio_info_struct *nai) */
-/* { */
-/* 	long newrate = freqs[fr->sampling_frequency]>>(param.down_sample); */
-/* 	fr->down_sample = param.down_sample; */
-/* 	if(!audio_fit_capabilities(nai,fr->stereo,newrate)) safe_exit(1); */
-/* } */
+void prepare_audioinfo(struct frame *fr, struct audio_info_struct *nai)
+{
+	long newrate = freqs[fr->sampling_frequency]>>(param.down_sample);
+	fr->down_sample = param.down_sample;
+	if(!audio_fit_capabilities(nai,fr->stereo,newrate)) safe_exit(1);
+}
 
 /*
  * play a frame read by read_frame();
@@ -434,7 +434,7 @@ int play_frame(int init,struct frame *fr)
 			old_channels = ai.channels;
 
 			newrate = freqs[fr->sampling_frequency]>>(param.down_sample);
-//			prepare_audioinfo(fr, &ai);
+			prepare_audioinfo(fr, &ai);
 			if(param.verbose > 1) fprintf(stderr, "Note: audio output rate = %li\n", ai.rate);
 
 			if(param.gapless && (fr->lay == 3)) layer3_gapless_bytify(fr, &ai);
@@ -743,7 +743,7 @@ void set_synth_functions(struct frame *fr)
 					set_pointer(512);
 					if(param.gapless) {
 						if(pre_init) {
-//							prepare_audioinfo(&fr, &pre_ai);
+							prepare_audioinfo(&fr, &pre_ai);
 							pre_init = 0;
 						}
 						/* keep track... */
