@@ -57,7 +57,7 @@ namespace ews {
 				request_, buffer_.data(), buffer_.data() + bytes_transferred );
 			
 			if (result) {
-				BOOST_LOGL(www,debug) << "Begin Write: " <<  (int)this
+				BOOST_LOGL(www,debug) << "Begin Write: " <<  this
 							<< " : " << request_.uri << std::endl;
  	
 				if ( ! request_handler::handle_request( request_, reply_ ) ){
@@ -100,7 +100,7 @@ namespace ews {
 		}
 		BOOST_LOGL(www,debug)
 			<< "Wrote " << bytes_transferred << " bytes on connection "
-			<< (int)this << " result: " << e.what();
+			<< this << " result: " << e.what();
 	}
 
 } // namespace ews
