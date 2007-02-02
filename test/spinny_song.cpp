@@ -21,21 +21,18 @@ TEST( Table ){
 TEST( Interesting ){
 	DummyApp da;
 
-	boost::filesystem::path mpath( TESTING_FIXTURES_PATH, boost::filesystem::native );
-	mpath/="music";
+	CHECK( ! Song::is_interesting( da.music_path ) );
 
-	CHECK( ! Song::is_interesting( mpath ) );
+	CHECK( Song::is_interesting( da.music_path/"song.mp3" ) );
 
-	CHECK( Song::is_interesting( mpath/"song.mp3" ) );
+	CHECK( Song::is_interesting( da.music_path/"song.mP3" ) );
 
-	CHECK( Song::is_interesting( mpath/"song.mP3" ) );
-
-	CHECK( Song::is_interesting( mpath/"song.MP3" ) );
+	CHECK( Song::is_interesting( da.music_path/"song.MP3" ) );
 }
 
 TEST( Create ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
 	md->save();
@@ -48,11 +45,11 @@ TEST( Create ){
 
 TEST( SetFromTag ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
 	md->save();
-	Song::ptr song = Song::create_from_file( *md,"sonny_stitt.mp3" );
+	Song::ptr song = Song::create_from_file( *md,"Sonny_Stitt.mp3" );
 
 	CHECK_EQUAL( "Blue Mode (Take 1)", song->title() );
 	CHECK_EQUAL( 3, song->track() );

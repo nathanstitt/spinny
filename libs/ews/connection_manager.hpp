@@ -16,6 +16,9 @@ namespace ews {
 		/// Add the specified connection to the manager and start it.
 		void start(connection_ptr c);
 
+		/// remove the connection from management
+		void remove(connection_ptr c);
+
 		/// Stop the specified connection.
 		void stop(connection_ptr c);
 

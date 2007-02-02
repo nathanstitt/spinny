@@ -7,7 +7,7 @@
 #include "boost/thread/xtime.hpp"
 #include <boost/thread/tss.hpp>
 #include "handlers/shared.hpp"
-
+#include "streaming/server.hpp"
 #include <cassert>
 
 
@@ -50,7 +50,7 @@ int main(int argv , char** argc ) {
 // 		.add_modifier(&boost::logging::append_enter,"enter");
 
 	
-	boost::logging::manipulate_logs("www")
+	boost::logging::manipulate_logs("strm")
 		.del_modifier("time")
 		.enable( boost::logging::level::info )
 		.del_modifier("prefix")
@@ -62,6 +62,7 @@ int main(int argv , char** argc ) {
 
 	boost::logging::flush_log_cache();
 
+	BOOST_LOGL(strm, err ) << "HERE: " << __LINE__ ;
 	// Block all signals for background thread.
 	sigset_t new_mask;
 	sigfillset(&new_mask);

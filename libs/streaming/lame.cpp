@@ -1,57 +1,9 @@
-/*
- *      Command line frontend program
- *
- *      Copyright (c) 1999 Mark Taylor
- *                    2000 Takehiro TOMINAGA
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Library General Public License for more details.
- *
- * You should have received a copy of the GNU Library General Public
- * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
- */
-
-/* $Id: main.c,v 1.92.2.1 2005/12/18 18:49:29 robert Exp $ */
 
 # include "lame/config.h"
 
 #include <assert.h>
 #include <stdio.h>
 
-#ifdef STDC_HEADERS
-# include <stdlib.h>
-# include <string.h>
-#else
-# ifndef HAVE_STRCHR
-#  define strchr index
-#  define strrchr rindex
-# endif
-char   *strchr(), *strrchr();
-# ifndef HAVE_MEMCPY
-#  define memcpy(d, s, n) bcopy ((s), (d), (n))
-#  define memmove(d, s, n) bcopy ((s), (d), (n))
-# endif
-#endif
-
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-
-#include <sys/stat.h>
-
-#ifdef __sun__
-/* woraround for SunOS 4.x, it has SEEK_* defined here */
-#include <unistd.h>
-#endif
 
 #if defined(_WIN32)
 # include <windows.h>
@@ -59,25 +11,18 @@ char   *strchr(), *strrchr();
 
 #define         MAX_U_32_NUM            0xFFFFFFFF
 
-#include "lame.hpp"
-
-/* PLL 14/04/2000 */
-#if macintosh
-#include <console.h>
-#endif
-
-#ifdef WITH_DMALLOC
-#include <dmalloc.h>
-#endif
-
+#include "streaming/lame.hpp"
+#include "streaming/server.hpp"
 
 #include <boost/thread/xtime.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/bind.hpp>
+#include "spinny/album.hpp"
+#include "spinny/artist.hpp"
 
-BOOST_DEFINE_LOG( lame, "lame" )
+using namespace Streaming;
 
 int
 is_syncword_mp123( const void *const headerptr)
@@ -165,7 +110,7 @@ lame_decode_fromfile(FILE * fd, short pcm_l[], short pcm_r[],
 
 
 int
-Lame::decode_initfile()
+Lame::init_decode_file()
 {
 	/*  VBRTAGDATA pTagData; */
 	/* int xing_header,len2,num_frames; */
@@ -183,7 +128,7 @@ Lame::decode_initfile()
 		return -1;      /* failed */
 	if (buf[0] == 'I' && buf[1] == 'D' && buf[2] == '3') {
 	    
-		BOOST_LOGL( lame, info ) << "ID3v2 found, be aware that the ID3 tag is currently lost when transcoding";
+		BOOST_LOGL( strm, info ) << "ID3v2 found, be aware that the ID3 tag is currently lost when transcoding";
 
 		len = 6;
 		if (fread(&buf, 1, len, musicin) != len)
@@ -204,7 +149,7 @@ Lame::decode_initfile()
 			return -1;  /* failed */
 		aid_header = (unsigned char) buf[0] + 256 * (unsigned char) buf[1];
 
-		BOOST_LOGL( lame, info ) << "Album ID found.  length=" << aid_header;
+		BOOST_LOGL( strm, info ) << "Album ID found.  length=" << aid_header;
 
 		/* skip rest of AID, except for 6 bytes we have already read */
 		fseek(musicin, aid_header - 6, SEEK_CUR);
@@ -223,7 +168,7 @@ Lame::decode_initfile()
 	}
 
 	if ((buf[2] & 0xf0)==0) {
-		BOOST_LOGL( lame, info ) << "Input file is freeformat.";
+		BOOST_LOGL( strm, info ) << "Input file is freeformat.";
 		freeformat = 1;
 	}
 	/* now parse the current buffer looking for MP3 headers.    */
@@ -233,7 +178,7 @@ Lame::decode_initfile()
 	/* so mp3data->bitrate will be 0 until we have decoded the first */
 	/* frame.  Cannot decode first frame here because we are not */
 	/* yet prepared to handle the output. */
-	ret = lame_decode1_headersB( buf, len, pcm_l, pcm_r, &mp3input_data,&(enc_delay),&(enc_padding));
+	ret = lame_decode1_headers( buf, len, pcm_l, pcm_r, &mp3input_data );
 	if (-1 == ret)
 		return -1;
 
@@ -242,14 +187,14 @@ Lame::decode_initfile()
 		len = fread(buf, 1, sizeof(buf), musicin);
 		if (len != sizeof(buf))
 			return -1;
-		ret = lame_decode1_headersB( buf, len, pcm_l, pcm_r, &mp3input_data,&(enc_delay),&(enc_padding) );
+		ret = lame_decode1_headers( buf, len, pcm_l, pcm_r, &mp3input_data );
 		if (-1 == ret)
 			return -1;
 	}
 
 	if (mp3input_data.bitrate==0 && !freeformat) {
-		BOOST_LOGL( lame, info ) << "fail to sync...";
-		return decode_initfile();
+		BOOST_LOGL( strm, info ) << "fail to sync...";
+		return init_decode_file();
 	}
 
 	if ( mp3input_data.totalframes > 0) {
@@ -271,17 +216,16 @@ Lame::read_samples_mp3( short int mpg123pcm[2][1152], int )
 
     out = lame_decode_fromfile( musicin, mpg123pcm[0], mpg123pcm[1],
 			       &(mp3input_data));
-
     if (out < 0) {
         memset(mpg123pcm, 0, sizeof(**mpg123pcm) * 2 * 1152);
         return 0;
     }
 
     if ( lame_get_num_channels( lgf ) != mp3input_data.stereo )
-	    BOOST_LOGL(lame,err ) << "Error: number of channels has changed in mp3 file - not supported";
+	    BOOST_LOGL(strm,err ) << "Error: number of channels has changed in mp3 file - not supported";
 
     if ( lame_get_in_samplerate( lgf ) != mp3input_data.samplerate )
-	    BOOST_LOGL(lame,err ) << "Error: sample frequency has changed in mp3 file - not supported";
+	    BOOST_LOGL(strm,err ) << "Error: sample frequency has changed in mp3 file - not supported";
 
     return out;
 }
@@ -295,25 +239,7 @@ Lame::get_audio( int buffer[2][1152] )
 
 	short   buf_tmp16[2][1152];
 	int     samples_read;
-	unsigned int     framesize;
-	int     samples_to_read;
-//	unsigned int tmp_num_samples;
 	int     i;
-
-
-	/* 
-	 * NOTE: LAME can now handle arbritray size input data packets,
-	 * so there is no reason to read the input data in chuncks of
-	 * size "framesize".  EXCEPT:  the LAME graphical frame analyzer 
-	 * will get out of sync if we read more than framesize worth of data.
-	 */
-
-	samples_to_read = framesize = lame_get_framesize(lgf);
-	assert(framesize <= 1152);
-
-	/* get num_samples */
-//	tmp_num_samples = lame_get_num_samples( lgf );
-
 
 	samples_read = read_samples_mp3( buf_tmp16, num_channels );
 	for( i = samples_read; --i >= 0; )
@@ -323,41 +249,98 @@ Lame::get_audio( int buffer[2][1152] )
 			buffer[1][i] = buf_tmp16[1][i] << (8 * sizeof(int) - 16);
 	} else if( num_channels == 1 ) {
 		memset( buffer[1], 0, samples_read * sizeof(int) );
-	} else
-		assert(0);
-
-
-
-
+	}
 
 	return samples_read;
 }
 
+static const char *mode_names[2][4] = {
+	{"stereo", "j-stereo", "dual-ch", "single-ch"},
+	{"stereo", "force-ms", "dual-ch", "single-ch"}
+};
+
 
 bool
-Lame::transcode_song()
+Lame::transcode_song( Spinny::Song::ptr song )
 {
+
 	boost::mutex::scoped_lock lock(buffer_mutex);
 
 	int     Buffer[2][1152];
 	int     iread;
-//	int     frames;
+
+
+	std::string in_path = song->path().string();
+			
+	if ( (musicin = fopen(in_path.c_str(), "rb" ) ) == NULL ) {
+		BOOST_LOGL( strm, err ) << "Could not open " << in_path;
+		throw std::runtime_error( "file open for read failed" );
+	}
+	
+	if (-1 == init_decode_file() ) {
+		BOOST_LOGL( strm, err ) << "Error reading headers in mp3 input file " << in_path;
+		throw std::runtime_error( "Error reading headers in mp3 input file" );
+	}
+
+
+	id3tag_init( lgf );
+	id3tag_add_v2(lgf);
+	id3tag_v2_only(lgf);
+	id3tag_set_title( lgf, song->title().c_str() );
+	id3tag_set_artist( lgf, song->artist()->name().c_str() );
+	id3tag_set_album( lgf, song->album()->name().c_str() );
+	id3tag_set_year( lgf, boost::lexical_cast<std::string>( song->year() ).c_str()  );
+
+
+	(void) lame_set_in_samplerate( lgf, mp3input_data.samplerate );
+	(void) lame_set_num_samples( lgf, mp3input_data.nsamp );
+
+	lame_init_bitstream(lgf);
+
+	if ( lame_get_num_samples( lgf ) == MAX_U_32_NUM ) {
+
+		double  flen = lame_get_file_size(in_path); /* try to figure out num_samples */
+		if (flen >= 0) {
+			/* try file size, assume 2 bytes per sample */
+			if ( mp3input_data.bitrate > 0) {
+				double  totalseconds =
+					(flen * 8.0 / (1000.0 * mp3input_data.bitrate));
+				unsigned long tmp_num_samples =
+					(unsigned long) (totalseconds * lame_get_in_samplerate( lgf ));
+				
+				(void) lame_set_num_samples( lgf, tmp_num_samples );
+				mp3input_data.nsamp = tmp_num_samples;
+			} else {
+				(void) lame_set_num_samples( lgf,
+							     (unsigned long)(flen / (2 * lame_get_num_channels( lgf ))) );
+			}
+		}
+	}
+		
+	BOOST_LOGL( strm, info ) << "Encoding "  <<  lame_get_brate(lgf)
+				 << "kbs " << mode_names[lame_get_force_ms(lgf)][lame_get_mode(lgf)] 
+				 << " (qval=" << lame_get_quality(lgf) << ")"
+				 << "\n" << in_path
+				 << "\nTitle:   " << song->title() 
+				 << "\nArtist:  " << song->artist()->name()
+				 << "\nAlbum:   " << song->album()->name();
+
+						 
+
 
 	/* encode until we hit eof */
 	do {
 
-		while (  ! write_buffer && running ){
+		while (  ! write_buffer && this->is_running() ){
 			buffer_condition.wait(lock);
 		}
 
-		/* read in 'iread' samples */
 		iread = get_audio( Buffer );
-//		frames = lame_get_frameNum(lgf);
 
 		if (iread){
 			/* encode */
 			write_buffer->data_length = lame_encode_buffer_int(lgf, Buffer[0], Buffer[1], iread,
-								   write_buffer->data.c_array(), LAME_MAXMP3BUFFER );
+									   write_buffer->data.c_array(), LAME_MAXMP3BUFFER );
 		} else {
 			/* may return one more mp3 frame */
 			write_buffer->data_length = lame_encode_flush_nogap( lgf,
@@ -367,18 +350,29 @@ Lame::transcode_song()
 		/* was our output buffer big enough? */
 		if ( write_buffer->data_length < 0) {
 			if ( -1 == write_buffer->data_length  )
-				BOOST_LOGL( lame, err ) << "mp3 buffer is not big enough";
+				BOOST_LOGL( strm, err ) << "mp3 buffer is not big enough";
 			else
-				BOOST_LOGL( lame, err ) << "mp3 internal error:  error code=" << write_buffer->data_length; 
+				BOOST_LOGL( strm, err ) << "mp3 internal error:  error code=" << write_buffer->data_length; 
 			return false;
 		}
 
 		write_buffer = NULL;
 		buffer_condition.notify_one();
 
-	} while ( iread && running );
+	} while ( iread && this->is_running() );
+
+
+
+	if (fclose(this->musicin) != 0) {
+		BOOST_LOGL( strm, err ) << "Could not close audio input file";
+		throw std::runtime_error("Could not close audio input file");
+	}
+
 
 	return true;
+
+
+
 }
 
 
@@ -391,36 +385,57 @@ Lame::transcode_song()
 
 Lame::Lame(Spinny::PlayList::ptr p) :
 	pl(p),
-	running( true ),
-	lame_thread( boost::bind(&Lame::transcode,boost::ref(*this) ) )
+	lame_thread(0)
 {
-
-
-	
-}
-
-Lame::~Lame(){
-	BOOST_LOGL(lame,info)<< "stopping transcoder";
-	running=false;
-	buffer_condition.notify_all();
-	lame_thread.join();
+	BOOST_LOGL( strm, info ) << "New transcoder " << this;
+	this->start();
 }
 
 bool
-Lame::to_buffers(){
+Lame::start(){
+	return ( lame_thread=new boost::thread( boost::bind(&Lame::transcode,boost::ref(*this) ) ) );
+}
 
-
+bool
+Lame::stop(){
+	boost::thread *t=lame_thread;
+	lame_thread=NULL;
+	buffer_condition.notify_all();
+	t->join();
+	delete t;
 	return true;
 }
 
-static const char *mode_names[2][4] = {
-	{"stereo", "j-stereo", "dual-ch", "single-ch"},
-	{"stereo", "force-ms", "dual-ch", "single-ch"}
-};
+bool
+Lame::is_running(){
+	return lame_thread;
+}
+
+Lame::~Lame(){
+	BOOST_LOGL( strm, info ) << "Transcoder exit " << this;
+	this->stop();
+}
+
+void
+log_debug( const char* fmt, va_list args ) {
+	static char buff[300];
+	snprintf( buff, 300, fmt, args );
+	BOOST_LOGL( strm, debug ) << buff;
+}
+void
+log_info( const char* fmt, va_list args ) {
+	static char buff[300];
+	snprintf( buff, 300, fmt, args );
+	BOOST_LOGL( strm, info ) << buff;
+}void
+log_err( const char* fmt, va_list args ) {
+	static char buff[300];
+	snprintf( buff, 300, fmt, args );
+	BOOST_LOGL( strm, err ) << buff;
+}
 
 bool
 Lame::transcode(){
-
 	read_buffer=new buffer;
 	write_buffer=new buffer;
 	read_buffer->next=write_buffer;
@@ -448,67 +463,38 @@ Lame::transcode(){
 		throw std::runtime_error("fatal error during initialization");
 	}
 
-	lame_init_params(lgf);
 
 	if( -1 == lame_set_num_channels( lgf, 2 ) ) {
-		BOOST_LOGL( lame, err ) << "Unsupported number of channels: " << mp3input_data.stereo;
+		BOOST_LOGL( strm, err ) << "Unsupported number of channels: " << mp3input_data.stereo;
 		throw std::runtime_error( "Unsupported number of channels" );
 	}
 
+	if ( -1 == lame_set_brate(lgf, pl->bitrate() ) ){
+		BOOST_LOGL( strm, err ) << "Unsupported bitrate: " << pl->bitrate();
+		throw std::runtime_error( "Unsupported bitrate" );
 
-	while ( running ){
+	}
+
+	lame_set_errorf(lgf,log_err );
+ 	lame_set_debugf(lgf,log_debug);
+ 	lame_set_msgf(lgf,log_info);
+
+	lame_set_quality(lgf,7);
+
+	lame_init_params(lgf);
+
+	while ( this->is_running() ){
 		Spinny::Song::result_set songs = pl->songs();
-		for ( Spinny::Song::result_set::iterator song = songs.begin(); running && song != songs.end(); ++song ){
-			std::string in_path = song->path().string();
-			if ( (musicin = fopen(in_path.c_str(), "rb" ) ) == NULL ) {
-				BOOST_LOGL( lame, err ) << "Could not open " << in_path;
-				throw std::runtime_error( "file open for read failed" );
+		for ( Spinny::Song::result_set::iterator song = songs.begin(); this->is_running() && song != songs.end(); ++song ){
+
+			try {
+				this->transcode_song( song.shared_ptr() );
 			}
-	
-			if (-1 == decode_initfile() ) {
-				BOOST_LOGL( lame, err ) << "Error reading headers in mp3 input file " << in_path;
-				throw std::runtime_error( "Error reading headers in mp3 input file" );
+			catch ( const std::exception &ex ){
+				BOOST_LOGL( strm, err ) << "Caught exception: " << ex.what() << " moving on to next file";
 			}
-
-			(void) lame_set_in_samplerate( lgf, mp3input_data.samplerate );
-			(void) lame_set_num_samples( lgf, mp3input_data.nsamp );
-
-			if ( lame_get_num_samples( lgf ) == MAX_U_32_NUM ) {
-
-				double  flen = lame_get_file_size(in_path); /* try to figure out num_samples */
-				if (flen >= 0) {
-					/* try file size, assume 2 bytes per sample */
-					if ( mp3input_data.bitrate > 0) {
-						double  totalseconds =
-							(flen * 8.0 / (1000.0 * mp3input_data.bitrate));
-						unsigned long tmp_num_samples =
-							(unsigned long) (totalseconds * lame_get_in_samplerate( lgf ));
-				
-						(void) lame_set_num_samples( lgf, tmp_num_samples );
-						mp3input_data.nsamp = tmp_num_samples;
-					} else {
-						(void) lame_set_num_samples( lgf,
-									     (unsigned long)(flen / (2 * lame_get_num_channels( lgf ))) );
-					}
-				}
-			}
-		
-			BOOST_LOGL( lame, info ) << "Encoding " << in_path
-						 << " as " <<  lame_get_brate(lgf)
-						 << "kbs " << mode_names[lame_get_force_ms(lgf)][lame_get_mode(lgf)] 
-						 << " (qval=" << lame_get_quality(lgf) << ")";
-
-			this->transcode_song();
-
-			if (fclose(this->musicin) != 0) {
-				BOOST_LOGL( lame, err ) << "Could not close audio input file";
-				throw std::runtime_error("Could not close audio input file");
-			}
-
-			lame_init_bitstream(lgf);
 		}
 	}
-	BOOST_LOGL( lame, info ) << "Encoding completed";
 
 //	lame_mp3_tags_fid(lgf, musicout); /* add VBR tags to mp3 file */
 
@@ -532,7 +518,7 @@ Lame::get_chunk(){
 	boost::mutex::scoped_lock lock(buffer_mutex);
 
 
-	while ( write_buffer && running ){
+	while ( write_buffer && this->is_running() ){
 		buffer_condition.wait(lock);
 	}
 

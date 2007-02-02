@@ -138,22 +138,23 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
 		song->_title=field->GetRawText();
 	}
-	Artist::ptr artist;
+
+	std::string tmp;
+
  	frame = tag.Find( ID3FID_LEADARTIST );
  	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-		Artist::ptr a = Artist::find_or_create( field->GetRawText() );
-		artist.swap( a );
- 		song->_artist_id=artist->db_id();
- 	}
+		tmp=field->GetRawText();
+	}
+	Artist::ptr artist = Artist::find_or_create( tmp );
+	song->_artist_id=artist->db_id();
 
  	frame = tag.Find( ID3FID_ALBUM );
+	tmp="";
  	if ( artist && frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-		BOOST_LOGL( app,info ) << "Album: " << field->GetRawText();
-		Album::ptr a = Album::find_or_create( artist, field->GetRawText() );
-		a->add_artist( artist );
- 		song->_album_id=a->db_id();
- 	}
-
+		tmp=field->GetRawText();
+	}
+	Album::ptr album = Album::find_or_create( artist, tmp );
+	song->_album_id=album->db_id();
 
 	try {
 		frame = tag.Find( ID3FID_TRACKNUM );

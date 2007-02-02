@@ -37,7 +37,9 @@ parse_program_options(int ac, char* av[])
 		("web_listen_port",po::value<std::string>()->default_value("3000"),"Network port to listen on.")
 		("web_root", po::value<std::string>(),"Directory to serve files from.")
 		("template_root",po::value<std::string>(),"Directory to find templates in.")
-		("music_dir",po::value<std::vector<std::string> >(),"Directory that music files are located in");
+		("music_dir",po::value<std::vector<std::string> >(),"Directory that music files are located in")
+	        ("streaming_listen_port",po::value<unsigned int>()->default_value(6000),"First network port to stream music on.")
+		("streaming_listen_address",po::value<std::string>()->default_value("0.0.0.0"),"Network address to stream music on.")
 		;
 
         // Declare a group of options that will be 

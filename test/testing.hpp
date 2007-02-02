@@ -40,9 +40,8 @@ public:
 		db_path( fixtures_path / "test.db" ),
 		music_path( fixtures_path / "music" ),
 		web_path( fixtures_path / "webroot"),
-		template_path( fixtures_path / "webtmpl" )
+		template_path( fixtures_path / "cs" )
 		{
-
 			boost::filesystem::remove( db_path );
 			boost::filesystem::create_directory( fixtures_path );
 			boost::filesystem::create_directory( web_path );
@@ -69,10 +68,10 @@ public:
 			con->exec<sqlite::none>("create table testing( col1 int, col2 string, col3 int )");
 		}
 
-	void populate_test_files( const char *lib ){
+	void populate_fixture( const char *lib ){
 		filesystem::directory_iterator end_itr;
 		boost::filesystem::create_directory( fixtures_path / lib );
-		boost::filesystem::directory_iterator file( filesystem::path( SRC_PATH,boost::filesystem::native ) / "libs" / lib / "test-files" );
+		boost::filesystem::directory_iterator file( filesystem::path( SRC_PATH,boost::filesystem::native ) / "test" / "fixtures" / lib );
 		for (  ;file != end_itr; ++file ){
 			if ( file->leaf() != ".svn" ){
 				try {
@@ -84,33 +83,34 @@ public:
 	}
 
 
-	void
-	populate_web(){
-		filesystem::directory_iterator end_itr;
-		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH,boost::filesystem::native ) / "libs" / "cs" / "test-files" );
-		for ( ;file != end_itr; ++file ){
-			if ( file->leaf() != ".svn" ){
-				try {
-					boost::filesystem::copy_file( *file, template_path / file->leaf() );
-				}
-				catch ( std::exception & ){}
-			}
-		}
-	}
+// 	void
+// 	populate_web(){
+// 		populate_test_files("cs");
+// // 		filesystem::directory_iterator end_itr;
+// // 		boost::filesystem::directory_iterator file(  filesystem::path( SRC_PATH,boost::filesystem::native ) / "libs" / "cs" / "test-files" );
+// // 		for ( ;file != end_itr; ++file ){
+// // 			if ( file->leaf() != ".svn" ){
+// // 				try {
+// // 					boost::filesystem::copy_file( *file, template_path / file->leaf() );
+// // 				}
+// // 				catch ( std::exception & ){}
+// // 			}
+// // 		}
+// 	}
 
-	void
-	populate_music_fixtures(){
-		filesystem::directory_iterator end_itr;
-		boost::filesystem::directory_iterator file( filesystem::path( SRC_PATH ) / "libs" / "id3lib" / "test-files" );
-		for ( ;file != end_itr; ++file ){
-			if ( file->leaf() != ".svn" ){
-				try {
-					boost::filesystem::copy_file( *file, music_path / file->leaf() );
-				}
-				catch ( std::exception & ){}
-			}
-		}
-	}
+// 	void
+// 	populate_music_fixtures(){
+// 		filesystem::directory_iterator end_itr;
+// 		boost::filesystem::directory_iterator file( filesystem::path( SRC_PATH ) / "libs" / "id3lib" / "test-files" );
+// 		for ( ;file != end_itr; ++file ){
+// 			if ( file->leaf() != ".svn" ){
+// 				try {
+// 					boost::filesystem::copy_file( *file, music_path / file->leaf() );
+// 				}
+// 				catch ( std::exception & ){}
+// 			}
+// 		}
+// 	}
 
 	~DummyApp() {
 		Spinny::App::stop();

@@ -23,11 +23,11 @@ namespace ews {
 		std::string current_header_value;
 		void clear_current_header();
 	public:
-		request( const connection *conn );
+		request( connection *conn );
 
 		Spinny::User::ptr user;
 
-		const connection *conn;
+		connection *conn;
 
 		typedef std::map< std::string, std::string > headers_t;
 		headers_t headers;

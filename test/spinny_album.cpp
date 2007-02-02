@@ -14,10 +14,10 @@ TEST( Table ){
 
 TEST( FromSong ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	Spinny::MusicDir::ptr md = Spinny::MusicDir::create_root( da.music_path );
 
-	Spinny::Song::ptr song = Spinny::Song::create_from_file( *md, "sonny_stitt.mp3" );
+	Spinny::Song::ptr song = Spinny::Song::create_from_file( *md, "Sonny_Stitt.mp3" );
 	Spinny::Album::ptr alb = song->album();
 
 	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
@@ -26,10 +26,10 @@ TEST( FromSong ){
 
 TEST( Songs ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	Spinny::MusicDir::ptr md = Spinny::MusicDir::create_root( da.music_path );
 
-	Spinny::Song::ptr song = Spinny::Song::create_from_file( *md, "sonny_stitt.mp3" );
+	Spinny::Song::ptr song = Spinny::Song::create_from_file( *md, "Sonny_Stitt.mp3" );
 	Spinny::Album::ptr alb = song->album();
 
 	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
@@ -42,10 +42,10 @@ TEST( Songs ){
 
 TEST( All ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
-	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
+	Song::ptr song = Song::create_from_file( *md, "Sonny_Stitt.mp3" );
 
 	Album::result_set albums = Album::all();
 
@@ -59,10 +59,10 @@ TEST( All ){
 
 TEST( NameStartsWith ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
-	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
+	Song::ptr song = Song::create_from_file( *md, "Sonny_Stitt.mp3" );
 
 	Album::result_set albums = Album::name_starts_with("THE");
 
@@ -85,11 +85,11 @@ struct name_eq{
 
 TEST( Artists ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
 	md->save();
-	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
+	Song::ptr song = Song::create_from_file( *md, "Sonny_Stitt.mp3" );
 
   	Artist::result_set rs = Artist::all();
   	CHECK( rs.begin() != rs.end() );

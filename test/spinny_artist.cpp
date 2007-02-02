@@ -22,7 +22,7 @@ struct name_eq{
 
 TEST( Songs ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 	md->sync();
 
@@ -35,7 +35,7 @@ TEST( Songs ){
 
 TEST( NameStartsWith ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 	md->sync();
 
@@ -48,10 +48,10 @@ TEST( NameStartsWith ){
 
 TEST( FromSong ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
-	Song::ptr song = Song::create_from_file( *md, "sonny_stitt.mp3" );
+	Song::ptr song = Song::create_from_file( *md, "Sonny_Stitt.mp3" );
  
 	Artist::ptr artist = song->artist();
 

@@ -19,8 +19,8 @@ public:
 	static bool handle_request( const request& req, reply &rep );
 
 	enum RequestStatus {
-		Continue,    // All ok, continue passing the request to other handlers
-		Stop,    // All ok, but don't continue passing the request to other handlers
+		Continue,      // All ok, continue passing the request to other handlers
+		Stop,          // All ok, but don't continue passing the request to other handlers
 	};
 	enum RequestPhase {
 		Beginning,

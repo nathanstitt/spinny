@@ -104,8 +104,8 @@ rewriteValueTree( const std::string &rewritePath,
 
 TEST( All ){
 	DummyApp da;
-	da.populate_test_files("json");
-	
+	da.populate_fixture("json");
+
 	boost::filesystem::path input_path(  da.fixtures_path / "json" );
 	boost::filesystem::directory_iterator file( input_path );
 	filesystem::directory_iterator end_itr;

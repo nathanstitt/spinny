@@ -1,10 +1,10 @@
+#include "boost/bind.hpp"
 #include "ews/connection.hpp"
 #include "ews/connection_manager.hpp"
 #include "ews/request_handler.hpp"
 #include "ews/request_parser.hpp"
 #include "ews/server.hpp"
 #include <vector>
-#include <boost/bind.hpp>
 
 namespace ews {
 
@@ -17,7 +17,8 @@ namespace ews {
 		  socket_(io_service),
 		  connection_manager_(manager),
 		  request_(this),
-		  reply_(this)
+		  reply_(this),
+		  socket_detached_(false)
 	{
 		BOOST_LOGL(www,debug) << "NEW CONNECTION: " << (int)this << std::endl;
 	}
@@ -33,8 +34,15 @@ namespace ews {
 						    asio::placeholders::bytes_transferred)); 
 	}
 
+	void connection::detach_socket(){
+		connection_manager_.remove(shared_from_this());
+		socket_detached_ = true;
+	}
+
 	void connection::stop() {
-		socket_.close();
+		if ( ! socket_detached_ ){
+			socket_.close();
+		}
 	}
 
 	void connection::handle_read( const asio::error& e,
@@ -56,17 +64,18 @@ namespace ews {
 					reply_.set_to( reply::internal_server_error );
 				}
 				BOOST_LOGL( www, info ) << (int)reply_.status << " " << request_.method << " " << request_.uri;
-				for( reply::headers_t::const_iterator header=reply_.headers.begin();
-				     reply_.headers.end() != header;
-				     ++header ) {
-					BOOST_LOGL( www, debug ) << "Outgoing Header: "
-								   << header->first << " => " << header->second;
-				}
-
-				asio::async_write( socket_, reply_.to_buffers(),
-						   boost::bind(&connection::handle_write, shared_from_this(),
-							       asio::placeholders::error,
-							       asio::placeholders::bytes_transferred ) );
+					for( reply::headers_t::const_iterator header=reply_.headers.begin();
+					     reply_.headers.end() != header;
+					     ++header ) {
+						BOOST_LOGL( www, debug ) << "Outgoing Header: "
+									 << header->first << " => " << header->second;
+					}
+					if ( ! socket_detached_ ){
+						asio::async_write( socket_, reply_.to_buffers(),
+								   boost::bind(&connection::handle_write, shared_from_this(),
+									       asio::placeholders::error,
+									       asio::placeholders::bytes_transferred ) );
+					}
 			} else if ( ! result ) {
 				reply_.set_to( reply::bad_request );
 				asio::async_write(socket_, reply_.to_buffers(),

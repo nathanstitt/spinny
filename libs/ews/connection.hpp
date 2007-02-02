@@ -43,6 +43,7 @@ namespace ews {
 
 		boost::filesystem::path tmpl_root;
 
+		void detach_socket();
 	private:
 		/// Handle completion of a read operation.
 		void handle_read(const asio::error& e, std::size_t bytes_transferred);
@@ -65,9 +66,10 @@ namespace ews {
 		/// The reply to be sent back to the client.
 		reply reply_;
 
-
 		/// The parser for the incoming request.
 		request_parser request_parser_;
+
+		bool socket_detached_;
 
 	};
 

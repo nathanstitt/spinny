@@ -14,7 +14,7 @@ SUITE(SpinnyMusicDir) {
 
 TEST( CreateRoot ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
   	CHECK( md->is_root() );
@@ -35,7 +35,7 @@ TEST( CreateRoot ){
 
 TEST( Load ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md1 = MusicDir::create_root( da.music_path );
 
 	md1->save();
@@ -131,7 +131,7 @@ TEST( Children ){
 
 TEST( Path ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
   	CHECK( md->is_root() );
 	CHECK( da.music_path == md->path() ); 
@@ -139,7 +139,7 @@ TEST( Path ){
 
 TEST( Sync ){
 	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 
@@ -152,16 +152,16 @@ TEST( Sync ){
 	md->sync();
 
 	CHECK_EQUAL( 1, da.con->exec<int>( "select count(*) from music_dirs") );
-	CHECK_EQUAL( 8, da.con->exec<int>( "select count(*) from songs") );
-	CHECK_EQUAL( 4, da.con->exec<int>( "select count(*) from artists") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from songs") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from artists") );
 	CHECK_EQUAL( 4, da.con->exec<int>( "select count(*) from albums") );
 	CHECK_EQUAL( 4, da.con->exec<int>( "select count(*) from albums_artists") );
 
 
 	boost::filesystem::create_directory( da.music_path / "foo" );
 
-	if ( ! boost::filesystem::exists( da.music_path / "foo" / "sonny_stitt.mp3" ) ){
-		boost::filesystem::copy_file( da.music_path / "sonny_stitt.mp3",  da.music_path / "foo" / "sonny_stitt.mp3" );
+	if ( ! boost::filesystem::exists( da.music_path / "foo" / "Sonny_Stitt.mp3" ) ){
+		boost::filesystem::copy_file( da.music_path / "Sonny_Stitt.mp3",  da.music_path / "foo" / "Sonny_Stitt.mp3" );
 	}
 
 	md->sync();
@@ -191,7 +191,7 @@ struct name_eq{
 
 TEST( Songs ){
  	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 
 
  	MusicDir::ptr md = MusicDir::create_root( da.music_path );

@@ -2,7 +2,8 @@
  */
 
 
-#include "spinny.hpp"
+#include "spinny/spinny.hpp"
+
 #include <vector>
 #include <algorithm>
 #include "boost/bind.hpp"
@@ -12,6 +13,7 @@
 #include "spinny/settings.hpp"
 #include "boost/bind.hpp"
 #include "ews/server.hpp"
+#include "streaming/server.hpp"
 #include "spinny/music_dir.hpp"
 
 using namespace std;
@@ -28,10 +30,9 @@ namespace Spinny {
 
 static App *_instance=0;
 static ews::server *_ews=0;
+static Streaming::Server *_strm=0;
 static asio::thread *_web_thread=0;
-
-
-
+static asio::thread *_strm_thread=0;
 
 
 App::App(int argc, char **argv) :
@@ -89,7 +90,13 @@ App::run(int argc, char **argv)
 		);
 
 
-  	_web_thread = new asio::thread( boost::bind( &ews::server::run, _ews ) );
+	_strm = new Streaming::Server(  _instance->config<string>( "streaming_listen_address" ),
+					_instance->config<unsigned int>( "streaming_listen_port" )
+		);
+
+
+  	_web_thread =  new asio::thread( boost::bind( &ews::server::run, _ews ) );
+  	_strm_thread = new asio::thread( boost::bind( &Streaming::Server::run, _strm ) );
 
 	vector<string> mds = _instance->config<vector<string> >( "music_dir" );
  	for_each( mds.begin(), mds.end(), boost::bind( init_music_dir, _1 ) );
@@ -106,13 +113,19 @@ App::stop(){
 	_instance=0;
 
 	_ews->stop();
+	_strm->stop();
 	_web_thread->join();
+	_strm_thread->join();
 
 	delete _ews;
+	delete _strm;
 	_ews=0;
+	_strm=0;
 
 	delete _web_thread;
+	delete _strm_thread;
 	_web_thread=0;
+	_strm_thread=0;
 
 	BOOST_LOGL(app, warn) << "App stopped";
 }

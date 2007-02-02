@@ -35,7 +35,7 @@ TEST( Create ){
 
 TEST( Insert ){
  	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 	md->sync();
@@ -53,7 +53,7 @@ TEST( Insert ){
 
 TEST( Clear ){
  	DummyApp da;
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 	md->sync();
@@ -76,7 +76,7 @@ TEST( Clear ){
 TEST( Remove ){
  	DummyApp da;
 
-	da.populate_music_fixtures();
+	da.populate_fixture("music");
 
 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
 	md->sync();

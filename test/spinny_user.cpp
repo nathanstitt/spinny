@@ -15,7 +15,7 @@ TEST( Create ){
 
 TEST( IdLoad ){
 	DummyApp da;
-	EnableLogging el;
+//	EnableLogging el;
 	User::ptr u = User::create( "test-login", "test" );
 	u->save();
 
@@ -28,7 +28,7 @@ TEST( Roles ){
 	User::ptr u = User::create( "test-login", "test" );
 	u->save();
 
-	sqlite::id_t uid = sqlite::db()->exec<sqlite::id_t>( "select rowid from users" );
+	sqlite::id_t uid = sqlite::db()->exec<sqlite::id_t>( "select rowid from users where login='test-login'" );
 	CHECK_EQUAL( u->db_id(), uid );
 
 	CHECK( u->has_at_least( User::ReadOnlyRole ) );

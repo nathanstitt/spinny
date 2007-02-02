@@ -11,9 +11,14 @@ namespace ews {
 		c->start();
 	}
 
-	void connection_manager::stop(connection_ptr c)
+	void connection_manager::remove(connection_ptr c)
 	{
 		connections_.erase(c);
+	}
+
+	void connection_manager::stop(connection_ptr c)
+	{
+		this->remove(c);
 		c->stop();
 	}
 

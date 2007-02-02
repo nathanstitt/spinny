@@ -55,9 +55,9 @@ bool is_tmpl( string& filename ) {
 TEST( All ){
 
 	DummyApp da;
+	da.populate_fixture("cs");
 
-	da.populate_web();
-	template_path=da.template_path;
+	template_path=da.fixtures_path / "cs";
 	EWSTestClient ews;
 //	EnableLogging el("ewslog");
 	boost::filesystem::directory_iterator file( template_path );
