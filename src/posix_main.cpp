@@ -62,7 +62,6 @@ int main(int argv , char** argc ) {
 
 	boost::logging::flush_log_cache();
 
-	BOOST_LOGL(strm, err ) << "HERE: " << __LINE__ ;
 	// Block all signals for background thread.
 	sigset_t new_mask;
 	sigfillset(&new_mask);
