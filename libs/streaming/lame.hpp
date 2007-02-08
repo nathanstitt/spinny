@@ -17,32 +17,36 @@
 namespace Streaming {
 
 	class Lame {
-	public:
-		Lame( Spinny::PlayList::ptr pl );
-
-		bool start();
-		bool is_running();
-		bool stop();
-
-		asio::const_buffer get_chunk();
-
-		~Lame();
-	private:
-		boost::mutex buffer_mutex;
-		boost::condition buffer_condition;
-
+		friend class Chunk;
 		typedef boost::array<unsigned char,LAME_MAXMP3BUFFER> buff_t;
 		struct buffer {
 			buff_t data;
 			int data_length;
 			buffer *next;
 		};
+	public:
+
+
+		Lame( Spinny::PlayList::ptr pl );
+
+		Chunk get_chunk();
+
+//		asio::const_buffer next_seconds( int seconds );
+		
+		~Lame();
+	private:
+		bool fill_buffer();
+		void next_song();
+
+		boost::mutex buffer_mutex;
+		boost::condition buffer_condition;
+
+
 		buffer *read_buffer;
 		buffer *write_buffer;
 
-		bool transcode_song( Spinny::Song::ptr song );
-
 		Spinny::PlayList::ptr pl;
+		unsigned int cur_pos;
 
 		mp3data_struct mp3input_data;
 		lame_global_flags *lgf;
@@ -53,12 +57,22 @@ namespace Streaming {
 
 		int get_audio( int buffer[2][1152] );
 
-		int read_samples_mp3( short int mpg123pcm[2][1152], int );
-
 		int init_decode_file();
 
 		boost::thread *lame_thread;
 
+		bool running_;
+
+	};
+
+	struct Chunk {
+		friend class Lame;
+		Chunk( Lame::buffer *b,
+		       unsigned short int br );
+		unsigned int milliseconds();
+		std::size_t size();
+		asio::const_buffer data;
+		unsigned short int bitrate;
 	};
 
 }

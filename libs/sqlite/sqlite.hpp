@@ -379,6 +379,17 @@ namespace sqlite {
 			return ret;
 		}
 
+		// load one sqlite::table object
+		template<class T>
+		typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::stored_type
+		load_one(){
+			command *cmd = new command( *this,  _cmd.curval() );
+			result_set<T> rs( cmd );
+			BOOST_LOGL(sql,debug) << "load_stored of " << typeid(T).name();
+			this->clear_cmd();
+			return rs.begin().shared_ptr();
+		}
+
 		// count of items in table
 		template<class T1>
 		id_t

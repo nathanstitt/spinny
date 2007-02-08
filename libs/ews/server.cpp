@@ -38,12 +38,6 @@ namespace ews {
 					 << " root: " << doc_root_.string()
 					 << " tmpl: " << tmpl_root_.string();
 
-// 		std::cout << "EWS running on: " 
-// 					 << address
-// 					 << ":" << port
-// 					 << " root: " << doc_root_.string()
-// 					 << " tmpl: " << tmpl_root_.string()
-// 			  << std::endl;
 	}
 
 	void server::run()

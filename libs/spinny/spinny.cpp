@@ -32,14 +32,30 @@ static App *_instance=0;
 static ews::server *_ews=0;
 static Streaming::Server *_strm=0;
 static asio::thread *_web_thread=0;
-static asio::thread *_strm_thread=0;
+//static asio::thread *_strm_thread=0;
 
 
 App::App(int argc, char **argv) :
 	_argc( argc ),
 	_argv( argv )
 {
+#if defined(_WIN32)
+	/* set affinity back to all CPUs.  Fix for EAC/lame on SMP systems from
+	   "Todd Richmond" <todd.richmond@openwave.com> */
+	typedef BOOL (WINAPI *SPAMFunc)(HANDLE, DWORD);
+	SPAMFunc func;
+	SYSTEM_INFO si;
+
+	if ((func = (SPAMFunc)GetProcAddress(GetModuleHandle("KERNEL32.DLL"),
+					     "SetProcessAffinityMask")) != NULL) {
+		GetSystemInfo(&si);
+		func(GetCurrentProcess(), si.dwActiveProcessorMask);
+	}
+#endif
+
 	_vm=parse_program_options(argc,argv);
+
+
 }
 
 App*
@@ -90,13 +106,13 @@ App::run(int argc, char **argv)
 		);
 
 
-	_strm = new Streaming::Server(  _instance->config<string>( "streaming_listen_address" ),
-					_instance->config<unsigned int>( "streaming_listen_port" )
-		);
-
+ 	_strm = new Streaming::Server(  _instance->config<string>( "streaming_listen_address" ),
+ 					_instance->config<unsigned int>( "streaming_listen_port" )
+ 		);
+//	_strm->run();
 
   	_web_thread =  new asio::thread( boost::bind( &ews::server::run, _ews ) );
-  	_strm_thread = new asio::thread( boost::bind( &Streaming::Server::run, _strm ) );
+	// 	_strm_thread = new asio::thread( boost::bind( &Streaming::Server::run, _strm ) );
 
 	vector<string> mds = _instance->config<vector<string> >( "music_dir" );
  	for_each( mds.begin(), mds.end(), boost::bind( init_music_dir, _1 ) );
@@ -113,9 +129,11 @@ App::stop(){
 	_instance=0;
 
 	_ews->stop();
-	_strm->stop();
+//	_strm->stop();
+
+
 	_web_thread->join();
-	_strm_thread->join();
+//	_strm_thread->join();
 
 	delete _ews;
 	delete _strm;
@@ -123,9 +141,9 @@ App::stop(){
 	_strm=0;
 
 	delete _web_thread;
-	delete _strm_thread;
+//	delete _strm_thread;
 	_web_thread=0;
-	_strm_thread=0;
+//	_strm_thread=0;
 
 	BOOST_LOGL(app, warn) << "App stopped";
 }

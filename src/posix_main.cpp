@@ -52,7 +52,7 @@ int main(int argv , char** argc ) {
 	
 	boost::logging::manipulate_logs("strm")
 		.del_modifier("time")
-		.enable( boost::logging::level::info )
+		.enable( boost::logging::level::debug )
 		.del_modifier("prefix")
 		.del_modifier("enter")
 		.add_appender(&boost::logging::write_to_cout)    // all messages are written to cout

@@ -19,15 +19,14 @@ namespace Streaming {
 		/// serve up files from the given directory.
 		explicit Server( const std::string& address, unsigned int starting_port );
 
-		/// Run the server's io_service loop.
-		void run();
-
-		/// Stop the server.
-		void stop();
+		/// Stop a stream with the playlist
+		void stop(Spinny::PlayList::ptr);
 
 		bool add_client( Spinny::PlayList::ptr pl, Connection::ptr conn );
 
 		Stream::ptr add_stream( Spinny::PlayList::ptr pl );
+
+		~Server();
 	private:
 		unsigned int next_port();
 
@@ -36,6 +35,7 @@ namespace Streaming {
 
 		typedef std::set<Stream::ptr> streams_t;
 		streams_t streams_;
+
 
 	};
 

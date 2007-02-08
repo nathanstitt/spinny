@@ -8,8 +8,9 @@
 #include "boost/enable_shared_from_this.hpp"
 #include "boost/filesystem/path.hpp"
 
-namespace Streaming {
 
+namespace Streaming {
+	class Chunk;
 	class Stream;
 
 	/// Represents a single connection from a client.
@@ -30,6 +31,10 @@ namespace Streaming {
 		void set_stream( Stream *s );
 
 		asio::ip::tcp::socket& socket();
+		
+		bool send_finished();
+
+		void write( const Chunk &c );
 	private:
 		/// Handle completion of a write operation.
 		void handle_write(const asio::error& e, std::size_t bytes_transferred );
@@ -39,6 +44,9 @@ namespace Streaming {
 
 		/// The manager for this connection.
 		Stream *stream_;
+
+		bool send_finished_;
+
 	};
 
 

@@ -181,6 +181,18 @@ PlayList::bitrate() const {
 	return bitrate_;
 }
 
+Song::ptr
+PlayList::at( unsigned int pos ){
+	sqlite::connection *con = sqlite::db();
+	*con << "select ";
+	Song::table_description()->insert_fields( *con );
+	*con << ", playlist_songs.rowid from songs, playlist_songs where songs.rowid "
+	      << "= playlist_songs.song_id and playlist_songs.playlist_id = "
+	     << this->db_id() << " order by playlist_songs.present_order limit "
+	     << pos << ",1" ;
+	return con->load_one<Song>();
+}
+
 int
 PlayList::set_bitrate( int bitrate ){
 	return bitrate_=bitrate;

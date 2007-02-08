@@ -7,6 +7,7 @@
 #include "streaming/buffer.hpp"
 #include <boost/log/log.hpp>
 
+#include "boost/thread/thread.hpp"
 #include "streaming/connection.hpp"
 
 
@@ -26,19 +27,19 @@ namespace Streaming {
 		/// Stop the specified connection.
 		void stop( Connection::ptr c);
 
-		/// Stop all connections.
-		void stop_all();
-
 		unsigned int port();
 
 		Spinny::PlayList::ptr playlist();
 
 		~Stream();
 
+		void run();
+
 		/// Handle completion of an asynchronous accept operation.
 		void handle_accept(const asio::error& e);
 	private:
 		
+		void parcel();
 
 		Spinny::PlayList::ptr pl_;
 		std::string address_;
@@ -56,6 +57,12 @@ namespace Streaming {
 		/// The connection manager which owns all live connections.
 		typedef std::set<Connection::ptr> connections_t;
 		connections_t connections_;
+
+		boost::thread *controller_thread_;
+
+		boost::thread *networking_thread_;
+
+		bool running_;
 
 	};
 

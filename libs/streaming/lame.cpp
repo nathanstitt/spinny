@@ -84,7 +84,6 @@ lame_decode_fromfile(FILE * fd, short pcm_l[], short pcm_r[],
     ret = lame_decode1_headers(buf, len, pcm_l, pcm_r, mp3data);
     if (ret!=0) return ret;
 
-
     /* read until we get a valid output frame */
     while (1) {
         len = fread(buf, 1, 1024, fd);
@@ -209,28 +208,6 @@ Lame::init_decode_file()
 	return 0;
 }
 
-int
-Lame::read_samples_mp3( short int mpg123pcm[2][1152], int )
-{
-    int     out;
-
-    out = lame_decode_fromfile( musicin, mpg123pcm[0], mpg123pcm[1],
-			       &(mp3input_data));
-    if (out < 0) {
-        memset(mpg123pcm, 0, sizeof(**mpg123pcm) * 2 * 1152);
-        return 0;
-    }
-
-    if ( lame_get_num_channels( lgf ) != mp3input_data.stereo )
-	    BOOST_LOGL(strm,err ) << "Error: number of channels has changed in mp3 file - not supported";
-
-    if ( lame_get_in_samplerate( lgf ) != mp3input_data.samplerate )
-	    BOOST_LOGL(strm,err ) << "Error: sample frequency has changed in mp3 file - not supported";
-
-    return out;
-}
-
-
 
 int
 Lame::get_audio( int buffer[2][1152] )
@@ -240,8 +217,22 @@ Lame::get_audio( int buffer[2][1152] )
 	short   buf_tmp16[2][1152];
 	int     samples_read;
 	int     i;
+ 
+	samples_read = lame_decode_fromfile( musicin, buf_tmp16[0], buf_tmp16[1],
+					     &(mp3input_data));
+	if ( samples_read < 0) {
+		memset(buf_tmp16, 0, sizeof(**buf_tmp16) * 2 * 1152);
+		return 0;
+	}
 
-	samples_read = read_samples_mp3( buf_tmp16, num_channels );
+	if ( lame_get_num_channels( lgf ) != mp3input_data.stereo )
+		BOOST_LOGL(strm,err ) << "Error: number of channels has changed in mp3 file - not supported";
+
+	if ( lame_get_in_samplerate( lgf ) != mp3input_data.samplerate )
+		BOOST_LOGL(strm,err ) << "Error: sample frequency has changed in mp3 file - not supported";
+
+
+
 	for( i = samples_read; --i >= 0; )
 		buffer[0][i] = buf_tmp16[0][i] << (8 * sizeof(int) - 16);
 	if( num_channels == 2 ) {
@@ -261,27 +252,180 @@ static const char *mode_names[2][4] = {
 
 
 bool
-Lame::transcode_song( Spinny::Song::ptr song )
-{
-
-	boost::mutex::scoped_lock lock(buffer_mutex);
-
+Lame::fill_buffer(){
 	int     Buffer[2][1152];
-	int     iread;
+	int iread;
+	int encoded=0;
+	write_buffer->data_length=0;
+	do {
+		iread = get_audio( Buffer );
+		if ( iread ){
+			/* encode */
+			encoded = lame_encode_buffer_int( lgf, Buffer[0], Buffer[1], iread,
+							  write_buffer->data.c_array()+write_buffer->data_length,
+							  LAME_MAXMP3BUFFER-write_buffer->data_length );
+		} else {
+			/* may return one more mp3 frame */
+			encoded = lame_encode_flush_nogap( lgf, write_buffer->data.c_array()+write_buffer->data_length,
+							   LAME_MAXMP3BUFFER-write_buffer->data_length );
+			this->next_song();
+		}
+		/* was our output buffer big enough? */
+		if ( encoded < 0) {
+			if ( -1 == encoded  )
+				BOOST_LOGL( strm, err ) << "mp3 buffer is not big enough";
+			else
+				BOOST_LOGL( strm, err ) << "mp3 internal error:  error code=" << encoded;
+			throw std::runtime_error("Error filling buffer");
+		}
+		write_buffer->data_length += encoded;
+	} while( ( write_buffer->data_length + encoded + 500 ) < LAME_MAXMP3BUFFER );
+
+	BOOST_LOGL( strm, debug ) << "Filled buffer with " << write_buffer->data_length << " / " << LAME_MAXMP3BUFFER << " bytes";
+
+	return true;
+}
 
 
+
+Lame::Lame(Spinny::PlayList::ptr p) :
+	pl(p),
+	cur_pos( pl->size() ),
+	musicin(0),
+	lame_thread(0),
+	running_(true)
+{
+	BOOST_LOGL( strm, info ) << "New transcoder " << this;
+	lame_thread=new boost::thread( boost::bind(&Lame::transcode,boost::ref(*this) ) );
+}
+
+
+
+
+Lame::~Lame(){
+	BOOST_LOGL( strm, info ) << "Transcoder exit " << this;
+	running_=false;
+	buffer_condition.notify_all();
+	lame_thread->join();
+	delete lame_thread;
+}
+
+void
+log_debug( const char* fmt, va_list args ) {
+	static char buff[300];
+	snprintf( buff, 300, fmt, args );
+	BOOST_LOGL( strm, debug ) << " internal lame debug msg: " << buff;
+}
+void
+log_info( const char* fmt, va_list args ) {
+	static char buff[300];
+	snprintf( buff, 300, fmt, args );
+	BOOST_LOGL( strm, info ) << " internal lame info msg : " << buff;
+}
+
+void
+log_err( const char* fmt, va_list args ) {
+	static char buff[300];
+	snprintf( buff, 300, fmt, args );
+	BOOST_LOGL( strm, err ) << " internal lame error: " << buff;
+}
+
+bool
+Lame::transcode(){
+	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " called";
+
+	read_buffer=new buffer;
+	write_buffer=new buffer;
+	read_buffer->next=write_buffer;
+	write_buffer->next=read_buffer;
+	
+
+	/* initialize libmp3lame */
+
+	if (NULL == ( lgf = lame_init())) {
+		throw std::runtime_error("fatal error during initialization");
+	}
+
+
+	if( -1 == lame_set_num_channels( lgf, 2 ) ) {
+		BOOST_LOGL( strm, err ) << "Unsupported number of channels: " << mp3input_data.stereo;
+		throw std::runtime_error( "Unsupported number of channels" );
+	}
+
+	if ( -1 == lame_set_brate(lgf, pl->bitrate() ) ){
+		BOOST_LOGL( strm, err ) << "Unsupported bitrate: " << pl->bitrate();
+		throw std::runtime_error( "Unsupported bitrate" );
+
+	}
+
+	lame_set_errorf(lgf,log_err );
+ 	lame_set_debugf(lgf,log_debug);
+ 	lame_set_msgf(lgf,log_info);
+
+	lame_set_quality(lgf,7);
+
+	lame_init_params(lgf);
+
+	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " init portion finished-" << running_;
+
+	this->next_song();
+
+	while ( running_ ){
+		boost::mutex::scoped_lock lock(buffer_mutex);
+
+		while (  ! write_buffer && running_ ){
+			buffer_condition.wait(lock);
+		}
+
+		try {
+			this->fill_buffer();
+			write_buffer = NULL;
+			buffer_condition.notify_one();
+		}
+		catch ( const std::exception &ex ){
+			BOOST_LOGL( strm, err ) << "Caught exception: " << ex.what() << " moving on to next file";
+			this->next_song();
+		}
+	}
+
+	lame_close(lgf);
+
+	delete read_buffer;
+	delete write_buffer;
+
+	return true;
+
+}
+
+void
+Lame::next_song(){
+	unsigned int size = pl->size();
+	++cur_pos;
+
+	if ( this->cur_pos > size ){
+		this->cur_pos = 0;
+	}
+	Spinny::Song::ptr song = pl->at( cur_pos );
 	std::string in_path = song->path().string();
-			
-	if ( (musicin = fopen(in_path.c_str(), "rb" ) ) == NULL ) {
+
+	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " " << song->title();
+	
+	
+	if ( this->musicin && fclose( this->musicin ) ) {
+		BOOST_LOGL( strm, err ) << "Could not close audio input file";
+		throw std::runtime_error("Could not close audio input file");
+	}
+	
+	if ( ( musicin = fopen(in_path.c_str(), "rb" ) ) == NULL ) {
 		BOOST_LOGL( strm, err ) << "Could not open " << in_path;
 		throw std::runtime_error( "file open for read failed" );
 	}
+
 	
 	if (-1 == init_decode_file() ) {
 		BOOST_LOGL( strm, err ) << "Error reading headers in mp3 input file " << in_path;
 		throw std::runtime_error( "Error reading headers in mp3 input file" );
 	}
-
 
 	id3tag_init( lgf );
 	id3tag_add_v2(lgf);
@@ -317,216 +461,51 @@ Lame::transcode_song( Spinny::Song::ptr song )
 		}
 	}
 		
-	BOOST_LOGL( strm, info ) << "Encoding "  <<  lame_get_brate(lgf)
+	BOOST_LOGL( strm, info ) << this<< " encoding "  <<  lame_get_brate(lgf)
 				 << "kbs " << mode_names[lame_get_force_ms(lgf)][lame_get_mode(lgf)] 
 				 << " (qval=" << lame_get_quality(lgf) << ")"
-				 << "\n" << in_path
-				 << "\nTitle:   " << song->title() 
-				 << "\nArtist:  " << song->artist()->name()
-				 << "\nAlbum:   " << song->album()->name();
-
-						 
-
-
-	/* encode until we hit eof */
-	do {
-
-		while (  ! write_buffer && this->is_running() ){
-			buffer_condition.wait(lock);
-		}
-
-		iread = get_audio( Buffer );
-
-		if (iread){
-			/* encode */
-			write_buffer->data_length = lame_encode_buffer_int(lgf, Buffer[0], Buffer[1], iread,
-									   write_buffer->data.c_array(), LAME_MAXMP3BUFFER );
-		} else {
-			/* may return one more mp3 frame */
-			write_buffer->data_length = lame_encode_flush_nogap( lgf,
-									     write_buffer->data.c_array(),
-									     LAME_MAXMP3BUFFER );
-		}
-		/* was our output buffer big enough? */
-		if ( write_buffer->data_length < 0) {
-			if ( -1 == write_buffer->data_length  )
-				BOOST_LOGL( strm, err ) << "mp3 buffer is not big enough";
-			else
-				BOOST_LOGL( strm, err ) << "mp3 internal error:  error code=" << write_buffer->data_length; 
-			return false;
-		}
-
-		write_buffer = NULL;
-		buffer_condition.notify_one();
-
-	} while ( iread && this->is_running() );
-
-
-
-	if (fclose(this->musicin) != 0) {
-		BOOST_LOGL( strm, err ) << "Could not close audio input file";
-		throw std::runtime_error("Could not close audio input file");
-	}
-
-
-	return true;
-
+				 << "\n    " << in_path
+				 << "\n    Title:   " << song->title() 
+				 << "\n    Artist:  " << song->artist()->name()
+				 << "\n    Album:   " << song->album()->name();
 
 
 }
-
-
-
-
-
-
-
-  
-
-Lame::Lame(Spinny::PlayList::ptr p) :
-	pl(p),
-	lame_thread(0)
-{
-	BOOST_LOGL( strm, info ) << "New transcoder " << this;
-	this->start();
-}
-
-bool
-Lame::start(){
-	return ( lame_thread=new boost::thread( boost::bind(&Lame::transcode,boost::ref(*this) ) ) );
-}
-
-bool
-Lame::stop(){
-	boost::thread *t=lame_thread;
-	lame_thread=NULL;
-	buffer_condition.notify_all();
-	t->join();
-	delete t;
-	return true;
-}
-
-bool
-Lame::is_running(){
-	return lame_thread;
-}
-
-Lame::~Lame(){
-	BOOST_LOGL( strm, info ) << "Transcoder exit " << this;
-	this->stop();
-}
-
-void
-log_debug( const char* fmt, va_list args ) {
-	static char buff[300];
-	snprintf( buff, 300, fmt, args );
-	BOOST_LOGL( strm, debug ) << buff;
-}
-void
-log_info( const char* fmt, va_list args ) {
-	static char buff[300];
-	snprintf( buff, 300, fmt, args );
-	BOOST_LOGL( strm, info ) << buff;
-}void
-log_err( const char* fmt, va_list args ) {
-	static char buff[300];
-	snprintf( buff, 300, fmt, args );
-	BOOST_LOGL( strm, err ) << buff;
-}
-
-bool
-Lame::transcode(){
-	read_buffer=new buffer;
-	write_buffer=new buffer;
-	read_buffer->next=write_buffer;
-	write_buffer->next=read_buffer;
-	
-
-#if defined(_WIN32)
-	/* set affinity back to all CPUs.  Fix for EAC/lame on SMP systems from
-	   "Todd Richmond" <todd.richmond@openwave.com> */
-	typedef BOOL (WINAPI *SPAMFunc)(HANDLE, DWORD);
-	SPAMFunc func;
-	SYSTEM_INFO si;
-
-	if ((func = (SPAMFunc)GetProcAddress(GetModuleHandle("KERNEL32.DLL"),
-					     "SetProcessAffinityMask")) != NULL) {
-		GetSystemInfo(&si);
-		func(GetCurrentProcess(), si.dwActiveProcessorMask);
-	}
-#endif
-
-
-	/* initialize libmp3lame */
-
-	if (NULL == ( lgf = lame_init())) {
-		throw std::runtime_error("fatal error during initialization");
-	}
-
-
-	if( -1 == lame_set_num_channels( lgf, 2 ) ) {
-		BOOST_LOGL( strm, err ) << "Unsupported number of channels: " << mp3input_data.stereo;
-		throw std::runtime_error( "Unsupported number of channels" );
-	}
-
-	if ( -1 == lame_set_brate(lgf, pl->bitrate() ) ){
-		BOOST_LOGL( strm, err ) << "Unsupported bitrate: " << pl->bitrate();
-		throw std::runtime_error( "Unsupported bitrate" );
-
-	}
-
-	lame_set_errorf(lgf,log_err );
- 	lame_set_debugf(lgf,log_debug);
- 	lame_set_msgf(lgf,log_info);
-
-	lame_set_quality(lgf,7);
-
-	lame_init_params(lgf);
-
-	while ( this->is_running() ){
-		Spinny::Song::result_set songs = pl->songs();
-		for ( Spinny::Song::result_set::iterator song = songs.begin(); this->is_running() && song != songs.end(); ++song ){
-
-			try {
-				this->transcode_song( song.shared_ptr() );
-			}
-			catch ( const std::exception &ex ){
-				BOOST_LOGL( strm, err ) << "Caught exception: " << ex.what() << " moving on to next file";
-			}
-		}
-	}
-
-//	lame_mp3_tags_fid(lgf, musicout); /* add VBR tags to mp3 file */
-
-//	fclose(musicout); /* close the output file */
-
-	lame_close(lgf);
-
-	return true;
-
-}
-
 /*
 
 fire off thread to encode next block, returning current (already encoded block)
 
  */
 
-asio::const_buffer
+
+Chunk
 Lame::get_chunk(){
-	
 	boost::mutex::scoped_lock lock(buffer_mutex);
 
-
-	while ( write_buffer && this->is_running() ){
+	while ( write_buffer && running_ ){
 		buffer_condition.wait(lock);
 	}
 
 	write_buffer = read_buffer;
 	read_buffer=read_buffer->next;
 	buffer_condition.notify_one();
-
-	return asio::buffer( read_buffer->data, read_buffer->data_length );
+//	BOOST_LOGL( strm, info ) << __PRETTY_FUNCTION__ << " " <<  this << " returned " << read_buffer->data_length << " chunk";
+	Chunk c( read_buffer, pl->bitrate() );
+	return c;
 }
 
+Chunk::Chunk( Lame::buffer *b,
+	      unsigned short int br  ) : 
+	data( asio::buffer( b->data, b->data_length ) ),
+	bitrate( br ) 
+{ }
 
+unsigned int
+Chunk::milliseconds(){
+	return ( asio::buffer_size( data ) * 1000 ) / bitrate / 125;
+}
+
+std::size_t
+Chunk::size(){
+	return asio::buffer_size( data );
+}

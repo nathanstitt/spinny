@@ -10,25 +10,33 @@ using namespace Streaming;
 Server::Server(const std::string& address, unsigned int starting_port ) :
 	address_(address),
 	starting_port_(starting_port)
+
 {
-	BOOST_LOGL( strm,err ) << "Streaming on: " 
+	BOOST_LOGL( strm,info ) << "Streaming on: " 
 			       << address
 			       << " starting_port: " << starting_port;
-}
 
-
-void
-Server::run() {
 	Spinny::PlayList::result_set rs = Spinny::PlayList::all();
 	for ( Spinny::PlayList::result_set::iterator pl = rs.begin(); rs.end() != pl; ++pl ){
-		this->add_stream( pl.shared_ptr() );
+		if ( pl->size() ){
+			this->add_stream( pl.shared_ptr() );
+		}
 	}
 }
 
+
+Server::~Server() {
+	BOOST_LOGL( strm, info ) << "Stopping Streaming Server";
+	streams_.clear();
+}
+
 void
-Server::stop() {
+Server::stop( Spinny::PlayList::ptr pl ) {
 	for (streams_t::iterator stream=streams_.begin(); streams_.end() != stream; ++stream ){
-		(*stream)->stop_all();
+		if ( (*stream)->playlist() == pl ){
+			streams_.erase( *stream );
+			break;
+		}
 	}
 }
 

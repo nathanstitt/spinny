@@ -86,6 +86,9 @@ public:
 	unsigned int
 	size() const;
 
+	Song::ptr
+	at( unsigned int pos );
+
 	void
 	clear();
 
