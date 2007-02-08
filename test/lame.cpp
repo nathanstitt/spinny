@@ -12,7 +12,7 @@ SUITE(LameTestSuit) {
 
 TEST( Decode ){
  	DummyApp da;
-	EnableLogging el("lame");
+	EnableLogging el("strm");
 
 	da.populate_fixture("music");
 	Spinny::MusicDir::ptr md = Spinny::MusicDir::create_root( da.music_path );
@@ -26,28 +26,32 @@ TEST( Decode ){
 	for ( Spinny::Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
 		pl->insert( s.shared_ptr(), 0 );
 	}
-	
-	
-   	boost::filesystem::ofstream os("/tmp/out.mp3", std::ios::out | std::ios::binary);
+
+   	boost::filesystem::ofstream os(  da.fixtures_path / "lame-test.mp3", std::ios::out | std::ios::binary );
+	unsigned int seconds=0;
+	int read=0;
     
 	{
 		Streaming::Lame l(pl);
-		int read=0;
-
 		while ( read < 1024*1024*1 ) {
-			asio::const_buffer buf = l.get_chunk();
-			read += asio::buffer_size( buf );
-			os.write( asio::buffer_cast<const char*>(buf), asio::buffer_size( buf ) );
+			Streaming::Chunk c = l.get_chunk();
+			read += c.size();
+			seconds+=c.milliseconds();
+			CHECK( c.size() );
+			os.write( asio::buffer_cast<const char*>(c.data), c.size() );
 		}
-		BOOST_LOGL(strm,info)<< "Out Loop";
 	}
-	BOOST_LOGL(strm,info)<< "shutdown";
+
+	CHECK( boost::filesystem::file_size( da.fixtures_path / "lame-test.mp3" ) );
+	CHECK( seconds > 352400 && seconds < 352500 );
+	CHECK_EQUAL( read, 1057552 );
 
 	os.close();
 }
 
 
 }
+
 
 int
 lame( int, char ** ) 

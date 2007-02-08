@@ -131,6 +131,37 @@ TEST( Update ){
 	
 }
 
+TEST( At ){
+ 	DummyApp da;
+ 	da.populate_fixture("music");
+
+ 	MusicDir::ptr md = MusicDir::create_root( da.music_path );
+ 	md->sync();
+
+ 	Song::result_set all_songs = md->songs();
+
+  	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
+	int pos=1;
+	pl->save();
+
+	for ( Song::result_set::iterator s=all_songs.begin(); all_songs.end() != s; ++s ){
+		pl->insert( s.shared_ptr(), pos++ );
+	}
+
+	CHECK_EQUAL( pl->size(), all_songs.size() );
+
+	Song::result_set songs = pl->songs();
+	Song::result_set::iterator song = songs.begin();
+	
+	for ( int i = 0; i < pl->size(); ++i ){
+		Song::ptr s2 = pl->at( i );
+		CHECK_EQUAL( song->db_id(), s2->db_id() );
+		song++;
+	}
+
+
+}
+
 } // SUITE(SpinnyPlayList)
 
 
