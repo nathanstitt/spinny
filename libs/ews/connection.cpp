@@ -14,7 +14,7 @@ namespace ews {
 			       const boost::filesystem::path &t_root )
 		: doc_root( d_root ),
 		  tmpl_root( t_root ),
-		  socket_(io_service),
+		  socket_( new asio::ip::tcp::socket(io_service) ),
 		  connection_manager_(manager),
 		  request_(this),
 		  reply_(this),
@@ -23,12 +23,13 @@ namespace ews {
 		BOOST_LOGL(www,debug) << "NEW CONNECTION: " << (int)this << std::endl;
 	}
 
-	asio::ip::tcp::socket& connection::socket() {
+	boost::shared_ptr<asio::ip::tcp::socket>
+	connection::socket() {
 		return socket_;
 	}
 
 	void connection::start() {
-		socket_.async_read_some(asio::buffer(buffer_),
+		socket_->async_read_some(asio::buffer(buffer_),
 					boost::bind(&connection::handle_read, shared_from_this(),
 						    asio::placeholders::error,
 						    asio::placeholders::bytes_transferred)); 
@@ -41,7 +42,7 @@ namespace ews {
 
 	void connection::stop() {
 		if ( ! socket_detached_ ){
-			socket_.close();
+			socket_->close();
 		}
 	}
 
@@ -71,19 +72,19 @@ namespace ews {
 									 << header->first << " => " << header->second;
 					}
 					if ( ! socket_detached_ ){
-						asio::async_write( socket_, reply_.to_buffers(),
+						asio::async_write( *socket_, reply_.to_buffers(),
 								   boost::bind(&connection::handle_write, shared_from_this(),
 									       asio::placeholders::error,
 									       asio::placeholders::bytes_transferred ) );
 					}
 			} else if ( ! result ) {
 				reply_.set_to( reply::bad_request );
-				asio::async_write(socket_, reply_.to_buffers(),
+				asio::async_write( *socket_, reply_.to_buffers(),
 						  boost::bind(&connection::handle_write, shared_from_this(),
 							      asio::placeholders::error,
 							      asio::placeholders::bytes_transferred ));
 			} else {
-				socket_.async_read_some(asio::buffer(buffer_),
+				socket_->async_read_some(asio::buffer(buffer_),
 							boost::bind(&connection::handle_read, shared_from_this(),
 								    asio::placeholders::error,
 								    asio::placeholders::bytes_transferred ));

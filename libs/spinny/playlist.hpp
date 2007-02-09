@@ -1,10 +1,11 @@
 /* @(#)playlist.hpp
  */
 
-#ifndef _PLAYLIST_H
-#define _PLAYLIST_H 1
+#ifndef _SPINNY_PLAYLIST_H
+#define _SPINNY_PLAYLIST_H 1
 
-#include "spinny/spinny.hpp"
+#include "sqlite/sqlite.hpp"
+#include "spinny/config.h"
 #include "spinny/song.hpp"
 
 #include <vector>
@@ -98,5 +99,5 @@ public:
 
 } // namespace Spinny
 
-#endif /* _PLAYLIST_H */
+#endif /* _SPINNY_PLAYLIST_H */
 

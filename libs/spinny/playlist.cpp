@@ -48,7 +48,7 @@ class pl_desc : public sqlite::table::description {
 public:
 	void checked_callback( bool ) {
 		if ( ! sqlite::db()->exec<int>( "select count(*) from playlists") ){
-			PlayList::ptr pl = PlayList::create( 0, "Default Playlist","A playlist to get started with..." );
+			PlayList::ptr pl = PlayList::create( 128, "Default Playlist","A playlist to get started with..." );
 			pl->save();
 		}
 

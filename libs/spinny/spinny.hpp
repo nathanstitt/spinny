@@ -6,8 +6,10 @@
 
 #include "sqlite/sqlite.hpp"
 #include "spinny/config.h"
-#include <boost/program_options.hpp>
-#include <boost/log/log.hpp>
+#include "boost/program_options.hpp"
+#include "boost/log/log.hpp"
+#include "boost/asio.hpp"
+#include "spinny/playlist.hpp"
 
 BOOST_DECLARE_LOG(app)
 
@@ -33,6 +35,10 @@ public:
  	const T& config( const std::string &name ) const {
 		return _vm[name].as<T>(); 
 	}
+
+	static
+	bool
+	add_streaming_client( Spinny::PlayList::ptr, asio::ip::tcp::socket & );
 
 };
 

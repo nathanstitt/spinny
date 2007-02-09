@@ -13,12 +13,14 @@ using namespace Streaming;
 
 
 Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned int port ) :
+	pl_(pl),
 	address_(address),
 	port_(port),
 	lame_( new Lame( pl ) ),
 	acceptor_(io_service_),
 	new_connection_( new Connection( io_service_, this ) ),
-	running_(true)
+	controller_thread_(NULL),
+	running_(false)
 { 
 	BOOST_LOGL( strm,info ) << "New Stream for " << pl->name() << " on: " << address	<< ":" << port;
 
@@ -33,10 +35,7 @@ Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned i
 	acceptor_.async_accept( new_connection_->socket(),
 				boost::bind(&Stream::handle_accept, this, asio::placeholders::error));
 
-
 	networking_thread_=new boost::thread( boost::bind(&Stream::run,boost::ref(*this) ) );
-
-	controller_thread_=new boost::thread( boost::bind(&Stream::parcel,boost::ref(*this) ) );
 
 }
 
@@ -44,25 +43,30 @@ Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned i
 bool
 Stream::add_connection( Connection::ptr c  ) {
 	connections_.insert(c);
-	//c->start();
 	c->set_stream( this );
+
+	if ( ! controller_thread_ ) {
+		BOOST_LOGL( strm, info ) << "Starting transcoder thread";
+		running_ = true;
+		controller_thread_=new boost::thread( boost::bind(&Stream::parcel,boost::ref(*this) ) );
+	}
+
 	return true;
 }
 
 void
 Stream::parcel(){
+
 	BOOST_LOGL( strm, debug ) << this << " Stream::parcel()";
+
 	while ( running_ ){
-		BOOST_LOGL( strm, debug ) << this << " getting new chunk";
 
 		Chunk chunk = lame_->get_chunk();
 
-BOOST_LOGL( strm, debug ) << __LINE__ << " getting new chunk";
+		BOOST_LOGL( strm, debug ) << "Stream got chunk, sleep for " << chunk.milliseconds() << "ms";
 
 		std::for_each(connections_.begin(), connections_.end(),
 			      boost::bind(&Connection::write, _1, chunk ) );
-
-BOOST_LOGL( strm, debug ) << __LINE__ << " getting new chunk";
 
 		// Construct a timer without setting an expiry time.
 		asio::deadline_timer timer(io_service_);
@@ -83,13 +87,15 @@ Stream::run(){
 }
 
 void
-Stream::stop( Connection::ptr c) {
-	c->stop();
+Stream::stop( Connection::ptr c ) {
 	connections_.erase(c);
-
+	if ( connections_.empty() ){
+		running_ = false;
+		controller_thread_->join();
+		delete controller_thread_;
+		controller_thread_ = NULL;
+	}
 }
-
-
 
 unsigned int
 Stream::port(){
@@ -98,39 +104,42 @@ Stream::port(){
 
 Spinny::PlayList::ptr
 Stream::playlist(){
+	BOOST_LOGL(strm,info) << __PRETTY_FUNCTION__ << " : " << __LINE__ << " " << (pl_);
+	BOOST_LOGL(strm,info) << __PRETTY_FUNCTION__ << " : " << __LINE__ << " " << pl_->db_id();
+
+	
 	return pl_;
 }
 
 Stream::~Stream(){
 
-	std::for_each(connections_.begin(), connections_.end(),
-		      boost::bind(&Connection::stop, _1));
+	BOOST_LOGL( strm, info ) << "Shutting down stream on port " << port();
+
+	if ( running_ ){
+		running_ = false;
+		controller_thread_->join();
+		delete controller_thread_;
+		controller_thread_ = NULL;
+	}
+
+	io_service_.interrupt();
+	networking_thread_->join();
+	delete networking_thread_;
 
 	connections_.clear();
 
 	delete lame_;
-
-	running_=false;
-
-	controller_thread_->join();
-
-	delete networking_thread_;
-	networking_thread_=0;
-
-	delete controller_thread_;
-	controller_thread_=0;
 }
 
 
 void
 Stream::handle_accept(const asio::error& e) {
 	if (!e) {
-		connections_.insert( new_connection_ );
-		new_connection_->write( lame_->get_chunk() );
+		this->add_connection( new_connection_ );
 
 		new_connection_.reset( new Connection( io_service_, this ) );
-		acceptor_.async_accept(new_connection_->socket(),
-				       boost::bind(&Stream::handle_accept, this, asio::placeholders::error));
+
+		acceptor_.async_accept( new_connection_->socket(),
+					boost::bind(&Stream::handle_accept, this, asio::placeholders::error));
 	}
-	
 }

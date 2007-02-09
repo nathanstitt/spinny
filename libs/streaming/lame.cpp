@@ -306,7 +306,15 @@ Lame::~Lame(){
 	BOOST_LOGL( strm, info ) << "Transcoder exit " << this;
 	running_=false;
 	buffer_condition.notify_all();
-	lame_thread->join();
+	{
+		boost::mutex::scoped_lock lock(buffer_mutex);
+	}
+
+	boost::xtime xt;
+	boost::xtime_get(&xt, boost::TIME_UTC);
+	xt.nsec += 1000;
+	boost::thread::sleep(xt); // Sleep for .1 second
+	
 	delete lame_thread;
 }
 
@@ -378,9 +386,11 @@ Lame::transcode(){
 		}
 
 		try {
-			this->fill_buffer();
-			write_buffer = NULL;
-			buffer_condition.notify_one();
+			if ( running_ ){
+				this->fill_buffer();
+				write_buffer = NULL;
+				buffer_condition.notify_one();
+			}
 		}
 		catch ( const std::exception &ex ){
 			BOOST_LOGL( strm, err ) << "Caught exception: " << ex.what() << " moving on to next file";
@@ -402,9 +412,10 @@ Lame::next_song(){
 	unsigned int size = pl->size();
 	++cur_pos;
 
-	if ( this->cur_pos > size ){
+	if ( this->cur_pos >= size ){
 		this->cur_pos = 0;
 	}
+
 	Spinny::Song::ptr song = pl->at( cur_pos );
 	std::string in_path = song->path().string();
 
@@ -502,7 +513,7 @@ Chunk::Chunk( Lame::buffer *b,
 
 unsigned int
 Chunk::milliseconds(){
-	return ( asio::buffer_size( data ) * 1000 ) / bitrate / 125;
+	return ( this->size() * 1000 ) / bitrate / 125;
 }
 
 std::size_t

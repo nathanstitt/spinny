@@ -4,10 +4,11 @@
 #ifndef _SPINNY_ARTIST_H
 #define _SPINNY_ARTIST_H 1
 
-#include "spinny/spinny.hpp"
+#include "sqlite/sqlite.hpp"
+#include "spinny/config.h"
 #include "spinny/song.hpp"
-#include <boost/filesystem/path.hpp>
-#include <boost/shared_ptr.hpp>
+#include "boost/filesystem/path.hpp"
+#include "boost/shared_ptr.hpp"
 #include <stdexcept>
 
 namespace Spinny {

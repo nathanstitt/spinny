@@ -7,7 +7,7 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/enable_shared_from_this.hpp"
 #include "boost/filesystem/path.hpp"
-
+#include "boost/thread/mutex.hpp"
 
 namespace Streaming {
 	class Chunk;
@@ -25,8 +25,7 @@ namespace Streaming {
 
 		explicit Connection(asio::io_service& io_service );
 
-		/// Stop all asynchronous operations associated with the connection.
-		void stop();
+		~Connection();
 
 		void set_stream( Stream *s );
 
@@ -36,6 +35,8 @@ namespace Streaming {
 
 		void write( const Chunk &c );
 	private:
+		boost::mutex mutex_;
+
 		/// Handle completion of a write operation.
 		void handle_write(const asio::error& e, std::size_t bytes_transferred );
 

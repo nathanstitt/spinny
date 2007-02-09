@@ -37,40 +37,22 @@ Stream::Stream() : ews::request_handler( "Stream", Middle ) {}
 
 
 ews::request_handler::RequestStatus
-Stream::handle( const ews::request& req, ews::reply&  ) const { 
+Stream::handle( const ews::request& req, ews::reply& rep ) const { 
 	
 	if ( req.u1 != "stream" ) {
 		return Continue;
 	}
 
-	//asio::ip::tcp::socket &socket=req.conn->socket();
+ 	BOOST_LOGL( www, info ) << "About to attempt socket detach";
 
-// 	req.conn->detach_socket();
+ 	Spinny::PlayList::ptr pl = Spinny::PlayList::load( boost::lexical_cast<sqlite::id_t>( req.u2 ) );
 
-// 	asio::ip::tcp::socket *s = &socket;
+	if ( Spinny::App::add_streaming_client( pl, req.conn->socket() ) ){
+		req.conn->detach_socket();
+	} else {
+		rep.set_to ( ews::reply::internal_server_error );
+	}
 
-// 	Spinny::PlayList::ptr pl = Spinny::PlayList::load( boost::lexical_cast<sqlite::id_t>( req.u2 ) );
-// 	Lame *ls = new Lame(pl);
-
-// 	rep.set_basic_headers( "mp3" );
-
-// 	std::vector<asio::const_buffer> cbs = rep.to_buffers();
-// 	cbs.push_back( ls->get_chunk() );
-
-// 	BOOST_LOGL( www, info ) << "About to write, Lame=" << (int)ls;
-
-// // 	asio::async_write( socket, cbs,
-
-// // 			   boost::bind(&Stream::send_more,
-// // 				       boost::ref(*this),
-// // 				       boost::ref(ls),
-// // 				       boost::ref(s),
-// // 				       asio::placeholders::error,
-// // 				       asio::placeholders::bytes_transferred )
-// // 			    );
-
-
-// 	BOOST_LOGL( www, info ) << "Wrote";
 	return Stop;
 
 }

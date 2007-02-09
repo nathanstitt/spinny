@@ -31,7 +31,7 @@ namespace ews {
 			);
 
 		/// Get the socket associated with the connection.
-		asio::ip::tcp::socket& socket();
+		boost::shared_ptr<asio::ip::tcp::socket> socket();
 
 		/// Start the first asynchronous operation for the connection.
 		void start();
@@ -52,7 +52,7 @@ namespace ews {
 		void handle_write(const asio::error& e, std::size_t bytes_transferred );
 
 		/// Socket for the connection.
-		asio::ip::tcp::socket socket_;
+		boost::shared_ptr<asio::ip::tcp::socket> socket_;
 
 		/// The manager for this connection.
 		connection_manager& connection_manager_;

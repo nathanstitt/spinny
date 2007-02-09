@@ -4,11 +4,11 @@
 #ifndef _SPINNY_SONG_H
 #define _SPINNY_SONG_H 1
 
-#include "spinny/spinny.hpp"
+#include "sqlite/sqlite.hpp"
+#include "spinny/config.h"
 #include "spinny/music_dir.hpp"
-
-#include <boost/filesystem/path.hpp>
-#include <boost/shared_ptr.hpp>
+#include "boost/filesystem/path.hpp"
+#include "boost/shared_ptr.hpp"
 #include <stdexcept>
 
 

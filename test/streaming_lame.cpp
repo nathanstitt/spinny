@@ -8,7 +8,7 @@
 using namespace std;
 
 
-SUITE(LameTestSuit) {
+SUITE(StreamingLameTestSuit) {
 
 TEST( Decode ){
  	DummyApp da;
@@ -44,7 +44,7 @@ TEST( Decode ){
 
 	CHECK( boost::filesystem::file_size( da.fixtures_path / "lame-test.mp3" ) );
 	CHECK( seconds > 352400 && seconds < 352500 );
-	CHECK_EQUAL( read, 1057552 );
+	CHECK( read > 1057500 && read < 1057600 );
 
 	os.close();
 }
@@ -54,7 +54,7 @@ TEST( Decode ){
 
 
 int
-lame( int, char ** ) 
+streaming_lame( int, char ** ) 
 {
-	return UnitTest::RunAllTests("LameTestSuit");
+	return UnitTest::RunAllTests("StreamingLameTestSuit");
 }

@@ -6,7 +6,7 @@
 #include <fstream>
 using namespace Spinny;
 
-SUITE(Streaming) {
+SUITE(StreamingStream) {
 
 
 
@@ -15,9 +15,14 @@ TEST( Decode ){
 	DummyApp da;
 	EnableLogging el("strm");
 
-	StreamingTestClient stc;
+	try {
+		StreamingTestClient stc;
 
-	std::vector<unsigned short int> data = stc.read( 10 );
+		std::vector<unsigned short int> data = stc.read( 10 );
+	} 
+	catch ( const StreamingTestClient::error &e ){
+
+	}
 }
 
 
@@ -29,6 +34,6 @@ TEST( Decode ){
 int
 streaming_stream( int argc, char * argv[] )  
 {
-	return UnitTest::RunAllTests("Streaming");
+	return UnitTest::RunAllTests("StreamingStream");
 }
 

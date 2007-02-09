@@ -67,13 +67,21 @@ Server::next_port(){
 
 bool
 Server::add_client( Spinny::PlayList::ptr pl, Connection::ptr conn ){
+BOOST_LOGL(strm,info)<< __PRETTY_FUNCTION__ << " : " << __LINE__;
+
 	bool found=false;
 	for (streams_t::iterator stream=streams_.begin(); streams_.end() != stream; ++stream ){
+
+		BOOST_LOGL(strm,info) << __PRETTY_FUNCTION__ << " : " << __LINE__;
+		BOOST_LOGL(strm,info) << (*stream)->playlist()->db_id() ;
+		BOOST_LOGL(strm,info) << " == " << pl->db_id();
+
 		if ( (*stream)->playlist()->db_id() == pl->db_id() ){
 			(*stream)->add_connection( conn );
 			found=true;
 		}
 	}
+
 	if ( ! found ){
 		Stream::ptr stream = this->add_stream( pl );
 		return stream->add_connection( conn );

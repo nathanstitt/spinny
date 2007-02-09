@@ -120,11 +120,21 @@ App::run(int argc, char **argv)
 	return 0;
 }
 
+bool
+App::add_streaming_client( Spinny::PlayList::ptr pl, asio::ip::tcp::socket &socket ){
+BOOST_LOGL(strm,info)<< __PRETTY_FUNCTION__ << " : " << __LINE__;
+
+Streaming::Connection *ptr = new Streaming::Connection( socket.io_service() );
+
+	boost::shared_ptr<Streaming::Connection> ref( ptr );
+
+	return _strm->add_client( pl, ref );
+}
+
 
 void
 App::stop(){
 	sqlite::stop_db();
-
 	delete _instance;
 	_instance=0;
 
@@ -135,8 +145,10 @@ App::stop(){
 	_web_thread->join();
 //	_strm_thread->join();
 
+
 	delete _ews;
 	delete _strm;
+
 	_ews=0;
 	_strm=0;
 

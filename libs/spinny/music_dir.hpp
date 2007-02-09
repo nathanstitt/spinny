@@ -1,10 +1,11 @@
 /* @(#)music_dir.hpp
  */
 
-#ifndef _MUSIC_DIR_H
-#define _MUSIC_DIR_H 1
+#ifndef _SPINNY_MUSIC_DIR_H
+#define _SPINNY_MUSIC_DIR_H 1
 
-#include "spinny/spinny.hpp"
+#include "spinny/config.h"
+#include "sqlite/sqlite.hpp"
 #include "boost/filesystem/path.hpp"
 #include <vector>
 
@@ -97,5 +98,5 @@ public:
 
 
 
-#endif /* _MUSIC_DIR_H */
+#endif /* _SPINNY_MUSIC_DIR_H */
 
