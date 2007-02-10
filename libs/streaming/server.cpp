@@ -18,6 +18,7 @@ Server::Server(const std::string& address, unsigned int starting_port ) :
 
 	Spinny::PlayList::result_set rs = Spinny::PlayList::all();
 	for ( Spinny::PlayList::result_set::iterator pl = rs.begin(); rs.end() != pl; ++pl ){
+		BOOST_LOGL( strm, info ) << "Examining playlist " << pl->name() << " ( " << pl->size() << " songs )";
 		if ( pl->size() ){
 			this->add_stream( pl.shared_ptr() );
 		}

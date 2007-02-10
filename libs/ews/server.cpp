@@ -28,9 +28,9 @@ namespace ews {
 		acceptor_.set_option(asio::ip::tcp::acceptor::reuse_address(true));
 		acceptor_.bind(endpoint);
 		acceptor_.listen();
-		acceptor_.async_accept(new_connection_->socket(),
+		acceptor_.async_accept( *(new_connection_->socket()),
 				       boost::bind(&server::handle_accept, this,
-						   asio::placeholders::error));
+						   asio::placeholders::error)) ;
 
 		BOOST_LOGL( www,debug) << "EWS running on: " 
 					 << address
@@ -42,6 +42,7 @@ namespace ews {
 
 	void server::run()
 	{
+		BOOST_LOGL( www, info ) << "Accepting connections";
 		// The io_service::run() call will block until all asynchronous operations
 		// have finished. While the server is running, there is always at least one
 		// asynchronous operation outstanding: the asynchronous accept call waiting
@@ -63,7 +64,7 @@ namespace ews {
 			connection_manager_.start(new_connection_);
 			new_connection_.reset( new connection(io_service_,
 							      connection_manager_, doc_root_, tmpl_root_ ));
-			acceptor_.async_accept(new_connection_->socket(),
+			acceptor_.async_accept( *(new_connection_->socket()),
 					       boost::bind(&server::handle_accept, this,
 							   asio::placeholders::error));
 		}

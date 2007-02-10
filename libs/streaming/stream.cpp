@@ -32,7 +32,7 @@ Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned i
 	acceptor_.set_option(asio::ip::tcp::acceptor::reuse_address(true));
 	acceptor_.bind(endpoint);
 	acceptor_.listen();
-	acceptor_.async_accept( new_connection_->socket(),
+	acceptor_.async_accept( *(new_connection_->socket()),
 				boost::bind(&Stream::handle_accept, this, asio::placeholders::error));
 
 	networking_thread_=new boost::thread( boost::bind(&Stream::run,boost::ref(*this) ) );
@@ -139,7 +139,7 @@ Stream::handle_accept(const asio::error& e) {
 
 		new_connection_.reset( new Connection( io_service_, this ) );
 
-		acceptor_.async_accept( new_connection_->socket(),
+		acceptor_.async_accept( *(new_connection_->socket()),
 					boost::bind(&Stream::handle_accept, this, asio::placeholders::error));
 	}
 }

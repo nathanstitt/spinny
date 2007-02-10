@@ -1,7 +1,8 @@
 #include "song.hpp"
 
 #include "boost/filesystem/operations.hpp"
-#include "id3lib/tag.h"
+#include "taglib/tag.h"
+#include "taglib/fileref.h"
 #include "artist.hpp"
 #include "album.hpp"
 
@@ -119,6 +120,8 @@ Song::ptr
 Song::create_from_file(  const MusicDir &md, const std::string name ){
 	md.save_if_needed();
 
+	BOOST_LOGL( app,debug ) << "Createing " << name;
+
 	boost::filesystem::path path = md.path() / name;
 
 	if ( ! boost::filesystem::exists( path ) || ! is_interesting( path ) ) {
@@ -130,58 +133,46 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 	song->_dir_id = md.db_id();
 	song->_file_name=name;
 
-	ID3_Tag tag( path.string().c_str() );
-	ID3_Field *field;
-	ID3_Frame *frame;
+	TagLib::FileRef tag_file( path.string().c_str() );
+	TagLib::Tag *tag =  tag_file.tag();
 
-	frame = tag.Find( ID3FID_TITLE );
-	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-		song->_title=field->GetRawText();
-	}
+	song->_title=tag->title().to8Bit();
 
-	std::string tmp;
+ 	Artist::ptr artist = Artist::find_or_create( tag->artist().to8Bit() );
+ 	song->_artist_id=artist->db_id();
 
- 	frame = tag.Find( ID3FID_LEADARTIST );
- 	if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-		tmp=field->GetRawText();
-	}
-	Artist::ptr artist = Artist::find_or_create( tmp );
-	song->_artist_id=artist->db_id();
+ 	Album::ptr album = Album::find_or_create( artist, tag->album().to8Bit() );
+ 	song->_album_id=album->db_id();
 
- 	frame = tag.Find( ID3FID_ALBUM );
-	tmp="";
- 	if ( artist && frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-		tmp=field->GetRawText();
-	}
-	Album::ptr album = Album::find_or_create( artist, tmp );
-	song->_album_id=album->db_id();
+	song->_track=tag->track();
 
-	try {
-		frame = tag.Find( ID3FID_TRACKNUM );
-		if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-			song->_track=boost::lexical_cast<int>( field->GetRawText() );
-		}
-	} catch( boost::bad_lexical_cast & ){
-		song->_track=0;
-	}
+	TagLib::AudioProperties *props = tag_file.audioProperties();
 
-	const Mp3_Headerinfo *header = tag.GetMp3HeaderInfo();
-	if ( header ) {
-		song->_length = header->time;
-		song->_bitrate= header->bitrate;
-		
+	if ( props ){
+		song->_length =	props->length();
+		song->_bitrate= props->bitrate();
 	} else {
-		song->_length = 0;
+		song->_length =	0;
+		song->_bitrate= 0;
 	}
 
-	try {
-		frame = tag.Find( ID3FID_YEAR );
-		if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-			song->_year=boost::lexical_cast<int>( field->GetRawText() );
-		}
-	} catch( boost::bad_lexical_cast & ){
-		song->_year=0;
-	}
+// 	const Mp3_Headerinfo *header = tag.GetMp3HeaderInfo();
+// 	if ( header ) {
+// 		 header->time;
+// 		song->_bitrate= header->bitrate;
+		
+// 	} else {
+// 		song->_length = 0;
+// 	}
+
+// 	try {
+// 		frame = tag.Find( ID3FID_YEAR );
+// 		if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
+// 			song->_year=boost::lexical_cast<int>( field->GetRawText() );
+// 		}
+// 	} catch( boost::bad_lexical_cast & ){
+// 		song->_year=0;
+// 	}
 	song->save();
 
 	BOOST_LOGL( app,info ) << "Added song id: " << song->db_id() << " artist: " << song->_artist_id

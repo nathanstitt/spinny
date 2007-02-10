@@ -6,14 +6,14 @@
 using namespace Streaming;
 
 Connection::Connection( asio::io_service& socket, Stream *stream ) :
-	socket_(socket),
+	socket_( new asio::ip::tcp::socket( socket ) ),
 	stream_( stream ),
 	send_finished_(true)
 {
 	BOOST_LOGL(strm,debug) << "New Streaming Connection: " << this << std::endl;
 }
 
-Connection::Connection( asio::io_service& socket ) :
+Connection::Connection( boost::shared_ptr<asio::ip::tcp::socket> &socket ) :
 	socket_(socket),
 	stream_( NULL ),
 	send_finished_(true)
@@ -30,7 +30,7 @@ Connection::write( const Chunk &c ){
 			       << ( send_finished_ ? " sending" : " skipping due to lag" );
 	if ( send_finished_ ){
 		
-		asio::async_write( socket_, asio::const_buffer_container_1(c.data),
+		asio::async_write( *socket_, asio::const_buffer_container_1(c.data),
 				   boost::bind( &Connection::handle_write, shared_from_this(),
 						asio::placeholders::error,
 						asio::placeholders::bytes_transferred ) );
@@ -54,7 +54,7 @@ Connection::handle_write( const asio::error& e, std::size_t bytes_transferred ){
 
 
 Connection::~Connection(){
-	socket_.close();
+	socket_->close();
 }
 
 
@@ -64,7 +64,7 @@ Connection::set_stream( Stream *s ){
 }
 
 
-asio::ip::tcp::socket&
+boost::shared_ptr<asio::ip::tcp::socket>
 Connection::socket(){
 	return socket_;
 }

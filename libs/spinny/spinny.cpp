@@ -66,6 +66,7 @@ App::instance(){
 
 void
 init_music_dir( const std::string &dir ){
+	BOOST_LOGL( app, debug ) << "Scanning directory " << dir;
 	MusicDir::ptr md=MusicDir::create_root(dir);
 	md->sync();
 }
@@ -109,22 +110,25 @@ App::run(int argc, char **argv)
  	_strm = new Streaming::Server(  _instance->config<string>( "streaming_listen_address" ),
  					_instance->config<unsigned int>( "streaming_listen_port" )
  		);
-//	_strm->run();
+
+	BOOST_LOGL( app, debug ) << "Streaming started successfully, now starting www";
 
   	_web_thread =  new asio::thread( boost::bind( &ews::server::run, _ews ) );
-	// 	_strm_thread = new asio::thread( boost::bind( &Streaming::Server::run, _strm ) );
+
+	BOOST_LOGL( app, debug ) << "WWW started successfully, re-scanning directories";
 
 	vector<string> mds = _instance->config<vector<string> >( "music_dir" );
+
  	for_each( mds.begin(), mds.end(), boost::bind( init_music_dir, _1 ) );
 
 	return 0;
 }
 
 bool
-App::add_streaming_client( Spinny::PlayList::ptr pl, asio::ip::tcp::socket &socket ){
-BOOST_LOGL(strm,info)<< __PRETTY_FUNCTION__ << " : " << __LINE__;
+App::add_streaming_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::socket> socket ){
+	BOOST_LOGL(app,info)<< __PRETTY_FUNCTION__ << " : " << __LINE__;
 
-Streaming::Connection *ptr = new Streaming::Connection( socket.io_service() );
+	Streaming::Connection *ptr = new Streaming::Connection( socket );
 
 	boost::shared_ptr<Streaming::Connection> ref( ptr );
 

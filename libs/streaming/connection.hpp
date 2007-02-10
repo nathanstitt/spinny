@@ -23,13 +23,14 @@ namespace Streaming {
 
 		explicit Connection(asio::io_service& io_service, Stream *stream );
 
-		explicit Connection(asio::io_service& io_service );
+		explicit Connection( boost::shared_ptr<asio::ip::tcp::socket> &socket );
 
 		~Connection();
 
 		void set_stream( Stream *s );
 
-		asio::ip::tcp::socket& socket();
+		boost::shared_ptr<asio::ip::tcp::socket>
+		socket();
 		
 		bool send_finished();
 
@@ -41,7 +42,7 @@ namespace Streaming {
 		void handle_write(const asio::error& e, std::size_t bytes_transferred );
 
 		/// Socket for the connection.
-		asio::ip::tcp::socket socket_;
+		boost::shared_ptr<asio::ip::tcp::socket> socket_;
 
 		/// The manager for this connection.
 		Stream *stream_;

@@ -38,7 +38,7 @@ public:
 
 	static
 	bool
-	add_streaming_client( Spinny::PlayList::ptr, asio::ip::tcp::socket & );
+	add_streaming_client( Spinny::PlayList::ptr, boost::shared_ptr<asio::ip::tcp::socket> );
 
 };
 
