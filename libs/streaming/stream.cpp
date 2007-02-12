@@ -5,7 +5,7 @@
 #include "streaming/stream.hpp"
 #include "streaming/server.hpp"
 #include "streaming/lame.hpp"
-
+#include "boost/bind.hpp"
 #include <iostream>
 
 

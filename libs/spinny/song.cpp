@@ -120,8 +120,6 @@ Song::ptr
 Song::create_from_file(  const MusicDir &md, const std::string name ){
 	md.save_if_needed();
 
-	BOOST_LOGL( app,debug ) << "Createing " << name;
-
 	boost::filesystem::path path = md.path() / name;
 
 	if ( ! boost::filesystem::exists( path ) || ! is_interesting( path ) ) {
@@ -175,7 +173,7 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 // 	}
 	song->save();
 
-	BOOST_LOGL( app,info ) << "Added song id: " << song->db_id() << " artist: " << song->_artist_id
+	BOOST_LOGL( app,info ) << "Added song " << song->_title << " id:" << song->db_id() << " artist: " << song->_artist_id
 			       << " album: " << song->_album_id << " : " << song->_title;
 
 	return song;

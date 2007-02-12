@@ -5,7 +5,6 @@
 #include "spinny/album.hpp"
 #include "spinny/artist.hpp"
 #include "boost/filesystem/operations.hpp"
-#include "id3lib/tag.h"
 
 namespace Spinny {
 

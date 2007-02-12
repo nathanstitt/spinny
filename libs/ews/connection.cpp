@@ -20,7 +20,7 @@ namespace ews {
 		  reply_(this),
 		  socket_detached_(false)
 	{
-		BOOST_LOGL(www,debug) << "NEW CONNECTION: " << (int)this << std::endl;
+		BOOST_LOGL(www,debug) << "NEW CONNECTION: " << this << std::endl;
 	}
 
 	boost::shared_ptr<asio::ip::tcp::socket>

@@ -12,7 +12,7 @@ namespace network {
 		: socket_(io_service),
 		  connection_manager_(manager)
 	{
-		BOOST_LOGL(netwk,debug) << "NEW CONNECTION: " << (int)this << std::endl;
+		BOOST_LOGL(netwk,debug) << "NEW CONNECTION: " << this << std::endl;
 	}
 
 	asio::ip::tcp::socket& connection::socket() {
@@ -49,7 +49,7 @@ namespace network {
 		}
 		BOOST_LOGL( netwk,debug )
 			<< "Wrote " << bytes_transferred << " bytes on connection "
-			<< (int)this << " result: " << e.what();
+			<< this << " result: " << e.what();
 	}
 
 } // namespace ews

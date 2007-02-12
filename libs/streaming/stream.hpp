@@ -4,7 +4,6 @@
 
 #include "spinny/playlist.hpp"
 #include "boost/asio.hpp"
-#include "streaming/buffer.hpp"
 #include <boost/log/log.hpp>
 
 #include "boost/thread/thread.hpp"
