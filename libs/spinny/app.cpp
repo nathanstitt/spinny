@@ -1,8 +1,8 @@
-/* @(#)spinny.cpp
+/* @(#)app.cpp
  */
 
 
-#include "spinny/spinny.hpp"
+#include "spinny/app.hpp"
 
 #include <vector>
 #include <algorithm>

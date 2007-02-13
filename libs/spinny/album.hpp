@@ -4,7 +4,7 @@
 #ifndef _SPINNY_ALBUM_H
 #define _SPINNY_ALBUM_H 1
 
-#include "spinny/spinny.hpp"
+#include "spinny/app.hpp"
 #include "spinny/artist.hpp"
 #include "spinny/song.hpp"
 #include <boost/filesystem/path.hpp>

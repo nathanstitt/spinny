@@ -1,6 +1,6 @@
 
 #include <boost/program_options.hpp>
-#include "spinny.hpp"
+#include "spinny/app.hpp"
 
 namespace po = boost::program_options;
 

@@ -4,7 +4,7 @@
 #ifndef _USER_H
 #define _USER_H 1
 
-#include "spinny/spinny.hpp"
+#include "spinny/app.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
 
 namespace Spinny {

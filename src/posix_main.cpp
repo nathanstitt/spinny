@@ -1,5 +1,5 @@
 #include <iostream>
-#include "spinny/spinny.hpp"
+#include "spinny/app.hpp"
 #include "sqlite/sqlite.hpp"
 #include "boost/log/functions.hpp"
 #include "boost/thread/thread.hpp"

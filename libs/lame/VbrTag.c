@@ -70,8 +70,8 @@
 
 
 
-const static char	VBRTag0[]={"Xing"};
-const static char	VBRTag1[]={"Info"};
+static const char	VBRTag0[]={"Xing"};
+static const char	VBRTag1[]={"Info"};
 
 
 
