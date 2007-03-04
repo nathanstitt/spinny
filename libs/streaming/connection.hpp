@@ -34,8 +34,15 @@ namespace Streaming {
 		
 		bool send_finished();
 
+		std::string
+		remote_address();
+
 		void write( const Chunk &c );
+
+		void write_history( const std::list<asio::const_buffer> &buffers );
 	private:
+		void set_socket_options();
+
 		boost::mutex mutex_;
 
 		/// Handle completion of a write operation.

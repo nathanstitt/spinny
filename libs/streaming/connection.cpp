@@ -11,6 +11,8 @@ Connection::Connection( asio::io_service& socket, Stream *stream ) :
 	send_finished_(true)
 {
 	BOOST_LOGL(strm,debug) << "New Streaming Connection: " << this << std::endl;
+
+
 }
 
 Connection::Connection( boost::shared_ptr<asio::ip::tcp::socket> &socket ) :
@@ -21,6 +23,12 @@ Connection::Connection( boost::shared_ptr<asio::ip::tcp::socket> &socket ) :
 	BOOST_LOGL(strm,debug) << "New Streaming Connection: " << this << std::endl;
 }
 
+
+void
+Connection::set_socket_options(){
+// 	asio::socket_base::linger option(true, 30);
+// 	socket_->set_option(option);
+}
 
 void
 Connection::write( const Chunk &c ){
@@ -39,22 +47,58 @@ Connection::write( const Chunk &c ){
 }
 
 void
-Connection::handle_write( const asio::error& e, std::size_t bytes_transferred ){
-	boost::mutex::scoped_lock lk(mutex_);
+Connection::write_history( const std::list<asio::const_buffer> &buffers ){
 
-	BOOST_LOGL(strm,debug)
-		<< "Wrote " << bytes_transferred << " bytes on connection "
-		<< this << " result: " << e.what();
-	if ( e ){
-		stream_->stop( shared_from_this() );
-	} else {
-		send_finished_=true;
+	if ( send_finished_ ){
+		asio::async_write( *socket_, buffers,
+				   boost::bind( &Connection::handle_write, shared_from_this(),
+						asio::placeholders::error,
+						asio::placeholders::bytes_transferred ) );
+		send_finished_=false;
 	}
 }
 
+void
+Connection::handle_write( const asio::error& e, std::size_t bytes_transferred ){
+	boost::mutex::scoped_lock lk(mutex_);
+
+// 	BOOST_LOGL(strm,debug)
+// 		<< "Wrote " << bytes_transferred << " bytes on connection "
+// 		<< this << " result: " << e.what();
+
+	if ( asio::error::success == e ){
+		send_finished_=true;
+	} else {
+		BOOST_LOGL( strm, warn ) << "Streaming connection disconnected";
+		stream_->stop( shared_from_this() );
+	}
+}
+
+std::string
+Connection::remote_address(){
+	return socket_->remote_endpoint().address().to_string();
+}
+
+void
+close_error_handler( const asio::error& e ) {
+	if ( e ){
+		BOOST_LOGL( strm,err ) << "Socket close failed: " << e.what();
+	} else {
+		BOOST_LOGL( strm, debug ) << "Socket closed successfully";
+	}
+}
 
 Connection::~Connection(){
-	socket_->close();
+	boost::mutex::scoped_lock lk(mutex_);
+
+	BOOST_LOGL( strm,info )<< "Destroying Connection " << this;
+
+	try {
+		socket_->close( close_error_handler );
+	}
+	catch( const asio::error &e ){
+		BOOST_LOGL( strm,info )<< "socket->close() raised " << e.what();
+	}
 }
 
 

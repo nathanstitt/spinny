@@ -42,9 +42,12 @@ Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned i
 
 bool
 Stream::add_connection( Connection::ptr c  ) {
+	BOOST_LOGL( strm, info ) << "Stream " << this
+				 << " adding connection "
+				 << c->socket()->remote_endpoint().address().to_string();
 	connections_.insert(c);
 	c->set_stream( this );
-
+	c->write_history( lame_->history() );
 	if ( ! controller_thread_ ) {
 		BOOST_LOGL( strm, info ) << "Starting transcoder thread";
 		running_ = true;
@@ -63,7 +66,7 @@ Stream::parcel(){
 
 		Chunk chunk = lame_->get_chunk();
 
-		BOOST_LOGL( strm, debug ) << "Stream got chunk, sleep for " << chunk.milliseconds() << "ms";
+//		BOOST_LOGL( strm, debug ) << "Stream got chunk, sleep for " << chunk.milliseconds() << "ms";
 
 		std::for_each(connections_.begin(), connections_.end(),
 			      boost::bind(&Connection::write, _1, chunk ) );
@@ -104,10 +107,6 @@ Stream::port(){
 
 Spinny::PlayList::ptr
 Stream::playlist(){
-	BOOST_LOGL(strm,info) << __PRETTY_FUNCTION__ << " : " << __LINE__ << " " << (pl_);
-	BOOST_LOGL(strm,info) << __PRETTY_FUNCTION__ << " : " << __LINE__ << " " << pl_->db_id();
-
-	
 	return pl_;
 }
 
@@ -121,12 +120,17 @@ Stream::~Stream(){
 		delete controller_thread_;
 		controller_thread_ = NULL;
 	}
+	BOOST_LOGL( strm, info ) << "Stopped sending new data";
 
 	io_service_.interrupt();
 	networking_thread_->join();
 	delete networking_thread_;
 
+	BOOST_LOGL( strm, info ) << "Stopped listening";
+
 	connections_.clear();
+
+	BOOST_LOGL( strm, info ) << "Sockets closed";
 
 	delete lame_;
 }

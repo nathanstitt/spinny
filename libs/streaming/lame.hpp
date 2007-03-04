@@ -12,38 +12,46 @@
 #include "boost/filesystem/fstream.hpp"
 #include "streaming/server.hpp"
 #include <string>
-
+#include <list>
 
 namespace Streaming {
 
+	struct buffer;
+
 	class Lame {
 		friend class Chunk;
-		typedef boost::array<unsigned char,LAME_MAXMP3BUFFER> buff_t;
-		struct buffer {
-			buff_t data;
-			int data_length;
-			buffer *next;
-		};
 	public:
-
 
 		Lame( Spinny::PlayList::ptr pl );
 
 		Chunk get_chunk();
 
-//		asio::const_buffer next_seconds( int seconds );
-		
+		std::list<asio::const_buffer>
+		history();
+
 		~Lame();
+		
 	private:
-		bool fill_buffer();
+		typedef boost::array<unsigned char,LAME_MAXMP3BUFFER> buff_t;
+		struct Buffer {
+			Buffer();
+			void destroy( int buffer_num=0 );
+			void create();
+			buff_t data;
+			int data_length;
+			Buffer *prev;
+			Buffer *next;
+			bool writable;
+		};
+
+		bool fill_buffer( Buffer *buff );
 		void next_song();
 
 		boost::mutex buffer_mutex;
 		boost::condition buffer_condition;
 
 
-		buffer *read_buffer;
-		buffer *write_buffer;
+//		Buffer *write_buffer;
 
 		Spinny::PlayList::ptr pl;
 		unsigned int cur_pos;
@@ -53,7 +61,7 @@ namespace Streaming {
 
 		FILE   *musicin;
 
-		bool transcode();
+		void transcode();
 
 		int get_audio( int buffer[2][1152] );
 
@@ -62,12 +70,13 @@ namespace Streaming {
 		boost::thread *lame_thread;
 
 		bool running_;
+		Buffer *buffer_;
 
 	};
 
 	struct Chunk {
 		friend class Lame;
-		Chunk( Lame::buffer *b,
+		Chunk( Lame::Buffer *b,
 		       unsigned short int br );
 		unsigned int milliseconds();
 		std::size_t size();

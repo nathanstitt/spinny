@@ -126,7 +126,16 @@ App::run(int argc, char **argv)
 
 bool
 App::add_streaming_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::socket> socket ){
-	BOOST_LOGL(app,info)<< __PRETTY_FUNCTION__ << " : " << __LINE__;
+
+	if ( ! pl->size() ){
+		BOOST_LOGL(app,info)<< "NOT adding streaming client "
+				    << socket->remote_endpoint().address().to_string()
+				    << " as playlist is empty";
+		return false;
+	}
+
+	BOOST_LOGL(app,info)<< "Adding streaming client "
+			    << socket->remote_endpoint().address().to_string();
 
 	Streaming::Connection *ptr = new Streaming::Connection( socket );
 

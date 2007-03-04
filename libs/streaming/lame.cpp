@@ -1,5 +1,4 @@
 
-# include "lame/config.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -23,6 +22,8 @@
 #include "spinny/artist.hpp"
 
 using namespace Streaming;
+
+
 
 int
 is_syncword_mp123( const void *const headerptr)
@@ -115,18 +116,15 @@ Lame::init_decode_file()
 	/* int xing_header,len2,num_frames; */
 	unsigned char buf[100];
 	int     ret;
-	unsigned int     len, aid_header;
+	unsigned int     len, aid_header=0;
 	short int pcm_l[1152], pcm_r[1152];
 	int freeformat = 0;
 
 	memset(&mp3input_data, 0, sizeof(mp3data_struct));
 	lame_decode_init();
 
-    
-	if ( fread(buf, 1, len, musicin) != len )
-		return -1;      /* failed */
 	if (buf[0] == 'I' && buf[1] == 'D' && buf[2] == '3') {
-	    
+    
 		BOOST_LOGL( strm, info ) << "ID3v2 found, be aware that the ID3 tag is currently lost when transcoding";
 
 		len = 6;
@@ -252,22 +250,22 @@ static const char *mode_names[2][4] = {
 
 
 bool
-Lame::fill_buffer(){
-	int     Buffer[2][1152];
+Lame::fill_buffer( Buffer *buffer ){
+	int read_buffer[2][1152];
 	int iread;
 	int encoded=0;
-	write_buffer->data_length=0;
+	buffer->data_length=0;
 	do {
-		iread = get_audio( Buffer );
+		iread = get_audio( read_buffer );
 		if ( iread ){
 			/* encode */
-			encoded = lame_encode_buffer_int( lgf, Buffer[0], Buffer[1], iread,
-							  write_buffer->data.c_array()+write_buffer->data_length,
-							  LAME_MAXMP3BUFFER-write_buffer->data_length );
+			encoded = lame_encode_buffer_int( lgf, read_buffer[0], read_buffer[1], iread,
+							  buffer->data.c_array()+buffer->data_length,
+							  LAME_MAXMP3BUFFER-buffer->data_length );
 		} else {
 			/* may return one more mp3 frame */
-			encoded = lame_encode_flush_nogap( lgf, write_buffer->data.c_array()+write_buffer->data_length,
-							   LAME_MAXMP3BUFFER-write_buffer->data_length );
+			encoded = lame_encode_flush_nogap( lgf, buffer->data.c_array()+buffer->data_length,
+							   LAME_MAXMP3BUFFER-buffer->data_length );
 			this->next_song();
 		}
 		/* was our output buffer big enough? */
@@ -278,10 +276,10 @@ Lame::fill_buffer(){
 				BOOST_LOGL( strm, err ) << "mp3 internal error:  error code=" << encoded;
 			throw std::runtime_error("Error filling buffer");
 		}
-		write_buffer->data_length += encoded;
-	} while( ( write_buffer->data_length + encoded + 500 ) < LAME_MAXMP3BUFFER );
+		buffer->data_length += encoded;
+	} while( ( buffer->data_length + encoded + 500 ) < LAME_MAXMP3BUFFER );
 
-	BOOST_LOGL( strm, debug ) << "Filled buffer with " << write_buffer->data_length << " / " << LAME_MAXMP3BUFFER << " bytes";
+	BOOST_LOGL( strm, debug ) << "Filled buffer " << buffer << " with " << buffer->data_length << " / " << LAME_MAXMP3BUFFER << " bytes";
 
 	return true;
 }
@@ -293,9 +291,12 @@ Lame::Lame(Spinny::PlayList::ptr p) :
 	cur_pos( pl->size() ),
 	musicin(0),
 	lame_thread(0),
-	running_(true)
+	running_(true),
+	buffer_( new Buffer )
 {
 	BOOST_LOGL( strm, info ) << "New transcoder " << this;
+	buffer_->create();
+
 	lame_thread=new boost::thread( boost::bind(&Lame::transcode,boost::ref(*this) ) );
 }
 
@@ -316,6 +317,8 @@ Lame::~Lame(){
 	boost::thread::sleep(xt); // Sleep for .1 second
 	
 	delete lame_thread;
+
+	buffer_->destroy();
 }
 
 void
@@ -338,14 +341,13 @@ log_err( const char* fmt, va_list args ) {
 	BOOST_LOGL( strm, err ) << " internal lame error: " << buff;
 }
 
-bool
+void
 Lame::transcode(){
 	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " called";
 
-	read_buffer=new buffer;
-	write_buffer=new buffer;
-	read_buffer->next=write_buffer;
-	write_buffer->next=read_buffer;
+//	write_buffer=new Buffer;
+//	read_buffer->next=write_buffer;
+//	write_buffer->next=read_buffer;
 	
 
 	/* initialize libmp3lame */
@@ -363,7 +365,6 @@ Lame::transcode(){
 	if ( -1 == lame_set_brate(lgf, pl->bitrate() ) ){
 		BOOST_LOGL( strm, err ) << "Unsupported bitrate: " << pl->bitrate();
 		throw std::runtime_error( "Unsupported bitrate" );
-
 	}
 
 	lame_set_errorf(lgf,log_err );
@@ -377,18 +378,22 @@ Lame::transcode(){
 	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " init portion finished-" << running_;
 
 	this->next_song();
+	Buffer *write_buffer = buffer_;
+
+	// move the buffer back one
+	buffer_ = buffer_->prev;
 
 	while ( running_ ){
 		boost::mutex::scoped_lock lock(buffer_mutex);
 
-		while (  ! write_buffer && running_ ){
+		while ( ! write_buffer->writable && running_ ){
 			buffer_condition.wait(lock);
 		}
 
 		try {
 			if ( running_ ){
-				this->fill_buffer();
-				write_buffer = NULL;
+				this->fill_buffer( write_buffer );
+				write_buffer->writable = false;
 				buffer_condition.notify_one();
 			}
 		}
@@ -396,44 +401,68 @@ Lame::transcode(){
 			BOOST_LOGL( strm, err ) << "Caught exception: " << ex.what() << " moving on to next file";
 			this->next_song();
 		}
+		write_buffer = write_buffer->next;
 	}
-
+		
 	lame_close(lgf);
-
-	delete read_buffer;
-	delete write_buffer;
-
-	return true;
-
 }
 
+Chunk
+Lame::get_chunk(){
+	boost::mutex::scoped_lock lock(buffer_mutex);
+	BOOST_LOGL( strm, info ) << "Lame::get_chunck() " << buffer_ << " writable: " << buffer_->prev  << " / " << buffer_->next;
+	while ( buffer_->writable && running_ ){
+		buffer_condition.wait(lock);
+	}
+	buffer_condition.notify_one();
+//	BOOST_LOGL( strm, info ) << "Lame::get_chunck() " << this << " returned " << buffer_->data_length << " chunk from buffer " << buffer_;
+	Chunk c( buffer_, pl->bitrate() );
+	
+	buffer_ = buffer_->next;
+	buffer_->writable = true;
+	return c;
+}
+
+std::list<asio::const_buffer>
+Lame::history(){
+	Buffer *end = buffer_;
+	Buffer *begin = end->next;
+	std::list<asio::const_buffer> ret;
+	while ( begin != end ){
+		ret.push_back( asio::buffer( begin->data, begin->data_length ) );
+		begin = begin->next;
+	}
+	BOOST_LOGL( strm, info ) << "Lame::history() " << this << " returned " << ret.size() << " chunks";
+	return ret;
+}
+  
 void
 Lame::next_song(){
-	unsigned int size = pl->size();
-	++cur_pos;
 
-	if ( this->cur_pos >= size ){
-		this->cur_pos = 0;
+	++cur_pos;
+	if ( cur_pos >= pl->size() ){
+		cur_pos = 0;
 	}
 
 	Spinny::Song::ptr song = pl->at( cur_pos );
 	std::string in_path = song->path().string();
 
 	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " " << song->title();
-	
-	
 	if ( this->musicin && fclose( this->musicin ) ) {
 		BOOST_LOGL( strm, err ) << "Could not close audio input file";
 		throw std::runtime_error("Could not close audio input file");
 	}
 	
+	BOOST_LOGL( strm, debug ) << __FILE__ << " : " << __LINE__;
+
 	if ( ( musicin = fopen(in_path.c_str(), "rb" ) ) == NULL ) {
 		BOOST_LOGL( strm, err ) << "Could not open " << in_path;
 		throw std::runtime_error( "file open for read failed" );
 	}
 
+	BOOST_LOGL( strm, debug ) << "Opened input file " << musicin;
 	
-	if (-1 == init_decode_file() ) {
+	if ( -1 == init_decode_file() ) {
 		BOOST_LOGL( strm, err ) << "Error reading headers in mp3 input file " << in_path;
 		throw std::runtime_error( "Error reading headers in mp3 input file" );
 	}
@@ -446,7 +475,6 @@ Lame::next_song(){
 	id3tag_set_album( lgf, song->album()->name().c_str() );
 	id3tag_set_year( lgf, boost::lexical_cast<std::string>( song->year() ).c_str()  );
 
-
 	(void) lame_set_in_samplerate( lgf, mp3input_data.samplerate );
 	(void) lame_set_num_samples( lgf, mp3input_data.nsamp );
 
@@ -456,6 +484,7 @@ Lame::next_song(){
 
 		double  flen = lame_get_file_size(in_path); /* try to figure out num_samples */
 		if (flen >= 0) {
+
 			/* try file size, assume 2 bytes per sample */
 			if ( mp3input_data.bitrate > 0) {
 				double  totalseconds =
@@ -469,9 +498,11 @@ Lame::next_song(){
 				(void) lame_set_num_samples( lgf,
 							     (unsigned long)(flen / (2 * lame_get_num_channels( lgf ))) );
 			}
+
 		}
 	}
 		
+
 	BOOST_LOGL( strm, info ) << this<< " encoding "  <<  lame_get_brate(lgf)
 				 << "kbs " << mode_names[lame_get_force_ms(lgf)][lame_get_mode(lgf)] 
 				 << " (qval=" << lame_get_quality(lgf) << ")"
@@ -489,23 +520,38 @@ fire off thread to encode next block, returning current (already encoded block)
  */
 
 
-Chunk
-Lame::get_chunk(){
-	boost::mutex::scoped_lock lock(buffer_mutex);
+static const int NUM_BUFFERS=3;
 
-	while ( write_buffer && running_ ){
-		buffer_condition.wait(lock);
-	}
+Lame::Buffer::Buffer() :
+	prev( NULL ),
+	next( NULL ),
+	writable( true )
+{
 
-	write_buffer = read_buffer;
-	read_buffer=read_buffer->next;
-	buffer_condition.notify_one();
-//	BOOST_LOGL( strm, info ) << __PRETTY_FUNCTION__ << " " <<  this << " returned " << read_buffer->data_length << " chunk";
-	Chunk c( read_buffer, pl->bitrate() );
-	return c;
 }
 
-Chunk::Chunk( Lame::buffer *b,
+void
+Lame::Buffer::create(){
+	Buffer *last = this;
+	for ( int i = 0 ; i < NUM_BUFFERS; ++i ){
+		last->next = new Buffer;
+		last->next->prev = last;
+		last = last->next;
+	}
+	this->prev = last;
+	last->next = this;
+}
+
+void
+Lame::Buffer::destroy( int buf_num ){
+	BOOST_LOGL( strm, info ) << "Destroying Lame::Buffer " <<  this << " buffer num = " << buf_num;
+	if ( buf_num < NUM_BUFFERS ){
+		this->next->destroy( buf_num+1 );
+	}
+	delete this;
+}
+
+Chunk::Chunk( Lame::Buffer *b,
 	      unsigned short int br  ) : 
 	data( asio::buffer( b->data, b->data_length ) ),
 	bitrate( br ) 
