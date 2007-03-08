@@ -6,6 +6,7 @@
 using namespace Streaming;
 
 Connection::Connection( asio::io_service& socket, Stream *stream ) :
+	missed_count_(0),
 	socket_( new asio::ip::tcp::socket( socket ) ),
 	stream_( stream ),
 	send_finished_(true)
@@ -35,14 +36,19 @@ Connection::write( const Chunk &c ){
 	boost::mutex::scoped_lock lk(mutex_);
 
 	BOOST_LOGL(strm,debug) << "Write requested on " << this 
-			       << ( send_finished_ ? " sending" : " skipping due to lag" );
+			       << ( send_finished_ ? " sending" : " skipping due to lag" ) << " missed " << missed_count_;
+
 	if ( send_finished_ ){
-		
+		missed_count_ = 0;
 		asio::async_write( *socket_, asio::const_buffer_container_1(c.data),
 				   boost::bind( &Connection::handle_write, shared_from_this(),
 						asio::placeholders::error,
 						asio::placeholders::bytes_transferred ) );
 		send_finished_=false;
+	} else if ( missed_count_ > 10 ){
+		stream_->stop( shared_from_this() );	
+	} else {
+		missed_count_ += 1;
 	}
 }
 
@@ -62,14 +68,14 @@ void
 Connection::handle_write( const asio::error& e, std::size_t bytes_transferred ){
 	boost::mutex::scoped_lock lk(mutex_);
 
-// 	BOOST_LOGL(strm,debug)
-// 		<< "Wrote " << bytes_transferred << " bytes on connection "
-// 		<< this << " result: " << e.what();
+ 	BOOST_LOGL(strm,debug)
+ 		<< "Wrote " << bytes_transferred << " bytes on connection "
+ 		<< this << " result: " << e.what();
 
 	if ( asio::error::success == e ){
 		send_finished_=true;
 	} else {
-		BOOST_LOGL( strm, warn ) << "Streaming connection disconnected";
+		BOOST_LOGL( strm, info ) << "Streaming connection disconnected";
 		stream_->stop( shared_from_this() );
 	}
 }
@@ -89,6 +95,7 @@ close_error_handler( const asio::error& e ) {
 }
 
 Connection::~Connection(){
+
 	boost::mutex::scoped_lock lk(mutex_);
 
 	BOOST_LOGL( strm,info )<< "Destroying Connection " << this;

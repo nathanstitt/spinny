@@ -92,7 +92,9 @@ Stream::run(){
 void
 Stream::stop( Connection::ptr c ) {
 	connections_.erase(c);
+	BOOST_LOGL( strm, info ) << "Stopped connection " << &(*c) << " " << connections_.size() << " remaining";
 	if ( connections_.empty() ){
+		
 		running_ = false;
 		controller_thread_->join();
 		delete controller_thread_;

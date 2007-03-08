@@ -43,6 +43,8 @@ namespace Streaming {
 	private:
 		void set_socket_options();
 
+		unsigned int missed_count_;
+
 		boost::mutex mutex_;
 
 		/// Handle completion of a write operation.
