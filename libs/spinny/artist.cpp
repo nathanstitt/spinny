@@ -153,7 +153,7 @@ Artist::name_starts_with( const std::string &name ){
 Artist::starting_char_t
 Artist::starting_chars() {
 	starting_char_t ret;
-	sqlite::command cmd( sqlite::db(), "select upper( substr(name,1,1) ),count(rowid) from artists group by upper( substr(name,1,1) ) order by upper( substr(name,1,1) );");
+	sqlite::command cmd( sqlite::db(), "select upper( substr(name,1,1) ),count(rowid) from artists where length(name)>0 group by upper( substr(name,1,1) ) order by upper( substr(name,1,1) );");
 	for ( sqlite::command::reader_iterator it=cmd.reader_begin(); cmd.reader_end() != it; ++it ){
 		ret.push_back( starting_char_t::value_type( it->get<char>(0), it->get<unsigned int>(1) ) );
 	}

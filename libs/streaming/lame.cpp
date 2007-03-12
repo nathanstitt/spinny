@@ -13,7 +13,6 @@
 #include "streaming/lame.hpp"
 #include "streaming/server.hpp"
 
-#include <boost/thread/xtime.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
@@ -23,6 +22,7 @@
 
 using namespace Streaming;
 
+static const int NUM_BUFFERS=3;
 
 
 int
@@ -252,11 +252,15 @@ static const char *mode_names[2][4] = {
 bool
 Lame::fill_buffer( Buffer *buffer ){
 	int read_buffer[2][1152];
-	int iread;
+	int iread=0;
 	int encoded=0;
 	buffer->data_length=0;
 	do {
-		iread = get_audio( read_buffer );
+		if ( SongChanged != action_ ){
+			iread = get_audio( read_buffer );
+		} else {
+			iread = 0;
+		}
 		if ( iread ){
 			/* encode */
 			encoded = lame_encode_buffer_int( lgf, read_buffer[0], read_buffer[1], iread,
@@ -288,37 +292,52 @@ Lame::fill_buffer( Buffer *buffer ){
 
 Lame::Lame(Spinny::PlayList::ptr p) :
 	pl(p),
-	cur_pos( pl->size() ),
+	current_pos_( pl->size() ),
 	musicin(0),
 	lame_thread(0),
-	running_(true),
+	action_( FillBuffer ),
 	buffer_( new Buffer )
 {
-	BOOST_LOGL( strm, info ) << "New transcoder " << this;
 	buffer_->create();
 
+	BOOST_LOGL( strm, info ) << "New transcoder " << this;
+
 	lame_thread=new boost::thread( boost::bind(&Lame::transcode,boost::ref(*this) ) );
+	
+
+	for ( int i = 0 ; i <= NUM_BUFFERS; ++i ){
+
+		boost::mutex::scoped_lock lock(buffer_mutex);
+
+		while ( AwaitingRead != action_ ){
+			buffer_condition.wait(lock);
+		}
+
+		action_= FillBuffer;
+		buffer_condition.notify_one();
+	}
 }
 
 
 
 
 Lame::~Lame(){
-	BOOST_LOGL( strm, info ) << "Transcoder exit " << this;
-	running_=false;
-	buffer_condition.notify_all();
 	{
 		boost::mutex::scoped_lock lock(buffer_mutex);
+
+		action_=Quitting;
+
+		buffer_condition.notify_one();
 	}
 
-	boost::xtime xt;
-	boost::xtime_get(&xt, boost::TIME_UTC);
-	xt.nsec += 1000;
-	boost::thread::sleep(xt); // Sleep for .1 second
-	
+
+	lame_thread->join();
+
 	delete lame_thread;
 
 	buffer_->destroy();
+
+	BOOST_LOGL( strm, info ) << "Transcoder exit " << this;
 }
 
 void
@@ -375,25 +394,26 @@ Lame::transcode(){
 
 	lame_init_params(lgf);
 
-	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " init portion finished-" << running_;
+	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " init portion finished-" << action_;
 
-	this->next_song();
+	this->select_song( 0 );
 	Buffer *write_buffer = buffer_;
 
 	// move the buffer back one
 	buffer_ = buffer_->prev;
 
-	while ( running_ ){
+	while ( Quitting != action_ ){
 		boost::mutex::scoped_lock lock(buffer_mutex);
 
-		while ( ! write_buffer->writable && running_ ){
+		while ( Quitting != action_ && SongChanged != action_ &&  FillBuffer != action_ ) {
 			buffer_condition.wait(lock);
 		}
 
 		try {
-			if ( running_ ){
+			if ( Quitting != action_ ){
 				this->fill_buffer( write_buffer );
-				write_buffer->writable = false;
+				write_buffer = write_buffer->next;
+				action_ = AwaitingRead;
 				buffer_condition.notify_one();
 			}
 		}
@@ -401,25 +421,26 @@ Lame::transcode(){
 			BOOST_LOGL( strm, err ) << "Caught exception: " << ex.what() << " moving on to next file";
 			this->next_song();
 		}
-		write_buffer = write_buffer->next;
 	}
-		
+	fclose( musicin );
+
 	lame_close(lgf);
 }
 
 Chunk
 Lame::get_chunk(){
 	boost::mutex::scoped_lock lock(buffer_mutex);
-	BOOST_LOGL( strm, info ) << "Lame::get_chunck() " << buffer_ << " writable: " << buffer_->prev  << " / " << buffer_->next;
-	while ( buffer_->writable && running_ ){
+	BOOST_LOGL( strm, info ) << "Lame::get_chunk() " << buffer_ << " writable: " << buffer_->prev  << " / " << buffer_->next;
+	while ( AwaitingRead != action_ ){
 		buffer_condition.wait(lock);
 	}
+	action_= FillBuffer;
+	buffer_ = buffer_->next;
 	buffer_condition.notify_one();
 //	BOOST_LOGL( strm, info ) << "Lame::get_chunck() " << this << " returned " << buffer_->data_length << " chunk from buffer " << buffer_;
 	Chunk c( buffer_, pl->bitrate() );
 	
-	buffer_ = buffer_->next;
-	buffer_->writable = true;
+
 	return c;
 }
 
@@ -438,13 +459,28 @@ Lame::history(){
   
 void
 Lame::next_song(){
-
-	++cur_pos;
-	if ( cur_pos >= pl->size() ){
-		cur_pos = 0;
+	++current_pos_;
+	if ( current_pos_ >= pl->size() ){
+		current_pos_ = 0;
 	}
+	this->select_song( current_pos_ );
+}
 
-	Spinny::Song::ptr song = pl->at( cur_pos );
+void
+Lame::song_order_changed( sqlite::id_t song_id, unsigned int new_position ){
+	BOOST_LOGL( strm, debug ) << " encoder on song " << current_song_id_ << " / " << song_id << " moved to " << new_position;
+
+	if ( current_song_id_ == song_id ){
+		current_pos_ = new_position;
+	}
+}
+
+void
+Lame::select_song( unsigned int index ){
+
+	Spinny::Song::ptr song = pl->at( index );
+	current_song_id_ = song->db_id();
+
 	std::string in_path = song->path().string();
 
 	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " " << song->title();
@@ -513,27 +549,19 @@ Lame::next_song(){
 
 
 }
-/*
 
-fire off thread to encode next block, returning current (already encoded block)
-
- */
-
-
-static const int NUM_BUFFERS=3;
 
 Lame::Buffer::Buffer() :
 	prev( NULL ),
-	next( NULL ),
-	writable( true )
+	next( NULL )
 {
-
+	BOOST_LOGL( strm, info ) << "new Lame::Buffer " <<  this;
 }
 
 void
 Lame::Buffer::create(){
 	Buffer *last = this;
-	for ( int i = 0 ; i < NUM_BUFFERS; ++i ){
+	for ( int buf_num = 0 ; buf_num < NUM_BUFFERS; ++buf_num ){
 		last->next = new Buffer;
 		last->next->prev = last;
 		last = last->next;

@@ -29,9 +29,21 @@ namespace Streaming {
 		std::list<asio::const_buffer>
 		history();
 
+		void song_order_changed( sqlite::id_t song_id, unsigned int index );
+
 		~Lame();
 		
 	private:
+
+		void select_song( unsigned int index );
+
+		enum MessageType {
+			AwaitingRead,
+			FillBuffer,
+			SongChanged,
+			Quitting,
+		};
+
 		typedef boost::array<unsigned char,LAME_MAXMP3BUFFER> buff_t;
 		struct Buffer {
 			Buffer();
@@ -41,7 +53,7 @@ namespace Streaming {
 			int data_length;
 			Buffer *prev;
 			Buffer *next;
-			bool writable;
+//			bool writable;
 		};
 
 		bool fill_buffer( Buffer *buff );
@@ -54,7 +66,8 @@ namespace Streaming {
 //		Buffer *write_buffer;
 
 		Spinny::PlayList::ptr pl;
-		unsigned int cur_pos;
+		unsigned int current_pos_;
+		sqlite::id_t current_song_id_;
 
 		mp3data_struct mp3input_data;
 		lame_global_flags *lgf;
@@ -69,7 +82,8 @@ namespace Streaming {
 
 		boost::thread *lame_thread;
 
-		bool running_;
+		MessageType action_;
+
 		Buffer *buffer_;
 
 	};

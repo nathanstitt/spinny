@@ -14,10 +14,11 @@ class thread_adapter {
 public:
 	thread_adapter( int argv, char **argc )
 		: argv_(argv), argc_(argc )
-    { }
-    void operator()() const {
-	    Spinny::App::run( argv_, argc_ );
-    }
+		{ }
+	void operator()() const {
+		Spinny::App::run( argv_, argc_ );
+	}
+
 private:
 	int argv_;
 	char **argc_;

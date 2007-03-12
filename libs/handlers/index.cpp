@@ -117,20 +117,9 @@ hdf_insert_artists( ews::reply &rep ){
 	rep.content << "}\n";
 }
 
-
-std::string
-make_ticket(){
-
-	std::string ticket;
-	boost::random_device dev;
-	for ( int i=0; i<10; ++i ){
-		BOOST_LOGL( www,info ) << "RAND " << i << " : " << dev();
-		ticket+="a";
-	}
-	return ticket;
-}
-
 Index::Index() : ews::request_handler( "Index", Middle ) {}
+
+
 
 ews::request_handler::RequestStatus
 Index::handle( const ews::request& req, ews::reply& rep ) const {

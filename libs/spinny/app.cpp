@@ -29,10 +29,17 @@ namespace Spinny {
 
 
 static App *_instance=0;
-static ews::server *_ews=0;
-static Streaming::Server *_strm=0;
+//static ews::server *_ews=0;
+//static Streaming::Server *_strm=0;
 static asio::thread *_web_thread=0;
 //static asio::thread *_strm_thread=0;
+
+void
+init_music_dir( const std::string &dir ){
+	BOOST_LOGL( app, debug ) << "Scanning directory " << dir;
+	MusicDir::ptr md=MusicDir::create_root(dir);
+	md->sync();
+}
 
 
 App::App(int argc, char **argv) :
@@ -55,7 +62,36 @@ App::App(int argc, char **argv) :
 
 	_vm=parse_program_options(argc,argv);
 
+	
+	sqlite::startup( this->config<string>("db") );
 
+	BOOST_LOGL( app, debug ) << "Starting Streaming";
+
+ 	streaming = new Streaming::Server(  this->config<string>( "streaming_listen_address" ),
+					    this->config<unsigned int>( "streaming_listen_port" )
+ 		);
+
+
+	BOOST_LOGL( app, debug ) << "Streaming started successfully, now starting www";
+
+	www = new ews::server( this->config<string>( "web_listen_address" ),
+				this->config<string>( "web_listen_port" ),
+				this->config<string>( "web_root" ),
+				this->config<string>( "template_root" )
+		);
+
+  	_web_thread =  new asio::thread( boost::bind( &ews::server::run, this->www ) );
+
+	BOOST_LOGL( app, debug ) << "WWW started successfully";
+}
+
+void
+App::rescan(){
+	BOOST_LOGL( app, info ) << "re-scanning directories";
+
+	vector<string> mds = this->config<vector<string> >( "music_dir" );
+
+ 	for_each( mds.begin(), mds.end(), boost::bind( init_music_dir, _1 ) );
 }
 
 App*
@@ -64,12 +100,6 @@ App::instance(){
 }
 
 
-void
-init_music_dir( const std::string &dir ){
-	BOOST_LOGL( app, debug ) << "Scanning directory " << dir;
-	MusicDir::ptr md=MusicDir::create_root(dir);
-	md->sync();
-}
 
 
 int
@@ -92,85 +122,74 @@ App::run(int argc, char **argv)
 
 	try {
 		_instance=new App( argc, argv );
+		BOOST_LOGL(app,info) << "Started spinny @ " << _instance;
+		_instance->rescan();
 	}
 
 	catch( App::CmdLineEx & ){
 		return 0;
 	}
 
-	sqlite::startup( _instance->config<string>("db") );
-
-	_ews = new ews::server( _instance->config<string>( "web_listen_address" ),
-				_instance->config<string>( "web_listen_port" ),
-				_instance->config<string>( "web_root" ),
-				_instance->config<string>( "template_root" )
-		);
-
-
- 	_strm = new Streaming::Server(  _instance->config<string>( "streaming_listen_address" ),
- 					_instance->config<unsigned int>( "streaming_listen_port" )
- 		);
-
-	BOOST_LOGL( app, debug ) << "Streaming started successfully, now starting www";
-
-  	_web_thread =  new asio::thread( boost::bind( &ews::server::run, _ews ) );
-
-	BOOST_LOGL( app, debug ) << "WWW started successfully, re-scanning directories";
-
-	vector<string> mds = _instance->config<vector<string> >( "music_dir" );
-
- 	for_each( mds.begin(), mds.end(), boost::bind( init_music_dir, _1 ) );
 
 	return 0;
 }
 
-bool
-App::add_streaming_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::socket> socket ){
+// bool
+// App::add_streaming_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::socket> socket ){
 
-	if ( ! pl->size() ){
-		BOOST_LOGL(app,info)<< "NOT adding streaming client "
-				    << socket->remote_endpoint().address().to_string()
-				    << " as playlist is empty";
-		return false;
-	}
+// 	if ( ! pl->size() ){
+// 		BOOST_LOGL(app,info)<< "NOT adding streaming client "
+// 				    << socket->remote_endpoint().address().to_string()
+// 				    << " as playlist is empty";
+// 		return false;
+// 	}
 
-	BOOST_LOGL(app,info)<< "Adding streaming client "
-			    << socket->remote_endpoint().address().to_string();
+// 	BOOST_LOGL(app,info)<< "Adding streaming client "
+// 			    << socket->remote_endpoint().address().to_string();
 
-	Streaming::Connection *ptr = new Streaming::Connection( socket );
+// 	Streaming::Connection *ptr = new Streaming::Connection( socket );
 
-	boost::shared_ptr<Streaming::Connection> ref( ptr );
+// 	boost::shared_ptr<Streaming::Connection> ref( ptr );
 
-	return _strm->add_client( pl, ref );
+// 	return _strm->add_client( pl, ref );
+// }
+
+
+App::~App(){
+	BOOST_LOGL(app, info ) << "Stopping app";
+	www->stop();
+	_web_thread->join();
+
+	BOOST_LOGL(app, info ) << "Stopping app";
+
+	delete _web_thread;
+
+	BOOST_LOGL(app, info ) << "Stopping app";
+	delete www;
+	BOOST_LOGL(app, info ) << "Stopping app";
+	delete streaming;
+	BOOST_LOGL(app, info ) << "Stopping app";
+
+	BOOST_LOGL(app, warn) << "App stopped";
 }
-
-
 void
 App::stop(){
 	sqlite::stop_db();
+
 	delete _instance;
 	_instance=0;
 
-	_ews->stop();
+//	_ews->stop();
 //	_strm->stop();
 
 
-	_web_thread->join();
 //	_strm_thread->join();
 
-
-	delete _ews;
-	delete _strm;
-
-	_ews=0;
-	_strm=0;
-
-	delete _web_thread;
+//	delete _web_thread;
 //	delete _strm_thread;
-	_web_thread=0;
+//	_web_thread=0;
 //	_strm_thread=0;
 
-	BOOST_LOGL(app, warn) << "App stopped";
 }
 
 } // namespace Spinny

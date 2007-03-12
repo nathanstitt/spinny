@@ -41,6 +41,21 @@ Server::stop( Spinny::PlayList::ptr pl ) {
 	}
 }
 
+void
+Server::song_order_changed( Spinny::PlayList::ptr pl, sqlite::id_t song_id, unsigned int new_position ){
+	BOOST_LOGL( strm, info ) << "PL " << pl->db_id() << " song " << song_id << " moved to " << new_position;
+
+	for (streams_t::iterator stream=streams_.begin(); streams_.end() != stream; ++stream ){
+		BOOST_LOGL( strm, info ) << "PL " << pl->db_id() << " == " << (*stream)->playlist()->db_id();
+		if ( (*stream)->playlist()->db_id() == pl->db_id() ){
+			BOOST_LOGL( strm, debug ) << "PL match";
+			(*stream)->song_order_changed( song_id, new_position );
+			break;
+		}
+	}
+}
+
+
 Stream::ptr
 Server::add_stream( Spinny::PlayList::ptr pl ){
 	Stream::ptr s( new Stream( pl, address_, this->next_port() ) );
@@ -67,22 +82,30 @@ Server::next_port(){
 
 
 bool
-Server::add_client( Spinny::PlayList::ptr pl, Connection::ptr conn ){
+Server::add_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::socket> socket ){
 
 	BOOST_LOGL(strm,info)<< "Adding Streaming client";
 
-	bool found=false;
+	if ( ! pl->size() ){
+		BOOST_LOGL(strm,info)<< "NOT adding streaming client "
+ 				    << socket->remote_endpoint().address().to_string()
+ 				    << " as playlist is empty";
+		return false;
+	}
+
+	boost::shared_ptr<Streaming::Connection> client( new Streaming::Connection( socket ) );
+	Stream::ptr s;
 	for (streams_t::iterator stream=streams_.begin(); streams_.end() != stream; ++stream ){
 		if ( (*stream)->playlist()->db_id() == pl->db_id() ){
-			(*stream)->add_connection( conn );
-			found=true;
+			s = *stream;
+			break;
 		}
 	}
 
-	if ( ! found ){
+	if ( ! s ){
 		BOOST_LOGL(strm,info) << "Failed to find stream for playlist id " << pl->db_id() << " creating one";
-		Stream::ptr stream = this->add_stream( pl );
-		return stream->add_connection( conn );
+		
+		s = this->add_stream( pl );
 	}
-	return true;
+	return s->add_connection( client );
 }

@@ -50,8 +50,8 @@ class Streams {
 		} else {
 			debug( "starting" );
 			sounds[ current ] = new Sound( clips[ current ] );
-			sounds[ current ].setVolume( volume );
 			sounds[ current ].loadSound( _root.stream_url+";stream"+Math.random()+".mp3", true );
+			sounds[ current ].setVolume( volume );
 			interval = setInterval( this, 'deleteSound',1000 );
 		}
 		playing=!playing;
@@ -73,8 +73,8 @@ class Streams {
 		debug( "load " + Number( ! current ) );
 
 		sounds[ ! current ] = new Sound( clips[ ! current ] );
-		sounds[ ! current ].setVolume( volume );
 		sounds[ ! current ].loadSound( stream_url + ";stream"+Math.random()+".mp3", true );
+		sounds[ ! current ].setVolume( volume );
 		sounds[ ! current ].setVolume(0);
 		clearInterval( interval );
 
@@ -86,7 +86,7 @@ class Streams {
 		if ( volume > 100 ){
 			volume = 100;
 		}
-		if ( volume < 0 ){
+		if ( volume <= 0 ){
 			stop();
 		} else {
 			debug( "Vol: " + volume + " : " + new_volume );

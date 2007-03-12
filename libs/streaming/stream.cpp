@@ -94,7 +94,6 @@ Stream::stop( Connection::ptr c ) {
 	connections_.erase(c);
 	BOOST_LOGL( strm, info ) << "Stopped connection " << &(*c) << " " << connections_.size() << " remaining";
 	if ( connections_.empty() ){
-		
 		running_ = false;
 		controller_thread_->join();
 		delete controller_thread_;
@@ -105,6 +104,13 @@ Stream::stop( Connection::ptr c ) {
 unsigned int
 Stream::port(){
 	return port_;
+}
+
+void
+Stream::song_order_changed( sqlite::id_t song_id, unsigned int new_position ){
+	BOOST_LOGL( strm, debug ) << "stream " << this << " song " << song_id << " moved to " << new_position;
+
+	lame_->song_order_changed( song_id, new_position );
 }
 
 Spinny::PlayList::ptr

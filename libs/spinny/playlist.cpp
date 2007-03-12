@@ -11,6 +11,8 @@
 #include <limits>
 #include <list>
 #include <iterator>
+#include "spinny/app.hpp"
+#include "streaming/server.hpp"
 
 namespace Spinny {
 
@@ -225,6 +227,7 @@ PlayList::set_song_order( sqlite::id_t db_id, int order ){
 	*con << "update playlist_songs set present_order="
 	     << order << " where playlist_songs.rowid = " << db_id << " and playlist_id = " << this->db_id();
 	con->exec<sqlite::none>();
+	Spinny::App::instance()->streaming->song_order_changed( shared_from_this(), db_id, order );
 }
 
 

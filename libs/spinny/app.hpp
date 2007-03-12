@@ -1,4 +1,4 @@
-/* @(#)spinny.hpp
+/* @(#)app.hpp
  */
 
 #ifndef _SPINNY_H
@@ -10,8 +10,14 @@
 #include "boost/log/log.hpp"
 #include "boost/asio.hpp"
 #include "spinny/playlist.hpp"
+#include "streaming/server.hpp"
+
 
 BOOST_DECLARE_LOG(app)
+
+namespace ews{
+	class server;
+}
 
 namespace Spinny {
 
@@ -22,6 +28,10 @@ class App {
 	boost::program_options::variables_map _vm;
 	void startup_threads();
 	void stop_threads();
+	~App();
+
+	void
+	rescan();
 public:
 	class CmdLineEx {};
 
@@ -36,10 +46,15 @@ public:
 		return _vm[name].as<T>(); 
 	}
 
-	static
-	bool
-	add_streaming_client( Spinny::PlayList::ptr, boost::shared_ptr<asio::ip::tcp::socket> );
+	Streaming::Server *streaming;
 
+	::ews::server *www;
+
+// 	static
+// 	bool
+// 	add_streaming_client( Spinny::PlayList::ptr, boost::shared_ptr<asio::ip::tcp::socket> );
+
+	
 };
 
 }

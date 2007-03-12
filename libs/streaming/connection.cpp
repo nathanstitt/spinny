@@ -17,6 +17,7 @@ Connection::Connection( asio::io_service& socket, Stream *stream ) :
 }
 
 Connection::Connection( boost::shared_ptr<asio::ip::tcp::socket> &socket ) :
+	missed_count_(0),
 	socket_(socket),
 	stream_( NULL ),
 	send_finished_(true)

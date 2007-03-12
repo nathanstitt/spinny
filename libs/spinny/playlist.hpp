@@ -7,12 +7,15 @@
 #include "sqlite/sqlite.hpp"
 #include "spinny/config.h"
 #include "spinny/song.hpp"
+#include "boost/enable_shared_from_this.hpp"
 
 #include <vector>
 
 namespace Spinny {
 
-class PlayList : public sqlite::table {
+class PlayList : public sqlite::table,
+		 public boost::enable_shared_from_this<PlayList>
+{
 public:
 	typedef boost::shared_ptr<PlayList> ptr;
 	typedef ::sqlite::result_set<PlayList> result_set;

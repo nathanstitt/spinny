@@ -34,6 +34,8 @@ namespace Streaming {
 
 		void run();
 
+		void song_order_changed( sqlite::id_t song_id, unsigned int new_position );
+
 		/// Handle completion of an asynchronous accept operation.
 		void handle_accept(const asio::error& e);
 	private:

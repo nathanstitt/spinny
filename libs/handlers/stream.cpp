@@ -46,8 +46,8 @@ Stream::handle( const ews::request& req, ews::reply& rep ) const {
  	BOOST_LOGL( www, info ) << "About to attempt socket detach";
 
  	Spinny::PlayList::ptr pl = Spinny::PlayList::load( boost::lexical_cast<sqlite::id_t>( req.u2 ) );
-
-	if ( Spinny::App::add_streaming_client( pl, req.conn->socket() ) ){
+ 
+	if ( Spinny::App::instance()->streaming->add_client( pl, req.conn->socket() ) ){
 		req.conn->detach_socket();
 	} else {
 		rep.set_to ( ews::reply::internal_server_error );

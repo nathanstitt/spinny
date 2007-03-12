@@ -8,7 +8,6 @@
 #include "ews/connection.hpp"
 #include "ews/exceptions.hpp"
 #include "ews/connection_manager.hpp"
-#include "ews/mime_types.hpp"
 #include "ews/request_handler.hpp"
 #include <boost/log/log.hpp>
 

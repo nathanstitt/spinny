@@ -22,9 +22,11 @@ namespace Streaming {
 		/// Stop a stream with the playlist
 		void stop(Spinny::PlayList::ptr);
 
-		bool add_client( Spinny::PlayList::ptr pl, Connection::ptr conn );
+		bool add_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::socket> );
 
 		Stream::ptr add_stream( Spinny::PlayList::ptr pl );
+
+		void song_order_changed( Spinny::PlayList::ptr pl, sqlite::id_t song_id, unsigned int new_position );
 
 		~Server();
 	private:
