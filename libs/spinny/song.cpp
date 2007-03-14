@@ -144,6 +144,8 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 
 	song->_track=tag->track();
 
+	song->_year=tag->year();
+
 	TagLib::AudioProperties *props = tag_file.audioProperties();
 
 	if ( props ){

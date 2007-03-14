@@ -21,7 +21,7 @@ namespace Streaming {
 
 		Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned int port );
 
-		bool add_connection( Connection::ptr conn );
+		bool add_connection( Connection::ptr conn, bool icy_taint );
 
 		/// Stop the specified connection.
 		void stop( Connection::ptr c);
@@ -35,6 +35,8 @@ namespace Streaming {
 		void run();
 
 		void song_order_changed( sqlite::id_t song_id, unsigned int new_position );
+
+		bool select_song( Spinny::Song::ptr song );
 
 		/// Handle completion of an asynchronous accept operation.
 		void handle_accept(const asio::error& e);

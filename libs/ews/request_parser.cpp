@@ -51,8 +51,8 @@ namespace ews {
 		switch (state_)
 		{
 		case method_start:
-//			std::cout << "Parsing: " << __LINE__ << std::endl;
 			if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
+				BOOST_LOGL( www, err ) << "malformed request, invalid starting char";
 				return false;
 			} else {
 				state_ = method;
@@ -65,14 +65,15 @@ namespace ews {
 				state_ = uri;
 				return boost::indeterminate;
 			} else if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
+				BOOST_LOGL( www, err ) << "malformed request, invalid method char";
 				return false;
 			} else {
 				req.method.push_back(input);
 				return boost::indeterminate;
 			}
 		case uri_start:
-//			std::cout << "Parsing: " << __LINE__ << std::endl;
 			if (is_ctl(input)) {
+				BOOST_LOGL( www, err ) << "malformed request, invalid uri char";
 				return false;
 			} else {
 				state_ = uri;
@@ -84,6 +85,7 @@ namespace ews {
 				state_ = http_version_h;
 				return boost::indeterminate;
 			} else if (is_ctl(input)) {
+				BOOST_LOGL( www, err ) << "malformed request, invalid uri char";
 				return false;
 			} else {
 				req.uri.push_back(input);
@@ -94,6 +96,7 @@ namespace ews {
 				state_ = http_version_t_1;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, invalid (H)TTP char";
 				return false;
 			}
 		case http_version_t_1:
@@ -101,6 +104,7 @@ namespace ews {
 				state_ = http_version_t_2;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, invalid H(T)TP char";
 				return false;
 			}
 		case http_version_t_2:
@@ -108,6 +112,7 @@ namespace ews {
 				state_ = http_version_p;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, invalid HT(T)P char";
 				return false;
 			}
 		case http_version_p:
@@ -115,6 +120,7 @@ namespace ews {
 				state_ = http_version_slash;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, invalid HTT(P) char";
 				return false;
 			}
 		case http_version_slash:
@@ -124,6 +130,7 @@ namespace ews {
 				state_ = http_version_major_start;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, invalid HTTP slash char";
 				return false;
 			}
 		case http_version_major_start:
@@ -132,6 +139,7 @@ namespace ews {
 				state_ = http_version_major;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP version not digit";
 				return false;
 			}
 		case http_version_major:
@@ -142,6 +150,7 @@ namespace ews {
 				req.http_version_major = req.http_version_major * 10 + input - '0';
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP version not digit then dot";
 				return false;
 			}
 		case http_version_minor_start:
@@ -150,6 +159,7 @@ namespace ews {
 				state_ = http_version_minor;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP version not digit dot digit";
 				return false;
 			}
 		case http_version_minor:
@@ -160,6 +170,7 @@ namespace ews {
 				req.http_version_minor = req.http_version_minor * 10 + input - '0';
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP version did not end as expected";
 				return false;
 			}
 		case expecting_newline_1:
@@ -170,6 +181,7 @@ namespace ews {
 				state_ = header_line_start;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP version did not end as expected";
 				return false;
 			}
 		case header_line_start:
@@ -180,14 +192,15 @@ namespace ews {
 				state_ = header_lws;
 				return boost::indeterminate;
 			} else if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP header " << req.current_header_name << " is invalid";
 				return false;
 			} else {
 				if ( ! req.current_header_name.empty() ){
 					req.headers[ boost::to_upper_copy( decode_str( req.current_header_name ) ) ] 
 						= decode_str( req.current_header_value );
 					BOOST_LOGL( www, debug ) << "Finished Header: "
-								   << req.current_header_name << " => " 
-								   << req.current_header_value;
+								 << boost::to_upper_copy(req.current_header_name) << " => " 
+								 << req.current_header_value;
 					req.clear_current_header();
 				}
  				req.current_header_name.push_back(input);
@@ -201,6 +214,8 @@ namespace ews {
 			} else if (input == ' ' || input == '\t') {
 				return boost::indeterminate;
 			} else if (is_ctl(input)) {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP header " << req.current_header_name
+						       << " value " << req.current_header_value << " is invalid";
 				return false;
 			} else {
 				state_ = header_value;
@@ -212,23 +227,29 @@ namespace ews {
 				state_ = space_before_header_value;
 				return boost::indeterminate;
 			}else if (!is_char(input) || is_ctl(input) || is_tspecial(input)) {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP header " << req.current_header_name
+						       << " did not have : after name";
 				return false;
 			} else {
 				req.current_header_name.push_back(input);
 				return boost::indeterminate;
 			}
 		case space_before_header_value:
+			state_ = header_value;
 			if (input == ' ') {
-				state_ = header_value;
 				return boost::indeterminate;
-			} else {
-				return false;
+			} else { // here we give the benifet of the doubt, as
+				 // often time streaming clients don't bother with a space
+				req.current_header_value.push_back(input);
+				return boost::indeterminate;
 			}
 		case header_value:
 			if (input == '\r') {
 				state_ = expecting_newline_2;
 				return boost::indeterminate;
 			} else if (is_ctl(input)) {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP header " << req.current_header_name
+						       << " value " << req.current_header_value << " didn't end in \\r";
 				return false;
 			} else {
 				req.current_header_value.push_back(input);
@@ -239,6 +260,8 @@ namespace ews {
 				state_ = header_line_start;
 				return boost::indeterminate;
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP header " << req.current_header_name
+						       << " value " << req.current_header_value << " didn't end in \\n";
 				return false;
 			}
 		case expecting_newline_3: // finished headers
@@ -265,6 +288,7 @@ namespace ews {
 					return true;
 				}
 			} else {
+				BOOST_LOGL( www, err ) << "malformed request, HTTP headers did not end in \\r\\n\\r\\n";
 				return false;
 			}
 		case reading_body:
@@ -275,6 +299,7 @@ namespace ews {
 				return boost::indeterminate;
 			}
 		default:
+			BOOST_LOGL( www, err ) << "malformed request, unknown parsing error";
 			return false;
 		}
 	}
@@ -308,8 +333,6 @@ namespace ews {
 	{
 		return c >= '0' && c <= '9';
 	}
-
-
 
 
 	

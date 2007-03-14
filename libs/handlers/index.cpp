@@ -1,3 +1,4 @@
+
 #include "ews/server.hpp"
 #include "handlers/index.hpp"
 #include "spinny/music_dir.hpp"
@@ -11,7 +12,6 @@
 
 
 using namespace handlers;
-
 
 
 static

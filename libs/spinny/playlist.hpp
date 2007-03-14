@@ -91,6 +91,10 @@ public:
 	size() const;
 
 	Song::ptr
+	load_song( sqlite::id_t db_id );
+
+
+	Song::ptr
 	at( unsigned int pos );
 
 	void

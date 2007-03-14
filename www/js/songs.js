@@ -5,8 +5,10 @@ Songs = function() {
     var lastHighlighted;
 
     onSongDblClick = function(grid, rowIndex, colIndex){
+        params='pl_id='+Playlists.selected()+'&song_id='+dm.getRowId( rowIndex );
+	var url;
 	if ( 0 == colIndex ){
-	    params='pl_id='+Playlists.selected()+'&song_id='+dm.getRowId( rowIndex );
+	    url = '/pl/songs/rm';
 	    var cb = {
 		success: function(o){ YAHOO.log( "Song rm req success" ); 
 		    Songs.refreshListing();	      
@@ -14,8 +16,15 @@ Songs = function() {
 		failure: function(o){ YAHOO.log("Song rm req failed"); }
 	    }
 	    YAHOO.log( "Removing Song: " + dm.getRowId( rowIndex )  );
-	    YAHOO.util.Connect.asyncRequest( 'POST', '/pl/songs/rm', cb, params );
+	} else {
+	    url = '/pl/songs/select';
+	    var cb = {
+		success: function(o){ YAHOO.log( "Song change req success" ); 
+		},
+		failure: function(o){ YAHOO.log("Song change req failed"); }
+	    }
 	}
+	YAHOO.util.Connect.asyncRequest( 'POST', url, cb, params );
     }
 
     // return a public interface

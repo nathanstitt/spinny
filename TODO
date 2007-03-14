@@ -1,10 +1,12 @@
 
+Streaming from shoutcast client, w/ICY tags
 
-Stream Music
+Finish Flash applet
+       Use XMLSocket to transport JS from server to browser
+       Redo graphics in vector with animation while playing
 
 Server side sorting on grid, when sorted by column, sort order should be saved
 
-Chat interface
-
 Installation work
-x
+
+

@@ -154,8 +154,8 @@ TEST( Sync ){
 	CHECK_EQUAL( 1, da.con->exec<int>( "select count(*) from music_dirs") );
 	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from songs") );
 	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from artists") );
-	CHECK_EQUAL( 4, da.con->exec<int>( "select count(*) from albums") );
-	CHECK_EQUAL( 4, da.con->exec<int>( "select count(*) from albums_artists") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from albums") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from albums_artists") );
 
 
 	boost::filesystem::create_directory( da.music_path / "foo" );
@@ -168,10 +168,10 @@ TEST( Sync ){
 
 
 	CHECK_EQUAL( 2, da.con->exec<int>( "select count(*) from music_dirs") );
-	CHECK_EQUAL( 9, da.con->exec<int>( "select count(*) from songs") );
-	CHECK_EQUAL( 4, da.con->exec<int>( "select count(*) from artists") );
-	CHECK_EQUAL( 4, da.con->exec<int>( "select count(*) from albums") );
-	CHECK_EQUAL( 4, da.con->exec<int>( "select count(*) from albums_artists") );
+	CHECK_EQUAL( 6, da.con->exec<int>( "select count(*) from songs") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from artists") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from albums") );
+	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from albums_artists") );
 
 
   	boost::filesystem::remove_all( da.music_path / "foo" ); 
@@ -180,7 +180,7 @@ TEST( Sync ){
  	md->sync();
 
  	CHECK_EQUAL( 1, da.con->exec<int>( "select count(*) from music_dirs") );
- 	CHECK_EQUAL( 8, da.con->exec<int>( "select count(*) from songs") );
+ 	CHECK_EQUAL( 5, da.con->exec<int>( "select count(*) from songs") );
 }
 
 struct name_eq{

@@ -20,7 +20,7 @@ TEST( FromSong ){
 	Spinny::Song::ptr song = Spinny::Song::create_from_file( *md, "Sonny_Stitt.mp3" );
 	Spinny::Album::ptr alb = song->album();
 
-	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
+	CHECK_EQUAL( "The Bebop Recordings", alb->name() );
 }
 
 
@@ -32,7 +32,7 @@ TEST( Songs ){
 	Spinny::Song::ptr song = Spinny::Song::create_from_file( *md, "Sonny_Stitt.mp3" );
 	Spinny::Album::ptr alb = song->album();
 
-	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
+	CHECK_EQUAL( "The Bebop Recordings", alb->name() );
 	Song::result_set songs = alb->songs();
 	CHECK( songs.begin() != songs.end() );
 
@@ -53,7 +53,7 @@ TEST( All ){
 
 	Album::ptr alb=albums.begin().shared_ptr();
 
-	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
+	CHECK_EQUAL( "The Bebop Recordings", alb->name() );
 
 }
 
@@ -70,7 +70,7 @@ TEST( NameStartsWith ){
 
 	Album::ptr alb=albums.begin().shared_ptr();
 
-	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
+	CHECK_EQUAL( "The Bebop Recordings", alb->name() );
 
 }
 
@@ -95,7 +95,7 @@ TEST( Artists ){
   	CHECK( rs.begin() != rs.end() );
 
  	Album::ptr alb = song->album();
-  	CHECK_EQUAL( "The Bebop Recordings, 1949-1952", alb->name() );
+  	CHECK_EQUAL( "The Bebop Recordings", alb->name() );
 
   	rs = alb->artists();
 

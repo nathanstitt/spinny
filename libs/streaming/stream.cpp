@@ -39,12 +39,29 @@ Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned i
 
 }
 
+/*
+icy-name:Unnamed Server\r\n
+icy-genre:Unknown Genre\r\n
+icy-pub:1\r\n
+icy-br:56\r\n
+icy-url:http://www.shoutcast.com\r\n
+icy-irc:%23shoutcast\r\n
+icy-icq:0\r\n
+icy-aim:N%2FA\r\n
+content-type: mime/type\r\n
+icy-reset: 1\r\n
+icy-prebuffer: ??\r\n 
+icy-metaint:8192\r\n
+\r\n 
+*/
 
 bool
-Stream::add_connection( Connection::ptr c  ) {
+Stream::add_connection( Connection::ptr c, bool icy_taint  ) {
 	BOOST_LOGL( strm, info ) << "Stream " << this
-				 << " adding connection "
+				 << " adding " << (icy_taint ? "" : "un" ) << "tainted connection "
 				 << c->socket()->remote_endpoint().address().to_string();
+
+	c->write( 
 	connections_.insert(c);
 	c->set_stream( this );
 	c->write_history( lame_->history() );
@@ -109,9 +126,15 @@ Stream::port(){
 void
 Stream::song_order_changed( sqlite::id_t song_id, unsigned int new_position ){
 	BOOST_LOGL( strm, debug ) << "stream " << this << " song " << song_id << " moved to " << new_position;
-
 	lame_->song_order_changed( song_id, new_position );
 }
+
+bool
+Stream::select_song( Spinny::Song::ptr song ){
+	BOOST_LOGL( strm, debug ) << "stream " << this << " streaming " << song->db_id();
+	return lame_->select_song( song );
+}
+
 
 Spinny::PlayList::ptr
 Stream::playlist(){
@@ -147,7 +170,7 @@ Stream::~Stream(){
 void
 Stream::handle_accept(const asio::error& e) {
 	if (!e) {
-		this->add_connection( new_connection_ );
+		this->add_connection( new_connection_, false );
 
 		new_connection_.reset( new Connection( io_service_, this ) );
 

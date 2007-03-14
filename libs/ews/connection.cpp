@@ -78,6 +78,7 @@ namespace ews {
 									       asio::placeholders::bytes_transferred ) );
 					}
 			} else if ( ! result ) {
+				BOOST_LOGL( www,err ) << "Failed to parse request";
 				reply_.set_to( reply::bad_request );
 				asio::async_write( *socket_, reply_.to_buffers(),
 						  boost::bind(&connection::handle_write, shared_from_this(),

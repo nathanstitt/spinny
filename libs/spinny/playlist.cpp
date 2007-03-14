@@ -195,6 +195,18 @@ PlayList::at( unsigned int pos ){
 	return con->load_one<Song>();
 }
 
+Song::ptr
+PlayList::load_song( sqlite::id_t song_id ){
+	sqlite::connection *con = sqlite::db();
+	*con << "select ";
+	Song::table_description()->insert_fields( *con );
+	*con << ", playlist_songs.rowid from songs, playlist_songs where songs.rowid"
+	     << "= playlist_songs.song_id and playlist_songs.rowid = "
+	     << song_id << " and playlist_songs.playlist_id = "
+	     << this->db_id();
+	return con->load_one<Song>();
+}
+
 int
 PlayList::set_bitrate( int bitrate ){
 	return bitrate_=bitrate;

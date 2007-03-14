@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-
 #if defined(_WIN32)
 # include <windows.h>
 #endif
@@ -256,10 +255,11 @@ Lame::fill_buffer( Buffer *buffer ){
 	int encoded=0;
 	buffer->data_length=0;
 	do {
-		if ( SongChanged != action_ ){
-			iread = get_audio( read_buffer );
-		} else {
+		if ( SongChanged == action_ ){
+			BOOST_LOGL( strm, debug ) << "Song has changed to " << current_song_id_;
 			iread = 0;
+		} else {
+			iread = get_audio( read_buffer );
 		}
 		if ( iread ){
 			/* encode */
@@ -291,8 +291,8 @@ Lame::fill_buffer( Buffer *buffer ){
 
 
 Lame::Lame(Spinny::PlayList::ptr p) :
-	pl(p),
-	current_pos_( pl->size() ),
+	pl_(p),
+	current_pos_( pl_->size() ),
 	musicin(0),
 	lame_thread(0),
 	action_( FillBuffer ),
@@ -307,7 +307,7 @@ Lame::Lame(Spinny::PlayList::ptr p) :
 
 	for ( int i = 0 ; i <= NUM_BUFFERS; ++i ){
 
-		boost::mutex::scoped_lock lock(buffer_mutex);
+		boost::recursive_mutex::scoped_lock lock(buffer_mutex);
 
 		while ( AwaitingRead != action_ ){
 			buffer_condition.wait(lock);
@@ -323,10 +323,8 @@ Lame::Lame(Spinny::PlayList::ptr p) :
 
 Lame::~Lame(){
 	{
-		boost::mutex::scoped_lock lock(buffer_mutex);
-
+		boost::recursive_mutex::scoped_lock lock(buffer_mutex);
 		action_=Quitting;
-
 		buffer_condition.notify_one();
 	}
 
@@ -381,8 +379,8 @@ Lame::transcode(){
 		throw std::runtime_error( "Unsupported number of channels" );
 	}
 
-	if ( -1 == lame_set_brate(lgf, pl->bitrate() ) ){
-		BOOST_LOGL( strm, err ) << "Unsupported bitrate: " << pl->bitrate();
+	if ( -1 == lame_set_brate(lgf, pl_->bitrate() ) ){
+		BOOST_LOGL( strm, err ) << "Unsupported bitrate: " << pl_->bitrate();
 		throw std::runtime_error( "Unsupported bitrate" );
 	}
 
@@ -403,10 +401,11 @@ Lame::transcode(){
 	buffer_ = buffer_->prev;
 
 	while ( Quitting != action_ ){
-		boost::mutex::scoped_lock lock(buffer_mutex);
+		boost::recursive_mutex::scoped_lock lock(buffer_mutex);
 
 		while ( Quitting != action_ && SongChanged != action_ &&  FillBuffer != action_ ) {
 			buffer_condition.wait(lock);
+
 		}
 
 		try {
@@ -429,16 +428,16 @@ Lame::transcode(){
 
 Chunk
 Lame::get_chunk(){
-	boost::mutex::scoped_lock lock(buffer_mutex);
-	BOOST_LOGL( strm, info ) << "Lame::get_chunk() " << buffer_ << " writable: " << buffer_->prev  << " / " << buffer_->next;
+	boost::recursive_mutex::scoped_lock lock(buffer_mutex);
 	while ( AwaitingRead != action_ ){
 		buffer_condition.wait(lock);
 	}
 	action_= FillBuffer;
 	buffer_ = buffer_->next;
 	buffer_condition.notify_one();
-//	BOOST_LOGL( strm, info ) << "Lame::get_chunck() " << this << " returned " << buffer_->data_length << " chunk from buffer " << buffer_;
-	Chunk c( buffer_, pl->bitrate() );
+	BOOST_LOGL( strm, info ) << "Lame::get_chunk() " << this << " returned " << buffer_->data_length << " chunk from buffer " << buffer_;
+
+	Chunk c( buffer_, pl_->bitrate() );
 	
 
 	return c;
@@ -446,13 +445,17 @@ Lame::get_chunk(){
 
 std::list<asio::const_buffer>
 Lame::history(){
+	Buffer *begin = buffer_->next->next;
 	Buffer *end = buffer_;
-	Buffer *begin = end->next;
 	std::list<asio::const_buffer> ret;
 	while ( begin != end ){
-		ret.push_back( asio::buffer( begin->data, begin->data_length ) );
+		BOOST_LOGL( strm, info ) << "Lame::history() added " << begin;
 		begin = begin->next;
+		ret.push_back( asio::buffer( begin->data, begin->data_length ) );
 	}
+//	BOOST_LOGL( strm, info ) << "Lame::history() added " << buffer_;
+//	ret.push_back( asio::buffer( buffer_->data, buffer_->data_length ) );
+	
 	BOOST_LOGL( strm, info ) << "Lame::history() " << this << " returned " << ret.size() << " chunks";
 	return ret;
 }
@@ -460,7 +463,7 @@ Lame::history(){
 void
 Lame::next_song(){
 	++current_pos_;
-	if ( current_pos_ >= pl->size() ){
+	if ( current_pos_ >= pl_->size() ){
 		current_pos_ = 0;
 	}
 	this->select_song( current_pos_ );
@@ -475,12 +478,53 @@ Lame::song_order_changed( sqlite::id_t song_id, unsigned int new_position ){
 	}
 }
 
+bool
+Lame::select_song( Spinny::Song::ptr song ){
+	BOOST_LOGL( strm, err ) << "Attempting to stream song " << song->title() << " ( " << song->db_id() << " )";
+
+	Spinny::Song::result_set songs = pl_->songs();
+	unsigned int pos = 0;
+	for ( Spinny::Song::result_set::iterator s = songs.begin(); s != songs.end(); ++s ){
+		if ( s->db_id() == song->db_id() ){
+			BOOST_LOGL( strm, debug ) << "Selecting song at position: " << pos;
+			{
+				boost::recursive_mutex::scoped_lock lock(buffer_mutex);
+				this->set_song( song );
+				current_pos_=pos;
+			}
+			for ( int i = 0 ; i <= NUM_BUFFERS; ++i ){
+
+				boost::recursive_mutex::scoped_lock lock(buffer_mutex);
+
+				while ( AwaitingRead != action_ ){
+					buffer_condition.wait(lock);
+				}
+
+				action_= FillBuffer;
+				buffer_condition.notify_one();
+			}
+
+			BOOST_LOGL( strm, debug ) << "Done";
+			return true;
+		}
+		++pos;
+	}
+
+	BOOST_LOGL( strm, err ) << "Tried to stream song " << song->title() << " ( " << song->db_id() 
+				<< " ) on playlist " << pl_->db_id() << ", but it wasn't contained therein";
+	return false;
+}
+
 void
 Lame::select_song( unsigned int index ){
+	Spinny::Song::ptr song = pl_->at( index );
+	current_pos_=index;
+	set_song( song );
+}
 
-	Spinny::Song::ptr song = pl->at( index );
+void
+Lame::set_song( Spinny::Song::ptr song ){
 	current_song_id_ = song->db_id();
-
 	std::string in_path = song->path().string();
 
 	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " " << song->title();

@@ -9,6 +9,7 @@
 #include "boost/asio.hpp"
 #include "boost/array.hpp"
 #include "boost/thread/thread.hpp"
+#include "boost/thread/recursive_mutex.hpp"
 #include "boost/filesystem/fstream.hpp"
 #include "streaming/server.hpp"
 #include <string>
@@ -32,8 +33,11 @@ namespace Streaming {
 		void song_order_changed( sqlite::id_t song_id, unsigned int index );
 
 		~Lame();
-		
+
+		bool select_song( Spinny::Song::ptr song );
+
 	private:
+		void set_song( Spinny::Song::ptr song );
 
 		void select_song( unsigned int index );
 
@@ -59,13 +63,13 @@ namespace Streaming {
 		bool fill_buffer( Buffer *buff );
 		void next_song();
 
-		boost::mutex buffer_mutex;
+		boost::recursive_mutex buffer_mutex;
 		boost::condition buffer_condition;
 
 
 //		Buffer *write_buffer;
 
-		Spinny::PlayList::ptr pl;
+		Spinny::PlayList::ptr pl_;
 		unsigned int current_pos_;
 		sqlite::id_t current_song_id_;
 

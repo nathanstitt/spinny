@@ -12,7 +12,7 @@ SUITE(StreamingLameTestSuit) {
 
 TEST( Decode ){
  	DummyApp da;
-	EnableLogging el("strm");
+//	EnableLogging el("strm");
 
 	da.populate_fixture("music");
 	Spinny::MusicDir::ptr md = Spinny::MusicDir::create_root( da.music_path );
@@ -41,11 +41,11 @@ TEST( Decode ){
 			os.write( asio::buffer_cast<const char*>(c.data), c.size() );
 		}
 	}
-
 	CHECK( boost::filesystem::file_size( da.fixtures_path / "lame-test.mp3" ) );
-	CHECK( seconds > 352400 && seconds < 352500 );
-	CHECK( read > 1057500 && read < 1057600 );
-
+	CHECK( seconds > 352100 && seconds < 352500 );
+	CHECK_EQUAL( 352160, seconds );
+	CHECK( read > 1055500 && read < 1056600 );
+	CHECK_EQUAL( 1056542, read );
 	os.close();
 }
 

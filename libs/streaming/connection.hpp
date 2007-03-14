@@ -7,7 +7,8 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/enable_shared_from_this.hpp"
 #include "boost/filesystem/path.hpp"
-#include "boost/thread/mutex.hpp"
+#include "boost/thread/recursive_mutex.hpp"
+
 
 namespace Streaming {
 	class Chunk;
@@ -40,12 +41,16 @@ namespace Streaming {
 		void write( const Chunk &c );
 
 		void write_history( const std::list<asio::const_buffer> &buffers );
+
+		bool use_icy( bool val );
+
+		bool using_icy();
 	private:
 		void set_socket_options();
 
 		unsigned int missed_count_;
 
-		boost::mutex mutex_;
+		boost::recursive_mutex mutex_;
 
 		/// Handle completion of a write operation.
 		void handle_write(const asio::error& e, std::size_t bytes_transferred );
@@ -57,6 +62,10 @@ namespace Streaming {
 		Stream *stream_;
 
 		bool send_finished_;
+
+		unsigned int icy_count_;
+
+		bool wants_icy_;
 
 	};
 

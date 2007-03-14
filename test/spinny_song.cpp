@@ -40,7 +40,7 @@ TEST( Create ){
 
 	Song::ptr song = Song::create_from_file( *md,"ozzy.mp3" );
 
-	CHECK_EQUAL( "Bark At The Moon", song->title() );
+	CHECK_EQUAL( "Road To Nowhere", song->title() );
 }
 
 TEST( SetFromTag ){
@@ -54,7 +54,7 @@ TEST( SetFromTag ){
 	CHECK_EQUAL( "Blue Mode (Take 1)", song->title() );
 	CHECK_EQUAL( 3, song->track() );
 	CHECK_EQUAL( 313, song->length() );
-	CHECK_EQUAL( 128000, song->bitrate() );
+	CHECK_EQUAL( 128, song->bitrate() );
 	CHECK_EQUAL( 1952, song->year() );
 }
 
