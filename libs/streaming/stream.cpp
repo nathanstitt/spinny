@@ -21,6 +21,7 @@ Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned i
 	new_connection_( new Connection( io_service_, this ) ),
 	controller_thread_(NULL),
 	running_(false)
+
 { 
 	BOOST_LOGL( strm,info ) << "New Stream for " << pl->name() << " on: " << address	<< ":" << port;
 
@@ -39,21 +40,6 @@ Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned i
 
 }
 
-/*
-icy-name:Unnamed Server\r\n
-icy-genre:Unknown Genre\r\n
-icy-pub:1\r\n
-icy-br:56\r\n
-icy-url:http://www.shoutcast.com\r\n
-icy-irc:%23shoutcast\r\n
-icy-icq:0\r\n
-icy-aim:N%2FA\r\n
-content-type: mime/type\r\n
-icy-reset: 1\r\n
-icy-prebuffer: ??\r\n 
-icy-metaint:8192\r\n
-\r\n 
-*/
 
 bool
 Stream::add_connection( Connection::ptr c, bool icy_taint  ) {
@@ -61,10 +47,10 @@ Stream::add_connection( Connection::ptr c, bool icy_taint  ) {
 				 << " adding " << (icy_taint ? "" : "un" ) << "tainted connection "
 				 << c->socket()->remote_endpoint().address().to_string();
 
-	c->write( 
+
 	connections_.insert(c);
 	c->set_stream( this );
-	c->write_history( lame_->history() );
+
 	if ( ! controller_thread_ ) {
 		BOOST_LOGL( strm, info ) << "Starting transcoder thread";
 		running_ = true;
@@ -72,6 +58,11 @@ Stream::add_connection( Connection::ptr c, bool icy_taint  ) {
 	}
 
 	return true;
+}
+
+std::list<asio::const_buffer>
+Stream::history(){
+	return lame_->history();
 }
 
 void
@@ -85,14 +76,15 @@ Stream::parcel(){
 
 //		BOOST_LOGL( strm, debug ) << "Stream got chunk, sleep for " << chunk.milliseconds() << "ms";
 
-		std::for_each(connections_.begin(), connections_.end(),
-			      boost::bind(&Connection::write, _1, chunk ) );
-
 		// Construct a timer without setting an expiry time.
 		asio::deadline_timer timer(io_service_);
 
 		// Set an expiry time relative to now.
 		timer.expires_from_now( boost::posix_time::milliseconds( chunk.milliseconds() ) );
+
+		std::for_each(connections_.begin(), connections_.end(),
+			      boost::bind(&Connection::write, _1, chunk ) );
+
 
 		// Wait for the timer to expire.
 		timer.wait();

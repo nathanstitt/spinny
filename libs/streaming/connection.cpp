@@ -36,19 +36,83 @@ Connection::set_socket_options(){
 // 	socket_->set_option(option);
 }
 
+
+/*
+
+http://forums.radiotoolbox.com/viewtopic.php?t=74
+
+
+icy-name:Unnamed Server\r\n
+icy-genre:Unknown Genre\r\n
+icy-pub:1\r\n
+icy-br:56\r\n
+icy-url:http://www.shoutcast.com\r\n
+icy-irc:%23shoutcast\r\n
+icy-icq:0\r\n
+icy-aim:N%2FA\r\n
+content-type: mime/type\r\n
+icy-reset: 1\r\n
+icy-prebuffer: ??\r\n 
+icy-metaint:8192\r\n
+\r\n 
+*/
+
+
+std::string&
+Connection::icy_tags(){
+	icy_tags_ = "ICY 200 OK\r\nContent-Type: audio/mpeg\r\nicy-name: ";
+	icy_tags_ += stream_->playlist()->name() + "\r\n";
+	if ( this->using_icy() ){
+		icy_tags_ += "icy-metaint:8192\r\n";
+	}
+	
+	return icy_tags_;
+}
+
 void
 Connection::write( const Chunk &c ){
 	boost::recursive_mutex::scoped_lock lk(mutex_);
 
-// 	BOOST_LOGL(strm,debug) << "Write requested on " << this 
-// 			       << ( send_finished_ ? " sending" : " skipping due to lag" ) << " missed " << missed_count_;
+ 	BOOST_LOGL(strm,debug) << "Write requested on " << this 
+ 			       << ( send_finished_ ? " sending" : " skipping due to lag" ) << " missed " << missed_count_;
 
+	//asio::const_buffer_container_1 buffer;
 	if ( send_finished_ ){
+
 		missed_count_ = 0;
-		asio::async_write( *socket_, asio::buffer(c.data),
-				   boost::bind( &Connection::handle_write, shared_from_this(),
-						asio::placeholders::error,
-						asio::placeholders::bytes_transferred ) );
+
+	
+		if ( this->using_icy() && ( icy_count_ + c.size() > 8192 ) ){
+			BOOST_LOGL(strm,debug) << "SENDING ICY TAGS: " << this->icy_tags();
+			std::string &tags = this->icy_tags();
+			tags.size();
+
+			boost::array<asio::const_buffer,3> bufs = { { 
+					asio::buffer( c.data, 8192 - icy_count_ + c.size() ),
+					asio::buffer( tags ),
+					asio::buffer( c.data + ( 8192 - icy_count_ + c.size() ), c.size() )
+				} };
+			asio::async_write( *socket_, bufs,
+					   boost::bind( &Connection::handle_write, shared_from_this(),
+							asio::placeholders::error,
+							asio::placeholders::bytes_transferred ) );
+
+			icy_count_ += c.size() - ( 8192 - icy_count_ + c.size() );
+
+		} else {
+			asio::async_write( *socket_, asio::buffer(c.data ),
+					   boost::bind( &Connection::handle_write, shared_from_this(),
+							asio::placeholders::error,
+							asio::placeholders::bytes_transferred ) );
+
+			if ( this->using_icy() ){
+				icy_count_ += c.size();
+			}
+
+		}
+
+
+
 		send_finished_=false;
 	} else if ( missed_count_ > 10 ){
 		stream_->stop( shared_from_this() );	
@@ -58,15 +122,12 @@ Connection::write( const Chunk &c ){
 }
 
 void
-Connection::write_history( const std::list<asio::const_buffer> &buffers ){
-
-	if ( send_finished_ ){
-		asio::async_write( *socket_, buffers,
-				   boost::bind( &Connection::handle_write, shared_from_this(),
-						asio::placeholders::error,
-						asio::placeholders::bytes_transferred ) );
-		send_finished_=false;
-	}
+Connection::write_buffers( const std::list<asio::const_buffer> &buffers ){
+	asio::async_write( *socket_, buffers,
+			   boost::bind( &Connection::handle_write, shared_from_this(),
+					asio::placeholders::error,
+					asio::placeholders::bytes_transferred ) );
+	send_finished_=false;
 }
 
 bool
@@ -127,6 +188,12 @@ Connection::~Connection(){
 void
 Connection::set_stream( Stream *s ){
 	stream_ = s;
+	asio::async_write( *socket_,      asio::buffer( this->icy_tags() ),
+			   boost::bind( &Connection::handle_write, shared_from_this(),
+					asio::placeholders::error,
+					asio::placeholders::bytes_transferred ) );
+	icy_count_=0;
+	this->write_buffers( stream_->history() );
 }
 
 

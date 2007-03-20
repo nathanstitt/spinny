@@ -40,12 +40,14 @@ namespace Streaming {
 
 		void write( const Chunk &c );
 
-		void write_history( const std::list<asio::const_buffer> &buffers );
-
 		bool use_icy( bool val );
 
 		bool using_icy();
 	private:
+		std::string& icy_tags();
+
+		void write_buffers( const std::list<asio::const_buffer> &buffers );
+
 		void set_socket_options();
 
 		unsigned int missed_count_;
@@ -67,6 +69,7 @@ namespace Streaming {
 
 		bool wants_icy_;
 
+		std::string icy_tags_;
 	};
 
 

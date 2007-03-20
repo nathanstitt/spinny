@@ -89,15 +89,13 @@ namespace Streaming {
 		MessageType action_;
 
 		Buffer *buffer_;
-
 	};
 
 	struct Chunk {
 		friend class Lame;
-		Chunk( Lame::Buffer *b,
-		       unsigned short int br );
-		unsigned int milliseconds();
-		std::size_t size();
+		Chunk( Lame::Buffer *b,unsigned short int br );
+		unsigned int milliseconds() const;
+		std::size_t size() const;
 		asio::const_buffer data;
 		unsigned short int bitrate;
 	};

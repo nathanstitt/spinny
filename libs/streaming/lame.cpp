@@ -630,11 +630,11 @@ Chunk::Chunk( Lame::Buffer *b,
 { }
 
 unsigned int
-Chunk::milliseconds(){
+Chunk::milliseconds() const {
 	return ( this->size() * 1000 ) / bitrate / 125;
 }
 
 std::size_t
-Chunk::size(){
+Chunk::size() const {
 	return asio::buffer_size( data );
 }

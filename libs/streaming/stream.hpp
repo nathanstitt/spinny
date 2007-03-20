@@ -38,6 +38,8 @@ namespace Streaming {
 
 		bool select_song( Spinny::Song::ptr song );
 
+		std::list<asio::const_buffer> history();
+
 		/// Handle completion of an asynchronous accept operation.
 		void handle_accept(const asio::error& e);
 	private:
