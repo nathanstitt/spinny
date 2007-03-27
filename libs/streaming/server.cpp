@@ -94,7 +94,7 @@ Server::next_port(){
 bool
 Server::add_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::socket> socket, bool icy_taint ){
 
-	BOOST_LOGL(strm,info)<< "Adding Streaming client";
+	BOOST_LOGL(strm,info)<< "Adding Streaming client, icy tags: " << icy_taint;
 
 	if ( ! pl->size() ){
 		BOOST_LOGL(strm,info)<< "NOT adding streaming client "
@@ -104,6 +104,8 @@ Server::add_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::s
 	}
 
 	boost::shared_ptr<Streaming::Connection> client( new Streaming::Connection( socket ) );
+	client->use_icy( icy_taint );
+
 	Stream::ptr s;
 	for (streams_t::iterator stream=streams_.begin(); streams_.end() != stream; ++stream ){
 		if ( (*stream)->playlist()->db_id() == pl->db_id() ){
@@ -117,5 +119,5 @@ Server::add_client( Spinny::PlayList::ptr pl, boost::shared_ptr<asio::ip::tcp::s
 		
 		s = this->add_stream( pl );
 	}
-	return s->add_connection( client, icy_taint );
+	return s->add_connection( client );
 }

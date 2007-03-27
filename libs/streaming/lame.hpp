@@ -36,6 +36,7 @@ namespace Streaming {
 
 		bool select_song( Spinny::Song::ptr song );
 
+		Spinny::Song::ptr current_song();
 	private:
 		void set_song( Spinny::Song::ptr song );
 

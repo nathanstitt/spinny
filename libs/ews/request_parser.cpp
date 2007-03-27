@@ -198,9 +198,6 @@ namespace ews {
 				if ( ! req.current_header_name.empty() ){
 					req.headers[ boost::to_upper_copy( decode_str( req.current_header_name ) ) ] 
 						= decode_str( req.current_header_value );
-					BOOST_LOGL( www, debug ) << "Finished Header: "
-								 << boost::to_upper_copy(req.current_header_name) << " => " 
-								 << req.current_header_value;
 					req.clear_current_header();
 				}
  				req.current_header_name.push_back(input);
@@ -416,6 +413,14 @@ namespace ews {
 					BOOST_LOGL( www, debug ) << "        " << *vrb;
 				}
 			}
+			for ( request::headers_t::const_iterator header=req.headers.begin();
+			      req.headers.end() != header;
+			      ++header ) {
+
+				BOOST_LOGL( www, err ) << "HTTP header " << header->first
+						       << " = " << header->second;
+			}
+
 		}
 
 		return rv;

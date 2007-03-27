@@ -2,6 +2,7 @@
 #include "streaming/connection.hpp"
 #include "streaming/server.hpp"
 #include "streaming/lame.hpp"
+#include "spinny/app.hpp"
 
 using namespace Streaming;
 
@@ -61,11 +62,14 @@ icy-metaint:8192\r\n
 std::string&
 Connection::icy_tags(){
 	icy_tags_ = "ICY 200 OK\r\nContent-Type: audio/mpeg\r\nicy-name: ";
-	icy_tags_ += stream_->playlist()->name() + "\r\n";
+	icy_tags_ += stream_->current_song()->title() + "\r\nicy-url: http://";
+	icy_tags_ += Spinny::App::instance()->config<std::string>("web_listen_address") + "\r\n";
+
 	if ( this->using_icy() ){
 		icy_tags_ += "icy-metaint:8192\r\n";
 	}
-	
+	icy_tags_ += "\r\n";
+
 	return icy_tags_;
 }
 
@@ -74,18 +78,18 @@ Connection::write( const Chunk &c ){
 	boost::recursive_mutex::scoped_lock lk(mutex_);
 
  	BOOST_LOGL(strm,debug) << "Write requested on " << this 
- 			       << ( send_finished_ ? " sending" : " skipping due to lag" ) << " missed " << missed_count_;
+ 			       << ( send_finished_ ? " sending" : " skipping due to lag" ) << " missed " << missed_count_
+			       << " : ICY " << this->using_icy() << " / " << icy_count_;
 
 	//asio::const_buffer_container_1 buffer;
 	if ( send_finished_ ){
 
 		missed_count_ = 0;
-
 	
 		if ( this->using_icy() && ( icy_count_ + c.size() > 8192 ) ){
 			BOOST_LOGL(strm,debug) << "SENDING ICY TAGS: " << this->icy_tags();
 			std::string &tags = this->icy_tags();
-			tags.size();
+			//std::size_t size = tags.size();
 
 			boost::array<asio::const_buffer,3> bufs = { { 
 					asio::buffer( c.data, 8192 - icy_count_ + c.size() ),
@@ -97,7 +101,7 @@ Connection::write( const Chunk &c ){
 							asio::placeholders::error,
 							asio::placeholders::bytes_transferred ) );
 
-			icy_count_ += c.size() - ( 8192 - icy_count_ + c.size() );
+			icy_count_ = c.size() - ( 8192 - icy_count_ + c.size() );
 
 		} else {
 			asio::async_write( *socket_, asio::buffer(c.data ),
@@ -108,10 +112,7 @@ Connection::write( const Chunk &c ){
 			if ( this->using_icy() ){
 				icy_count_ += c.size();
 			}
-
 		}
-
-
 
 		send_finished_=false;
 	} else if ( missed_count_ > 10 ){

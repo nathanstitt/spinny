@@ -478,6 +478,11 @@ Lame::song_order_changed( sqlite::id_t song_id, unsigned int new_position ){
 	}
 }
 
+Spinny::Song::ptr
+Lame::current_song(){
+	return pl_->at( current_pos_ );
+}
+
 bool
 Lame::select_song( Spinny::Song::ptr song ){
 	BOOST_LOGL( strm, err ) << "Attempting to stream song " << song->title() << " ( " << song->db_id() << " )";

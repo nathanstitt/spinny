@@ -3,6 +3,7 @@
 
 
 #include "spinny/playlist.hpp"
+#include "spinny/song.hpp"
 #include "boost/asio.hpp"
 #include <boost/log/log.hpp>
 
@@ -21,7 +22,7 @@ namespace Streaming {
 
 		Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned int port );
 
-		bool add_connection( Connection::ptr conn, bool icy_taint );
+		bool add_connection( Connection::ptr conn );
 
 		/// Stop the specified connection.
 		void stop( Connection::ptr c);
@@ -29,6 +30,8 @@ namespace Streaming {
 		unsigned int port();
 
 		Spinny::PlayList::ptr playlist();
+
+		Spinny::Song::ptr current_song();
 
 		~Stream();
 

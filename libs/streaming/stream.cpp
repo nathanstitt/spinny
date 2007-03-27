@@ -42,9 +42,9 @@ Stream::Stream( Spinny::PlayList::ptr pl, const std::string& address, unsigned i
 
 
 bool
-Stream::add_connection( Connection::ptr c, bool icy_taint  ) {
+Stream::add_connection( Connection::ptr c ) {
 	BOOST_LOGL( strm, info ) << "Stream " << this
-				 << " adding " << (icy_taint ? "" : "un" ) << "tainted connection "
+				 << " adding " << ( c->using_icy() ? "" : "un" ) << "tainted connection "
 				 << c->socket()->remote_endpoint().address().to_string();
 
 
@@ -133,6 +133,11 @@ Stream::playlist(){
 	return pl_;
 }
 
+Spinny::Song::ptr
+Stream::current_song(){
+	return lame_->current_song();
+}
+
 Stream::~Stream(){
 
 	BOOST_LOGL( strm, info ) << "Shutting down stream on port " << port();
@@ -162,7 +167,7 @@ Stream::~Stream(){
 void
 Stream::handle_accept(const asio::error& e) {
 	if (!e) {
-		this->add_connection( new_connection_, false );
+		this->add_connection( new_connection_ );
 
 		new_connection_.reset( new Connection( io_service_, this ) );
 
