@@ -138,8 +138,9 @@ Stream::current_song(){
 	return lame_->current_song();
 }
 
-Stream::~Stream(){
 
+void
+Stream::handle_stop(){
 	BOOST_LOGL( strm, info ) << "Shutting down stream on port " << port();
 
 	if ( running_ ){
@@ -156,11 +157,20 @@ Stream::~Stream(){
 
 	BOOST_LOGL( strm, info ) << "Stopped listening";
 
-	connections_.clear();
+	try{
+		connections_.clear();
+	}
+	catch( asio::system_exception& e ){
+		BOOST_LOGL( strm,info )<< "~Connection raised " << e.what();
+	}
 
 	BOOST_LOGL( strm, info ) << "Sockets closed";
 
 	delete lame_;
+}
+
+Stream::~Stream(){
+	io_service_.post(boost::bind(&Stream::handle_stop, this));
 }
 
 

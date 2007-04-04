@@ -29,7 +29,9 @@ Server::Server(const std::string& address, unsigned int starting_port ) :
 Server::~Server() {
 	BOOST_LOGL( strm, info ) << "Stopping Streaming Server";
 	streams_.clear();
+
 }
+
 
 void
 Server::stop( Spinny::PlayList::ptr pl ) {

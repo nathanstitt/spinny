@@ -13,6 +13,7 @@
 #include "sqlite/sqlite.hpp"
 #include "spinny/app.hpp"
 #include "boost/log/functions.hpp"
+#include "handlers/shared.hpp"
 
 // evil I know... just couldn't help myself
 using namespace std;
@@ -42,6 +43,8 @@ public:
 		web_path( fixtures_path / "webroot"),
 		template_path( fixtures_path / "cs" )
 		{
+			handlers::link_up();
+
 			boost::filesystem::remove( db_path );
 			boost::filesystem::create_directory( fixtures_path );
 			boost::filesystem::create_directory( web_path );

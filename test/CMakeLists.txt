@@ -18,7 +18,7 @@ CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx ${TESTS_SRC} )
 
 ADD_EXECUTABLE(${KIT}CxxTests ${Tests})
 
-TARGET_LINK_LIBRARIES(${KIT}CxxTests  libspinny taglib zlib sqlite unit_test ews cs json streaming lame boost )
+TARGET_LINK_LIBRARIES(${KIT}CxxTests handlers libspinny taglib zlib sqlite unit_test ews cs json streaming lame boost )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( ${KIT}CxxTests pthread )

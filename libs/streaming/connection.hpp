@@ -45,6 +45,7 @@ namespace Streaming {
 		bool using_icy();
 	private:
 		std::string& icy_tags();
+		std::string& icy_headers();
 
 		void write_buffers( const std::list<asio::const_buffer> &buffers );
 

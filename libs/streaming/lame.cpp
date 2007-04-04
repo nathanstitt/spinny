@@ -392,8 +392,6 @@ Lame::transcode(){
 
 	lame_init_params(lgf);
 
-	BOOST_LOGL( strm, debug ) << __PRETTY_FUNCTION__ << " init portion finished-" << action_;
-
 	this->select_song( 0 );
 	Buffer *write_buffer = buffer_;
 
@@ -438,7 +436,6 @@ Lame::get_chunk(){
 	BOOST_LOGL( strm, info ) << "Lame::get_chunk() " << this << " returned " << buffer_->data_length << " chunk from buffer " << buffer_;
 
 	Chunk c( buffer_, pl_->bitrate() );
-	
 
 	return c;
 }

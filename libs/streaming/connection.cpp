@@ -3,8 +3,11 @@
 #include "streaming/server.hpp"
 #include "streaming/lame.hpp"
 #include "spinny/app.hpp"
+#include "spinny/artist.hpp"
 
 using namespace Streaming;
+
+#define ICY_LENGTH 32768
 
 Connection::Connection( asio::io_service& socket, Stream *stream ) :
 	missed_count_(0),
@@ -58,15 +61,36 @@ icy-metaint:8192\r\n
 \r\n 
 */
 
-
 std::string&
 Connection::icy_tags(){
+	Spinny::Song::ptr song = stream_->current_song();
+	icy_tags_ = "0";
+	icy_tags_ += "StreamTitle='";
+	icy_tags_ += song->artist()->name() + " - ";
+	icy_tags_ += song->title() + "';";
+
+
+	div_t sz = div( icy_tags_.size(), 16 );
+
+	if ( sz.rem ){
+		icy_tags_.append( 17-sz.rem, '\0' );
+		sz.quot+=1;
+	}
+	icy_tags_[ 0 ] = sz.quot;
+	BOOST_LOGL( strm, debug ) << "Icy tags size=" << sz.quot;
+	return icy_tags_;
+}
+
+std::string&
+Connection::icy_headers(){
 	icy_tags_ = "ICY 200 OK\r\nContent-Type: audio/mpeg\r\nicy-name: ";
-	icy_tags_ += stream_->current_song()->title() + "\r\nicy-url: http://";
+	icy_tags_ += stream_->playlist()->name() + "\r\nicy-url: http://";
 	icy_tags_ += Spinny::App::instance()->config<std::string>("web_listen_address") + "\r\n";
 
 	if ( this->using_icy() ){
-		icy_tags_ += "icy-metaint:8192\r\n";
+		icy_tags_ += "icy-metaint: ";
+		icy_tags_ += boost::lexical_cast<std::string>(ICY_LENGTH);
+		icy_tags_ += "\r\n";
 	}
 	icy_tags_ += "\r\n";
 
@@ -86,22 +110,24 @@ Connection::write( const Chunk &c ){
 
 		missed_count_ = 0;
 	
-		if ( this->using_icy() && ( icy_count_ + c.size() > 8192 ) ){
-			BOOST_LOGL(strm,debug) << "SENDING ICY TAGS: " << this->icy_tags();
+		if ( this->using_icy() && ( icy_count_ + c.size() > ICY_LENGTH ) ){
 			std::string &tags = this->icy_tags();
+			BOOST_LOGL(strm,debug) << "SENDING ICY after " << (ICY_LENGTH - icy_count_ )
+					       << " bytes. Tag size: " << (int)tags[0] << " : " << tags;
+
 			//std::size_t size = tags.size();
 
 			boost::array<asio::const_buffer,3> bufs = { { 
-					asio::buffer( c.data, 8192 - icy_count_ + c.size() ),
+					asio::buffer( c.data, ICY_LENGTH - icy_count_ ),
 					asio::buffer( tags ),
-					asio::buffer( c.data + ( 8192 - icy_count_ + c.size() ), c.size() )
+					asio::buffer(  c.data+(ICY_LENGTH - icy_count_), c.size() )
 				} };
 			asio::async_write( *socket_, bufs,
 					   boost::bind( &Connection::handle_write, shared_from_this(),
 							asio::placeholders::error,
 							asio::placeholders::bytes_transferred ) );
 
-			icy_count_ = c.size() - ( 8192 - icy_count_ + c.size() );
+			icy_count_ = c.size() - ( ICY_LENGTH - icy_count_ );
 
 		} else {
 			asio::async_write( *socket_, asio::buffer(c.data ),
@@ -124,6 +150,17 @@ Connection::write( const Chunk &c ){
 
 void
 Connection::write_buffers( const std::list<asio::const_buffer> &buffers ){
+	boost::recursive_mutex::scoped_lock lk(mutex_);
+
+ 	for ( std::list<asio::const_buffer>::const_iterator buf = buffers.begin(); 
+	      buf != buffers.end();
+	      ++buf )
+	{
+		icy_count_ += asio::buffer_size( *buf  );
+
+	}
+
+
 	asio::async_write( *socket_, buffers,
 			   boost::bind( &Connection::handle_write, shared_from_this(),
 					asio::placeholders::error,
@@ -178,10 +215,24 @@ Connection::~Connection(){
 	BOOST_LOGL( strm,info )<< "Destroying Connection " << this;
 
 	try {
-		socket_->close( close_error_handler );
+		asio::error error_close;
+		socket_->close( asio::assign_error(error_close) );
+		if (error_close)
+		{
+			BOOST_LOGL(strm,err ) << "Error " << error_close.what() << " closeing socket on connection " << this;
+		}
+
 	}
-	catch( const asio::error &e ){
+	catch( const asio::system_exception &e ){
 		BOOST_LOGL( strm,info )<< "socket->close() raised " << e.what();
+	}
+
+	try {
+		socket_.reset();
+
+	}
+	catch( const asio::system_exception &e ){
+		BOOST_LOGL( strm,info )<< "~socket() raised " << e.what();
 	}
 }
 
@@ -189,7 +240,12 @@ Connection::~Connection(){
 void
 Connection::set_stream( Stream *s ){
 	stream_ = s;
-	asio::async_write( *socket_,      asio::buffer( this->icy_tags() ),
+	std::string &headers = this->icy_headers();
+
+	BOOST_LOGL( strm,info )<< "New Connection " << this << " on stream " << s 
+			       << "\nHeaders:\n" << headers;
+	
+	asio::async_write( *socket_, asio::buffer( headers ),
 			   boost::bind( &Connection::handle_write, shared_from_this(),
 					asio::placeholders::error,
 					asio::placeholders::bytes_transferred ) );

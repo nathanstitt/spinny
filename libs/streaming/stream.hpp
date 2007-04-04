@@ -46,7 +46,8 @@ namespace Streaming {
 		/// Handle completion of an asynchronous accept operation.
 		void handle_accept(const asio::error& e);
 	private:
-		
+		void handle_stop();
+
 		void parcel();
 
 		Spinny::PlayList::ptr pl_;

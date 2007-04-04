@@ -1,8 +1,9 @@
 
 
-#include "music_dir.hpp"
+#include "spinny/music_dir.hpp"
 #include "boost/filesystem/operations.hpp"
-#include "song.hpp" 
+#include "spinny/song.hpp" 
+#include "spinny/app.hpp"
 #include <vector>
 #include <limits>
 #include <list>
@@ -216,6 +217,8 @@ MusicDir::sync( unsigned char depth ){
  	if ( ! boost::filesystem::exists( this->path() ) )
  		return;
 
+	BOOST_LOGL( app, debug ) << "Syncing dir " << this->path().string();
+
 	result_set d_rs = this->children();
 	dirs_list_t dirs;
 	d_rs.copy_to<dirs_list_t>( dirs );
@@ -229,6 +232,8 @@ MusicDir::sync( unsigned char depth ){
 
 	// loop through each filesystem entry
  	for ( boost::filesystem::directory_iterator itr( this->path() ); itr != end_itr; ++itr ){
+
+		BOOST_LOGL( app, debug ) << "Examining " << itr->string();
 
 		// is directory?
  		if ( boost::filesystem::is_directory( *itr ) ) {
@@ -250,10 +255,14 @@ MusicDir::sync( unsigned char depth ){
 			// don't somehow travel to INFINITY & BEYOND
 			child->sync( depth );
  		} else if ( Song::is_interesting( *itr ) ){
+			BOOST_LOGL( app, debug ) << "Song is interested in it";
+
 			songs_list_t::iterator song = std::find_if( songs.begin(), songs.end(), name_eq<songs_list_t>( itr->leaf() ) );
 			if ( songs.end() == song ){
 				try {
+					BOOST_LOGL( app, debug ) << "Recording it";
 					Song::create_from_file( *this, itr->leaf() );
+					BOOST_LOGL( app, debug ) << "Recording " << itr->leaf();
 				}
 				catch( Song::file_error & ){	}
 			} else {
