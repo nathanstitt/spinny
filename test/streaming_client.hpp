@@ -44,8 +44,8 @@ struct StreamingTestClient {
 		
 		{
 
-		asio::ip::tcp::resolver::query query( "209.51.162.163", "6048" );
-//		asio::ip::tcp::resolver::query query( "localhost", "3001" );
+//		asio::ip::tcp::resolver::query query( "209.51.162.163", "6048" );
+		asio::ip::tcp::resolver::query query( "localhost", "3001" );
 		asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 		asio::ip::tcp::resolver::iterator end;
 
@@ -62,15 +62,13 @@ struct StreamingTestClient {
 
 		asio::streambuf request;
 		std::ostream request_stream(&request);
- 		request_stream << "GET /" << " HTTP/1.0\r\n"
- 			       << "Host: 64.236.34.97\r\n"
- 			       << "User-Agent: bmp/0.9.7\r\n";
+//  		request_stream << "GET /" << " HTTP/1.0\r\n"
+//  			       << "Host: 64.236.34.97\r\n"
+//  			       << "User-Agent: bmp/0.9.7\r\n";
 
-// 		request_stream << "GET /stream/" << stream_id << " HTTP/1.0\r\n"
-// 			       << "Host: localhost\r\n"
-// 			       << "Accept: */*\r\n"
-// 			       << "Connection: close\r\n"
-// 			       << "Content-Length: 0\r\n";
+ 		request_stream << "GET /stream/" << stream_id << " HTTP/1.0\r\n"
+ 			       << "Host: localhost\r\n"
+  			       << "User-Agent: bmp/0.9.7\r\n";
 
 		if ( taint ){
 			request_stream << "icy-metadata: 1\r\n";

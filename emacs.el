@@ -18,5 +18,5 @@
 (defun my-save-and-compile ()
   (interactive "")
   (save-buffer 0)
-  (compile "make -j2 -C ~/files/build -k"))
+  (compile "make -k -j2 -C ~/code/build"))
 

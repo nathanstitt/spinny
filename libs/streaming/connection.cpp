@@ -64,7 +64,8 @@ icy-metaint:8192\r\n
 std::string&
 Connection::icy_tags(){
 	Spinny::Song::ptr song = stream_->current_song();
-	icy_tags_ = "0";
+	icy_tags_ = " ";
+//	icy_tags_[0]=0;
 	icy_tags_ += "StreamTitle='";
 	icy_tags_ += song->artist()->name() + " - ";
 	icy_tags_ += song->title() + "';";
@@ -101,21 +102,18 @@ void
 Connection::write( const Chunk &c ){
 	boost::recursive_mutex::scoped_lock lk(mutex_);
 
- 	BOOST_LOGL(strm,debug) << "Write requested on " << this 
- 			       << ( send_finished_ ? " sending" : " skipping due to lag" ) << " missed " << missed_count_
-			       << " : ICY " << this->using_icy() << " / " << icy_count_;
+//  	BOOST_LOGL(strm,debug) << "Write requested on " << this 
+//  			       << ( send_finished_ ? " sending" : " skipping due to lag" ) << " missed " << missed_count_
+// 			       << " : ICY " << this->using_icy() << " / " << icy_count_;
 
-	//asio::const_buffer_container_1 buffer;
+
 	if ( send_finished_ ){
-
 		missed_count_ = 0;
 	
 		if ( this->using_icy() && ( icy_count_ + c.size() > ICY_LENGTH ) ){
 			std::string &tags = this->icy_tags();
 			BOOST_LOGL(strm,debug) << "SENDING ICY after " << (ICY_LENGTH - icy_count_ )
 					       << " bytes. Tag size: " << (int)tags[0] << " : " << tags;
-
-			//std::size_t size = tags.size();
 
 			boost::array<asio::const_buffer,3> bufs = { { 
 					asio::buffer( c.data, ICY_LENGTH - icy_count_ ),
@@ -141,11 +139,7 @@ Connection::write( const Chunk &c ){
 		}
 
 		send_finished_=false;
-	} else if ( missed_count_ > 10 ){
-		stream_->stop( shared_from_this() );	
-	} else {
-		missed_count_ += 1;
-	}
+ 	}
 }
 
 void
@@ -182,16 +176,16 @@ void
 Connection::handle_write( const asio::error& e, std::size_t bytes_transferred ){
 	boost::recursive_mutex::scoped_lock lk(mutex_);
 
-  	BOOST_LOGL(strm,debug)
-  		<< "Wrote " << bytes_transferred << " bytes on connection "
-  		<< this << " result: " << e.what();
+//   	BOOST_LOGL(strm,debug)
+//   		<< "Wrote " << bytes_transferred << " bytes on connection "
+//   		<< this << " result: " << e.what();
 
-	if ( asio::error::success == e ){
-		send_finished_=true;
-	} else {
-		BOOST_LOGL( strm, info ) << "Streaming connection disconnected";
-		stream_->stop( shared_from_this() );
-	}
+ 	if ( asio::error::success == e ){
+ 		send_finished_=true;
+ 	} else {
+ 		BOOST_LOGL( strm, info ) << "Streaming connection disconnected";
+ 		stream_->stop( shared_from_this() );
+ 	}
 }
 
 std::string

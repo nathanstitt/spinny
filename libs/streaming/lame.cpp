@@ -120,6 +120,7 @@ Lame::init_decode_file()
 	int freeformat = 0;
 
 	memset(&mp3input_data, 0, sizeof(mp3data_struct));
+
 	lame_decode_init();
 
 	if (buf[0] == 'I' && buf[1] == 'D' && buf[2] == '3') {
@@ -267,9 +268,9 @@ Lame::fill_buffer( Buffer *buffer ){
 							  buffer->data.c_array()+buffer->data_length,
 							  LAME_MAXMP3BUFFER-buffer->data_length );
 		} else {
-			/* may return one more mp3 frame */
-			encoded = lame_encode_flush_nogap( lgf, buffer->data.c_array()+buffer->data_length,
-							   LAME_MAXMP3BUFFER-buffer->data_length );
+// 			/* may return one more mp3 frame */
+// 			encoded = lame_encode_flush_nogap( lgf, buffer->data.c_array()+buffer->data_length,
+// 							   LAME_MAXMP3BUFFER-buffer->data_length );
 			this->next_song();
 		}
 		/* was our output buffer big enough? */
@@ -433,7 +434,7 @@ Lame::get_chunk(){
 	action_= FillBuffer;
 	buffer_ = buffer_->next;
 	buffer_condition.notify_one();
-	BOOST_LOGL( strm, info ) << "Lame::get_chunk() " << this << " returned " << buffer_->data_length << " chunk from buffer " << buffer_;
+//	BOOST_LOGL( strm, info ) << "Lame::get_chunk() " << this << " returned " << buffer_->data_length << " chunk from buffer " << buffer_;
 
 	Chunk c( buffer_, pl_->bitrate() );
 
@@ -549,40 +550,40 @@ Lame::set_song( Spinny::Song::ptr song ){
 		throw std::runtime_error( "Error reading headers in mp3 input file" );
 	}
 
-	id3tag_init( lgf );
-	id3tag_add_v2(lgf);
-	id3tag_v2_only(lgf);
-	id3tag_set_title( lgf, song->title().c_str() );
-	id3tag_set_artist( lgf, song->artist()->name().c_str() );
-	id3tag_set_album( lgf, song->album()->name().c_str() );
-	id3tag_set_year( lgf, boost::lexical_cast<std::string>( song->year() ).c_str()  );
+// 	id3tag_init( lgf );
+// 	id3tag_add_v2(lgf);
+// 	id3tag_v2_only(lgf);
+// 	id3tag_set_title( lgf, song->title().c_str() );
+// 	id3tag_set_artist( lgf, song->artist()->name().c_str() );
+// 	id3tag_set_album( lgf, song->album()->name().c_str() );
+// 	id3tag_set_year( lgf, boost::lexical_cast<std::string>( song->year() ).c_str()  );
 
-	(void) lame_set_in_samplerate( lgf, mp3input_data.samplerate );
-	(void) lame_set_num_samples( lgf, mp3input_data.nsamp );
+//	(void) lame_set_in_samplerate( lgf, mp3input_data.samplerate );
+//	(void) lame_set_num_samples( lgf, mp3input_data.nsamp );
 
-	lame_init_bitstream(lgf);
+//	lame_init_bitstream(lgf);
 
-	if ( lame_get_num_samples( lgf ) == MAX_U_32_NUM ) {
+// 	if ( lame_get_num_samples( lgf ) == MAX_U_32_NUM ) {
 
-		double  flen = lame_get_file_size(in_path); /* try to figure out num_samples */
-		if (flen >= 0) {
+// 		double  flen = lame_get_file_size(in_path); /* try to figure out num_samples */
+// 		if (flen >= 0) {
 
-			/* try file size, assume 2 bytes per sample */
-			if ( mp3input_data.bitrate > 0) {
-				double  totalseconds =
-					(flen * 8.0 / (1000.0 * mp3input_data.bitrate));
-				unsigned long tmp_num_samples =
-					(unsigned long) (totalseconds * lame_get_in_samplerate( lgf ));
+// 			/* try file size, assume 2 bytes per sample */
+// 			if ( mp3input_data.bitrate > 0) {
+// 				double  totalseconds =
+// 					(flen * 8.0 / (1000.0 * mp3input_data.bitrate));
+// 				unsigned long tmp_num_samples =
+// 					(unsigned long) (totalseconds * lame_get_in_samplerate( lgf ));
 				
-				(void) lame_set_num_samples( lgf, tmp_num_samples );
-				mp3input_data.nsamp = tmp_num_samples;
-			} else {
-				(void) lame_set_num_samples( lgf,
-							     (unsigned long)(flen / (2 * lame_get_num_channels( lgf ))) );
-			}
+// 				(void) lame_set_num_samples( lgf, tmp_num_samples );
+// //				mp3input_data.nsamp = tmp_num_samples;
+// 			} else {
+// 				(void) lame_set_num_samples( lgf,
+// 							     (unsigned long)(flen / (2 * lame_get_num_channels( lgf ))) );
+// 			}
 
-		}
-	}
+// 		}
+// 	}
 		
 
 	BOOST_LOGL( strm, info ) << this<< " encoding "  <<  lame_get_brate(lgf)
