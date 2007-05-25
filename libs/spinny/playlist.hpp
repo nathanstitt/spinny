@@ -6,12 +6,16 @@
 
 #include "sqlite/sqlite.hpp"
 #include "spinny/config.h"
-#include "spinny/song.hpp"
 #include "boost/enable_shared_from_this.hpp"
-
-#include <vector>
+#include "spinny/artist.hpp"
+#include "spinny/album.hpp"
+#include "spinny/song.hpp"
+#include "boost/shared_ptr.hpp"
 
 namespace Spinny {
+	class Artist;
+	class Album;
+	class CompletePlayList;
 
 class PlayList : public sqlite::table,
 		 public boost::enable_shared_from_this<PlayList>
@@ -21,7 +25,7 @@ public:
 	typedef ::sqlite::result_set<PlayList> result_set;
 private:
 	GRANT_NEEDED_FRIENDSHIP(PlayList);
-
+	friend class CompletePlayList;
 	PlayList();
 
 	virtual void table_insert_values( std::ostream &str ) const;
@@ -43,7 +47,7 @@ public:
 	all();
 
 	static ptr
-	create( int bitrate, const std::string &name, const std::string &desc );
+	create( const std::string &name="New Playlist", const std::string &desc="", int bitrate=128 );
 
 	static void
 	set_order( sqlite::id_t db_id, int order );
@@ -76,23 +80,35 @@ public:
 	set_present_order( int br );
 
 	Song::result_set
-	songs() const;
+	virtual songs( std::string order="", unsigned int start=0, unsigned int limit=0 ) const;
 
 	void
-	insert( const Song::ptr s, int position );
+	insert( Spinny::Song::result_set songs, int position );
 
 	void
-	insert( const PlayList::ptr pl, int position );
+	insert( Song::ptr s, int position );
+
+	void
+	insert( PlayList::ptr pl, int position );
+
+	void
+	insert( Spinny::MusicDir::ptr md, int position );
+
+	void
+	insert( Spinny::Artist::ptr artist, int position );
+
+	void
+	insert( boost::shared_ptr<Album> album, int position );
 
 	bool
 	save() const;
 
 	unsigned int
-	size() const;
+	virtual size() const;
 
+	static
 	Song::ptr
 	load_song( sqlite::id_t db_id );
-
 
 	Song::ptr
 	at( unsigned int pos );

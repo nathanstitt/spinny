@@ -2,17 +2,10 @@
  */
 
 
+//#include "streaming/stream.hpp"
 #include "spinny/playlist.hpp"
+#include "spinny/complete_playlist.hpp"
 
-
-
-#include "spinny/song.hpp" 
-#include <vector>
-#include <limits>
-#include <list>
-#include <iterator>
-#include "spinny/app.hpp"
-#include "streaming/server.hpp"
 
 namespace Spinny {
 
@@ -50,7 +43,7 @@ class pl_desc : public sqlite::table::description {
 public:
 	void checked_callback( bool ) {
 		if ( ! sqlite::db()->exec<int>( "select count(*) from playlists") ){
-			PlayList::ptr pl = PlayList::create( 128, "Default Playlist","A playlist to get started with..." );
+			PlayList::ptr pl = PlayList::create( "All Songs","All the songs in your library" );
 			pl->save();
 		}
 
@@ -127,7 +120,11 @@ PlayList::PlayList() : sqlite::table(), bitrate_(0), name_("") , description_(""
 
 PlayList::ptr
 PlayList::load( sqlite::id_t db_id ){
-	return sqlite::db()->load<PlayList>( db_id );
+	if ( db_id == 1 ){
+		return CompletePlayList::instance();
+	} else {
+		return sqlite::db()->load<PlayList>( db_id );
+	}
 }
 
 PlayList::result_set
@@ -137,7 +134,7 @@ PlayList::all(){
 
 
 PlayList::ptr
-PlayList::create( int bitrate, const std::string &name, const std::string &description ){
+PlayList::create( const std::string &name, const std::string &description,int bitrate ){
 	PlayList::ptr pl( new PlayList );
 	pl->name_=name;
 	pl->description_ = description;
@@ -200,10 +197,8 @@ PlayList::load_song( sqlite::id_t song_id ){
 	sqlite::connection *con = sqlite::db();
 	*con << "select ";
 	Song::table_description()->insert_fields( *con );
-	*con << ", playlist_songs.rowid from songs, playlist_songs where songs.rowid"
-	     << "= playlist_songs.song_id and playlist_songs.rowid = "
-	     << song_id << " and playlist_songs.playlist_id = "
-	     << this->db_id();
+	*con << ", songs.rowid from songs, playlist_songs where songs.rowid"
+	     << "= playlist_songs.song_id and playlist_songs.rowid = " << song_id;
 	return con->load_one<Song>();
 }
 
@@ -223,13 +218,23 @@ PlayList::set_present_order( int present_order ){
 }
 
 Song::result_set
-PlayList::songs() const {
+PlayList::songs( std::string order, unsigned int start, unsigned int limit ) const {
 	sqlite::connection *con = sqlite::db();
 	*con << "select ";
 	Song::table_description()->insert_fields( *con );
 	*con << ",playlist_songs.rowid from songs, playlist_songs where songs.rowid "
 	      << "= playlist_songs.song_id and playlist_songs.playlist_id = "
-	     << this->db_id() << " order by playlist_songs.present_order";
+	     << this->db_id() << " order by ";
+	if ( order.empty() ){
+		*con << "playlist_songs.present_order";
+	} else {
+		*con << sqlite::q( order );
+	}
+	if ( start && limit ){
+		*con << " limit " << start << ',' << limit;
+	}
+
+	BOOST_LOGL(sql,debug) << "SQL: " << con->current_statement();
 	return con->load_stored<Song>();
 }
 
@@ -239,15 +244,36 @@ PlayList::set_song_order( sqlite::id_t db_id, int order ){
 	*con << "update playlist_songs set present_order="
 	     << order << " where playlist_songs.rowid = " << db_id << " and playlist_id = " << this->db_id();
 	con->exec<sqlite::none>();
-	Spinny::App::instance()->streaming->song_order_changed( shared_from_this(), db_id, order );
+//	Spinny::App::instance()->streaming->song_order_changed( this->db_id(), db_id, order );
+}
+
+
+void
+PlayList::insert( Spinny::Song::result_set songs, int position ){
+	sqlite::connection *con = sqlite::db();
+
+	*con <<  "update playlist_songs set present_order = present_order+" << songs.size() << " where present_order >= " 
+	     << position << " and playlist_id = " << this->db_id();
+	con->exec<sqlite::none>();
+
+	for ( Spinny::Song::result_set::iterator song = songs.begin(); songs.end() != song; ++song){
+		*con << "insert into playlist_songs ( song_id, playlist_id, present_order ) values ( "
+		     << song->db_id() << ','
+		     << this->db_id() << ','
+		     << position++ << ')';
+		con->exec<sqlite::none>();
+	}
 }
 
 
 void
 PlayList::insert( Song::ptr s, int position ) {
 	sqlite::connection *con = sqlite::db();
+
+
 	*con <<  "update playlist_songs set present_order = present_order+1 where present_order >= " 
 	     << position << " and playlist_id = " << this->db_id();
+
 	con->exec<sqlite::none>();
 
 	*con << "insert into playlist_songs ( song_id, playlist_id, present_order ) values ( "
@@ -259,11 +285,44 @@ PlayList::insert( Song::ptr s, int position ) {
 
 void
 PlayList::insert( PlayList::ptr pl, int position ) {
-	Song::result_set songs = pl->songs();
-	for ( Song::result_set::iterator song=songs.begin(); song != songs.end(); ++song ){
-		this->insert( song.shared_ptr(), position );
+	sqlite::connection *con = sqlite::db();
+	
+	*con <<  "update playlist_songs set present_order = present_order+" << pl->size() << " where present_order >= " 
+	     << position << " and playlist_id = " << this->db_id();
+	con->exec<sqlite::none>();
+
+	*con << "select song_id from playlist_songs where playlist_id = "
+	     << this->db_id() << " order by present_order";
+
+	std::list<sqlite::id_t> song_ids;
+	sqlite::command cmd(con);
+	for ( sqlite::command::reader_iterator it=cmd.reader_begin(); it != cmd.reader_end(); ++it ){
+		song_ids.push_back( it->get<sqlite::id_t>(0) );
+	}
+	for ( std::list<sqlite::id_t>::iterator id = song_ids.begin(); id != song_ids.end(); ++id ){
+		*con << "insert into playlist_songs ( song_id, playlist_id, present_order ) values ( "
+		     << *id << ','
+		     << this->db_id() << ','
+		     << ++position << ')';
+		con->exec<sqlite::none>();
 	}
 }
+
+void
+PlayList::insert( Spinny::MusicDir::ptr md, int position ){
+	this->insert( md->songs(), position );
+}
+
+void
+PlayList::insert( Spinny::Artist::ptr artist, int position ){
+	this->insert( artist->songs(), position );
+}
+
+void
+PlayList::insert( Spinny::Album::ptr album, int position ){
+	this->insert( album->songs(), position );
+}
+
 
 bool
 PlayList::save() const {
@@ -288,9 +347,17 @@ PlayList::clear(){
 void
 PlayList::remove( sqlite::id_t song_id ){
 	sqlite::connection *con = sqlite::db();
+
+	*con <<  "update playlist_songs set present_order = present_order-1 where present_order >= " 
+	     << "(select b.present_order from playlist_songs b where b.rowid = " << song_id << ") and playlist_id = " << this->db_id();
+	con->exec<sqlite::none>();
+
+	
 	*con <<	"delete from playlist_songs where playlist_id = " << this->db_id() 
 	     << " and playlist_songs.rowid = " << song_id;
+
 	con->exec<sqlite::none>();
+
 }
 
 

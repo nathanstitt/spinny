@@ -40,27 +40,27 @@ int main(int argv , char** argc ) {
 // 	handlers::PlayList p;
 	
 
-	boost::logging::manipulate_logs("strm")
-		.del_modifier("time")
-		.enable( boost::logging::level::debug )
-		.del_modifier("prefix")
-		.del_modifier("enter")
-		.add_appender(&boost::logging::write_to_cout)    // all messages are written to cout
-		.add_modifier(&boost::logging::prepend_prefix,"prefix" )
-		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" )
-		.add_modifier(&boost::logging::append_enter,"enter");
+// 	boost::logging::manipulate_logs("strm")
+// 		.del_modifier("time")
+// 		.enable( boost::logging::level::debug )
+// 		.del_modifier("prefix")
+// 		.del_modifier("enter")
+// 		.add_appender(&boost::logging::write_to_cout)    // all messages are written to cout
+// 		.add_modifier(&boost::logging::prepend_prefix,"prefix" )
+// 		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" )
+// 		.add_modifier(&boost::logging::append_enter,"enter");
 
-	boost::logging::manipulate_logs("app")
-		.del_modifier("time")
-		.enable( boost::logging::level::debug )
-		.del_modifier("prefix")
-		.del_modifier("enter")
-		.add_appender(&boost::logging::write_to_cout)    // all messages are written to cout
-		.add_modifier(&boost::logging::prepend_prefix,"prefix" )
-		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" )
-		.add_modifier(&boost::logging::append_enter,"enter");
+// 	boost::logging::manipulate_logs("app")
+// 		.del_modifier("time")
+// 		.enable( boost::logging::level::debug )
+// 		.del_modifier("prefix")
+// 		.del_modifier("enter")
+// 		.add_appender(&boost::logging::write_to_cout)    // all messages are written to cout
+// 		.add_modifier(&boost::logging::prepend_prefix,"prefix" )
+// 		.add_modifier( boost::logging::prepend_time("$yy$MM$dd $hh:$mm:$ss "), "time" )
+// 		.add_modifier(&boost::logging::append_enter,"enter");
 
-	boost::logging::manipulate_logs("www")
+	boost::logging::manipulate_logs("sql")
 		.del_modifier("time")
 		.enable( boost::logging::level::debug )
 		.del_modifier("prefix")

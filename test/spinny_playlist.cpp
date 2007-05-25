@@ -16,7 +16,7 @@ SUITE(SpinnyPlayList){
 TEST( Load ){
 	DummyApp da;
 
-	PlayList::ptr p = PlayList::create( 128, std::string("128 Kbs"), std::string("BooYah") );
+	PlayList::ptr p = PlayList::create( std::string("128 Kbs"), std::string("BooYah") );
 	p->save();
 
  	PlayList::ptr pl = PlayList::load( p->db_id() );
@@ -28,7 +28,7 @@ TEST( Load ){
 
 TEST( Create ){
  	DummyApp da;
- 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
+ 	PlayList::ptr pl = PlayList::create( std::string("128 Kbs"), std::string("BooYah") );
 	pl->save();
  	CHECK_EQUAL( "128 Kbs", pl->name() );
 }
@@ -42,13 +42,23 @@ TEST( Insert ){
 
 	Song::result_set songs = md->songs();
 
- 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
+ 	PlayList::ptr pl = PlayList::create( std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
 		pl->insert( s.shared_ptr(), 0 );
 	}
 
 	CHECK_EQUAL( pl->size(), songs.size() );
+
+	pl->clear();
+	CHECK_EQUAL( pl->size(), 0 );
+
+	pl->insert( md,0 );
+	CHECK_EQUAL( pl->size(), songs.size() );
+
+	PlayList::ptr pl2 = PlayList::create( std::string("128 Kbs"), std::string("BooYah") );
+	pl2->insert(pl,0);
+	CHECK_EQUAL( pl->size(), pl2->size() );
 }
 
 TEST( Clear ){
@@ -60,7 +70,7 @@ TEST( Clear ){
 
 	Song::result_set songs = md->songs();
 
- 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
+ 	PlayList::ptr pl = PlayList::create( std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
 		pl->insert( s.shared_ptr(), 0 );
@@ -83,7 +93,7 @@ TEST( Remove ){
 
 	Song::result_set songs = md->songs();
 
- 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
+ 	PlayList::ptr pl = PlayList::create( std::string("128 Kbs"), std::string("BooYah") );
 
 	for ( Song::result_set::iterator s=songs.begin(); songs.end() != s; ++s ){
 		pl->insert( s.shared_ptr(),0 );
@@ -104,7 +114,7 @@ TEST( Remove ){
 
 TEST( Update ){
 	DummyApp da;
- 	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
+ 	PlayList::ptr pl = PlayList::create( std::string("128 Kbs"), std::string("BooYah") );
 	pl->save();
  	CHECK_EQUAL( "128 Kbs", pl->name() );
 	CHECK_EQUAL( "BooYah", pl->description() );
@@ -140,7 +150,7 @@ TEST( At ){
 
  	Song::result_set all_songs = md->songs();
 
-  	PlayList::ptr pl = PlayList::create( 128,  std::string("128 Kbs"), std::string("BooYah") );
+  	PlayList::ptr pl = PlayList::create( std::string("128 Kbs"), std::string("BooYah") );
 	int pos=1;
 	pl->save();
 

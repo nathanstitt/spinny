@@ -5,6 +5,7 @@
 #include "taglib/fileref.h"
 #include "artist.hpp"
 #include "album.hpp"
+#include "spinny/app.hpp"
 
 namespace Spinny {
 

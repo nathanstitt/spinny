@@ -536,8 +536,6 @@ Lame::set_song( Spinny::Song::ptr song ){
 		throw std::runtime_error("Could not close audio input file");
 	}
 	
-	BOOST_LOGL( strm, debug ) << __FILE__ << " : " << __LINE__;
-
 	if ( ( musicin = fopen(in_path.c_str(), "rb" ) ) == NULL ) {
 		BOOST_LOGL( strm, err ) << "Could not open " << in_path;
 		throw std::runtime_error( "file open for read failed" );

@@ -13,7 +13,7 @@
 #include "spinny/settings.hpp"
 #include "boost/bind.hpp"
 #include "ews/server.hpp"
-#include "streaming/server.hpp"
+//#include "streaming/server.hpp"
 #include "spinny/music_dir.hpp"
 
 using namespace std;
@@ -67,9 +67,9 @@ App::App(int argc, char **argv) :
 
 	BOOST_LOGL( app, debug ) << "Starting Streaming";
 
- 	streaming = new Streaming::Server(  this->config<string>( "streaming_listen_address" ),
-					    this->config<unsigned int>( "streaming_listen_port" )
- 		);
+//  	streaming = new Streaming::Server(  this->config<string>( "streaming_listen_address" ),
+// 					    this->config<unsigned int>( "streaming_listen_port" )
+//  		);
 
 
 	BOOST_LOGL( app, debug ) << "Streaming started successfully, now starting www";
@@ -160,15 +160,11 @@ App::~App(){
 	www->stop();
 	_web_thread->join();
 
-	BOOST_LOGL(app, info ) << "Stopping app";
 
 	delete _web_thread;
-
-	BOOST_LOGL(app, info ) << "Stopping app";
 	delete www;
-	BOOST_LOGL(app, info ) << "Stopping app";
-	delete streaming;
-	BOOST_LOGL(app, info ) << "Stopping app";
+
+//	delete streaming;
 
 	BOOST_LOGL(app, warn) << "App stopped";
 }

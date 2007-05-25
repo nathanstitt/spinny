@@ -1,7 +1,6 @@
 /* @(#)artist.cpp
  */
 
-//#include <config.h>
 #include "spinny/artist.hpp"
 #include "spinny/song.hpp"
 #include "spinny/album.hpp"

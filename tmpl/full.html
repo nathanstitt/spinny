@@ -2,71 +2,22 @@
 <html>
   <head>
     <title>Spinny</title>
-    <link rel="stylesheet" type="text/css" href="/css/reset-min.css">
-    <link rel="stylesheet" type="text/css" href="/css/tabs.css"/>
-    <link rel="stylesheet" type="text/css" href="/css/resizable.css">
-    <link rel="stylesheet" type="text/css" href="/css/dialog.css"/>
-    <link rel="stylesheet" type="text/css" href="/css/layout.css"/>
+    <link rel="stylesheet" type="text/css" href="/css/ext-all.css" />
+    <link rel="stylesheet" type="text/css" href="/css/ytheme-aero.css" />
+    <link rel="stylesheet" type="text/css" href="/css/custom.css" />
   </head>
   <body> <!--scroll="no"-->
     <div id="loading">
       <div class="loading-indicator">Loading...</div>
     </div>
-
-    <!-- begin common includes -->
-    <script type="text/javascript" src="/js/yahoo.js"></script>
-    <script type="text/javascript" src="/js/dom.js" ></script>
-    <script type="text/javascript" src="/js/event.js" ></script>
-    <script type="text/javascript" src="/js/treeview.js" ></script>
-    <script type="text/javascript" src="/js/dragdrop.js" ></script>
-    <script type="text/javascript" src="/js/connection.js" ></script>
-    <script type="text/javascript" src="/js/animation.js" ></script>
-    <script type="text/javascript" src="/js/autocomplete.js" ></script>
-    <script type="text/javascript" src="/js/logger.js"></script> 
-
-
-    <script type="text/javascript" src="/js/yui-ext.js"></script>
-
-    <script type="text/javascript" src="/js/ie-bg.js"></script>
-
-    <script type="text/javascript" src="/js/tree.js"></script>
-    <script type="text/javascript" src="/js/spinny-grid.js"></script>
+    
+    <script type="text/javascript" src="/js/yui-utilities.js"></script>
+    <script type="text/javascript" src="/js/ext-yui-adapter.js"></script>
+    <script type="text/javascript" src="/js/ext-all-debug.js"></script>
     <script type="text/javascript" src="/js/layout.js"></script>
-    <script type="text/javascript" src="/js/song-search.js"></script>
-    <script type="text/javascript" src="/js/songs.js"></script>
+    <script type="text/javascript" src="/js/trees.js"></script>
     <script type="text/javascript" src="/js/playlists.js"></script>
-    <script type="text/javascript" src="/js/user-admin.js"></script>
-
-    <script type="text/javascript">
-
-      Trees.prototype.init = function( el ){
-
-      this.artists=new YAHOO.widget.TreeView(document.getElementById("artistsTree"));
-      this.artists.tid='a';
-      var artistRoot = this.artists.getRoot();
-      <?cs each:item = Artists ?>
-      Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, artistRoot );<?cs /each ?>
-
-      this.albums=new YAHOO.widget.TreeView(document.getElementById("albumsTree"));
-      this.albums.tid='b';
-      var albumRoot = this.albums.getRoot();
-      <?cs each:item = Albums ?>
-      Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, albumRoot );<?cs /each ?>
-
-      this.dirs=new YAHOO.widget.TreeView(document.getElementById("dirsTree"));
-      this.dirs.tid='c';
-      var dirRoot = this.dirs.getRoot();
-
-      <?cs each:item = RootDirectories ?>
-      Trees.addNode( { type:"<?cs var:item.type?>",label:"<?cs var:item.label?>", id:"<?cs var: item.id ?>", ch:<?cs var:item.ch ?> }, dirRoot );<?cs /each ?>
-
-      this.artists.draw(); 
-      this.albums.draw(); 
-      this.dirs.draw(); 
-
-      }
-
-    </script>
+    <script type="text/javascript" src="/js/songs_grid.js"></script>
 
     <div id="west" class="ylayout-inactive-content">
       Hi. I'm the west panel.
@@ -75,18 +26,18 @@
     <div id="north" class="ylayout-inactive-content">
       <div id="flash_applet">
 
-	<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" codebase="http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0" width="550" height="400" id="play" align="middle">
-	  <param name="allowScriptAccess" value="sameDomain" />
-	  <param name="movie" value="/player.swf" /><param name="quality" value="high" /><param name="bgcolor" value="#ffffff" />
-	  <param NAME=FlashVars VALUE="stream_url=/stream/1/foo.mp3" />
-	  <embed src="/player.swf" quality="high" bgcolor="#c3daf9" width="100" height="20" name="play" align="left" allowScriptAccess="sameDomain" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" 
-		 FlashVars="stream_url=/stream/1/foo.mp3"/>
-	</object>
+<!-- 	<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" codebase="http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0" width="550" height="400" id="play" align="middle"> -->
+<!-- 	  <param name="allowScriptAccess" value="sameDomain" /> -->
+<!-- 	  <param name="movie" value="/player.swf" /><param name="quality" value="high" /><param name="bgcolor" value="#ffffff" /> -->
+<!-- 	  <param NAME=FlashVars VALUE="stream_url=/stream/1/foo.mp3" /> -->
+<!-- 	  <embed src="/player.swf" quality="high" bgcolor="#c3daf9" width="100" height="20" name="play" align="left" allowScriptAccess="sameDomain" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer"  -->
+<!-- 		 FlashVars="stream_url=/stream/1/foo.mp3"/> -->
+<!-- 	</object> -->
 
       </div>
       <div id="playlist-description">Current Playlist Description goes here</div>
       <?cs if:isAdmin ?>
-      <img src="/img/user_edit.gif" height="16" width="16" id="show-user-admin-btn" alt="Edit Users" title="Edit User Accounts">
+      <img src="/images/custom/user_edit.gif" height="16" width="16" id="show-user-admin-btn" alt="Edit Users" title="Edit User Accounts">
       <?cs /if ?>
     </div>
 
@@ -104,14 +55,14 @@
 	</div>
 
 	<div class="ydlg-ft">
-	  <span id="user-admin-dlg-save-wait" class="posting-msg"><img src="/img/dialog/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
+	  <span id="user-admin-dlg-save-wait" class="posting-msg"><img src="/images/default/grid/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
 	  <span id="user-admin-dlg-error-msg"></span>
 	</div>
       </div>
 
     <?cs /if ?>
 
-    <div id="playlists" style="width:200px;height:200px;overflow:hidden;"  class="ygrid-mso"></div>
+    <div id="playlistsGrid" style="width:200px;height:200px;overflow:hidden;"  class="ygrid-mso"></div>
 
     <div id="west-content" class="ylayout-inactive-content"></div>
 
@@ -124,8 +75,7 @@
       Info Panel #2
     </div>
 
-    <div id="albumsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
-    <div id="artistsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
+    <div id="tagsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
     <div id="dirsTree" class="ylayout-inactive-content" style="padding-left: 3px;"></div>
     <div id="searchSongs" class="ylayout-inactive-content" style="padding-left: 3px;">
 
@@ -133,13 +83,13 @@
 
     </div>
 
-    <div id="songs" class="ygrid-mso" style="width:800px;height:800px;overflow:hidden;"></div>
+    <div id="songsGrid" class="ygrid-mso" style="width:800px;height:800px;overflow:hidden;"></div>
 
     <div id="console" class="ylayout-inactive-content">
       message console - generally for informational stuff as it occurs on the server
     </div>
     <script type="text/javascript">
-      var myLogReader = new YAHOO.widget.LogReader("console"); 
+     // var myLogReader = new YAHOO.widget.LogReader("console"); 
     </script>
 
     <div id="playlists-dlg" style="visibility:hidden;position:absolute;top:0px;">
@@ -164,8 +114,8 @@
       </div>
       <div class="ydlg-ft">
 	<div id="playlist-dlg-msg">
-	  <span id="playlist-dlg-save-error" class="posting-msg"><img src="/img/dialog/warning.gif" alt="Warning" width="16" height="16" />&nbsp;</span>
-	  <span id="playlist-dlg-save-wait" class="posting-msg"><img src="/img/dialog/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
+	  <span id="playlist-dlg-save-error" class="posting-msg"><img src="/images/default/shared/warning.gif" alt="Warning" width="16" height="16" />&nbsp;</span>
+	  <span id="playlist-dlg-save-wait" class="posting-msg"><img src="/images/default/grid/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
 	  <span id="playlist-dlg-error-msg"></span>
 	</div>
       </div>

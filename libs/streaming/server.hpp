@@ -4,8 +4,8 @@
 #ifndef _STREAMING_SERVER_H
 #define _STREAMING_SERVER_H 1
 
+#include "spinny/playlist.hpp"
 #include "streaming/stream.hpp"
-
 
 BOOST_DECLARE_LOG(strm);
 

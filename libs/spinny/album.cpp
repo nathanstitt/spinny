@@ -1,7 +1,7 @@
 /* @(#)album.cpp
  */
 
-
+#include "spinny/app.hpp"
 #include "spinny/album.hpp"
 #include "spinny/artist.hpp"
 #include "boost/filesystem/operations.hpp"

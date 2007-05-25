@@ -1,15 +1,15 @@
 /* @(#)app.hpp
  */
 
-#ifndef _SPINNY_H
-#define _SPINNY_H 1
+#ifndef _SPINNY_APP_H
+#define _SPINNY_APP_H 1
+
 
 #include "sqlite/sqlite.hpp"
 #include "spinny/config.h"
 #include "boost/program_options.hpp"
 #include "boost/log/log.hpp"
 #include "boost/asio.hpp"
-#include "spinny/playlist.hpp"
 #include "streaming/server.hpp"
 
 
@@ -59,6 +59,6 @@ public:
 
 }
 
-#endif /* _SPINNY_H */
+#endif /* _SPINNY_APP_H */
 
 

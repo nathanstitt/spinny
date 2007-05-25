@@ -1,9 +1,7 @@
-#ifndef _STREAMING_STREAM_H
-#define _STREAMING_STREAM_H 1
-
+#ifndef STREAMING_STREAM_H
+#define STREAMING_STREAM_H 1
 
 #include "spinny/playlist.hpp"
-#include "spinny/song.hpp"
 #include "boost/asio.hpp"
 #include <boost/log/log.hpp>
 
@@ -78,5 +76,5 @@ namespace Streaming {
 };
 
 
-#endif /* _STREAMING_STREAM_H */
+#endif /* STREAMING_STREAM_H */
 

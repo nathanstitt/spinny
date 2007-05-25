@@ -19,7 +19,7 @@ TEST( Decode ){
 	md->sync();
 
 	Spinny::Song::result_set songs = md->songs();
- 	Spinny::PlayList::ptr pl = Spinny::PlayList::create( 24,  std::string("24 Kbs"), std::string("BooYah") );
+ 	Spinny::PlayList::ptr pl = Spinny::PlayList::create( std::string("24 Kbs"), std::string("BooYah"), 24 );
 
 	pl->save();
 

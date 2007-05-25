@@ -28,6 +28,35 @@ insert( Spinny::PlayList::ptr pl,sqlite::commas &comma, ews::reply &rep ){
 
 PL::PL() : ews::request_handler( "Playlists", Middle ) {}
 
+template< typename T >
+void
+test_loaded( T obj ){
+	if ( ! obj ){
+		throw ews::error("Failed to load!");
+	}
+}
+
+void
+add_something( Spinny::PlayList::ptr pl, const std::string &type, sqlite::id_t id, sqlite::id_t pos ){
+	if ( type == "song" ){
+		Spinny::Song::ptr song = Spinny::Song::load( id );
+		test_loaded( song );
+		pl->insert( song,  pos );
+	} else if ( type == "dir" ){
+		Spinny::MusicDir::ptr md = Spinny::MusicDir::load( id );
+		test_loaded( md );
+		pl->insert( md, pos );
+	} else if ( type == "artist" ){
+		Spinny::Artist::ptr artist = Spinny::Artist::load( id );
+		test_loaded( artist );
+		pl->insert( artist, pos );
+	} else if ( type == "pl" ){
+		Spinny::PlayList::ptr pl = Spinny::PlayList::load( id );
+		test_loaded( pl );
+		pl->insert( pl, pos );
+	}
+}
+
 ews::request_handler::RequestStatus
 PL::handle( const ews::request& req, ews::reply& rep ) const {
 //	BOOST_LOGL( www, info ) << name() << " examine " << req.url << " req.u1: " << req.u1;
@@ -39,10 +68,16 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 	sqlite::commas comma;
 
 	if ( req.u2 == "songs" ){
-		BOOST_LOGL(www,debug) << "Listing Songs for pl id: " << req.single_value<sqlite::id_t>( "pl_id" );
+		BOOST_LOGL(www,debug) << "Listing Songs for pl id: " << req.svalue( "pl_id" );
+
 		Spinny::PlayList::ptr pl = Spinny::PlayList::load( req.single_value<sqlite::id_t>( "pl_id" ) );
+		if ( ! pl ){
+			throw ews::error("Unable to load playlist");
+		}
 		if ( req.u3 == "list" ){
-			Spinny::Song::result_set songs = pl->songs();
+			Spinny::Song::result_set songs = pl->songs( req.svalue("order"),
+								    req.single_value<sqlite::id_t>("start"),
+								    req.single_value<sqlite::id_t>("limit") );
 			rep.content << "{ Songs:  [ \n";
 			for ( Spinny::Song::result_set::iterator song = songs.begin(); song != songs.end(); ++song ){
 				rep.content << comma << "{ 'id':" << song->db_id()
@@ -52,8 +87,7 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 					    << "'al':'" << json_q( song->album()->name() ) << "',"
 					    << "'ln':" << song->length() << "}\n";
 			}
-			rep.content  << "]}\n";				
-
+			rep.content  << "], Size: " << pl->size() << " }\n";
 		} else if ( req.u3 == "reorder" ) {
 			for ( ews::request::varibles_t::const_iterator var=req.varibles.begin();
 			      req.varibles.end() != var; ++var ){
@@ -63,9 +97,20 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 							     boost::lexical_cast<int>( var->second.front() ) );
 				}
 			}
-		} else if ( req.u3 == "addsong" ){
-			Spinny::Song::ptr song = Spinny::Song::load( req.single_value<sqlite::id_t>( "song_id" ) );
-			pl->insert( song,  req.single_value<sqlite::id_t>( "position" ) );
+		} else if ( req.u3 == "addsongs" ){
+			ews::request::varibles_t::const_iterator song_ids=req.varibles.find( "song_id" );
+			if ( song_ids != req.varibles.end() ){
+				sqlite::id_t pos = req.single_value<sqlite::id_t>( "pos" );
+				for ( ews::request::varible_t::const_iterator song_id = song_ids->second.begin();
+					      song_ids->second.end() != song_id; ++song_id ){
+
+					Spinny::Song::ptr song = pl->load_song( boost::lexical_cast<sqlite::id_t>( *song_id ) );
+					test_loaded( song );
+					pl->insert( song,  pos++ );
+				}
+			}
+		} else if ( req.u3 == "add" ){
+			add_something( pl, req.u4, req.single_value<sqlite::id_t>( "id" ), req.single_value<sqlite::id_t>( "pos" ) );
 		} else if ( req.u3 == "rm" ){
 			pl->remove( req.single_value<sqlite::id_t>( "song_id" ) );
 		} else if ( req.u3 == "addpl" ){
@@ -99,35 +144,19 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 			insert( pl.shared_ptr(), comma, rep );
 		}
 		rep.content << "]}";
-	} else if ( req.u2 == "create" ){
-		BOOST_LOGL( www,debug ) << "Creating Playlist:"
-				       << "\nName:        " << req.svalue("name")
-				       << "\nBitrate:     " << req.single_value<int>("bitrate")
-				       << "\nDescription: " << req.svalue("description");
-		Spinny::PlayList::ptr pl =
-			Spinny::PlayList::create( 0,
-						  req.svalue("name"),
-						  req.svalue("description") );
-		
-		if ( ! pl->save() ){
-			BOOST_LOGL( www,err ) << "Playlist Creation Failed!"
-				       << "\nName:        " << req.svalue("name")
-				       << "\nBitrate:     " << req.svalue("bitrate")
-				       << "\nDescription: " << req.svalue("description");
-			throw ews::error("Failed to create playlist");
+	} else if ( req.u2 == "update" ){
+		Spinny::PlayList::ptr pl;
+		if ( req.svalue("pl_id" ) == "0" ){
+			pl = Spinny::PlayList::create();
+		} else {
+			pl = Spinny::PlayList::load( req.single_value<sqlite::id_t>("pl_id" ) );
 		}
-		rep.content << "{Playlists: [";
-		insert( pl, comma, rep );
-		rep.content << "]}";
-	} else if ( req.u2 == "modify" ){
-		Spinny::PlayList::ptr pl = Spinny::PlayList::load( req.single_value<sqlite::id_t>("pl_id" ) );
-		pl->set_bitrate( 0 );
-		pl->set_name( req.svalue("name") );
-		pl->set_description( req.svalue("description") );
+		if ( req.u3 == "name" ){
+			pl->set_name( req.svalue("text") );
+		} else {
+			pl->set_description( req.svalue("text") );
+		}
 		pl->save();
-		rep.content << "{Playlists: [";
-		insert( pl, comma, rep );
-		rep.content << "]}";
 	} else if ( req.u2 == "reorder" )  {
 		for ( ews::request::varibles_t::const_iterator var=req.varibles.begin();
 		      req.varibles.end() != var; ++var ){
