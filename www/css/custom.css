@@ -1,0 +1,49 @@
+
+
+#loading
+{
+  position:absolute;
+  left:45%;
+  top:40%;
+  border:3px solid #B2D0F7;
+  background:white url(../images/custom/block-bg.gif) repeat-x;
+  padding:10px;
+  font:bold 14px verdana,tahoma,helvetica;
+  color:#003366;
+  width:150px;
+  text-align:center;
+  }
+
+.loading-indicator 
+{
+  font-size:8pt;
+  background-image:url(../images/default/grid/loading.gif);
+  background-repeat: no-repeat;
+  background-position:top left;
+  padding-left:20px;
+  height:18px;
+  text-align:left;
+}
+
+
+#playlist-description
+{
+  margin-left: auto; 
+  margin-right: auto;
+  width: 50em;
+  text-align: center;
+  font: 14px "sans serif", tahoma, verdana, helvetica;
+}
+
+#show-user-admin-btn
+{
+  position:absolute;
+  right: 10px;
+  top: 5px;
+  cursor:pointer;
+}
+
+
+#playlistsGrid .x-grid-header {
+    display:none;
+}
