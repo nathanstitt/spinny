@@ -1,10 +1,21 @@
-.ylayout-container{
+/*
+ * Ext JS Library 1.0.1
+ * Copyright(c) 2006-2007, Ext JS, LLC.
+ * licensing@extjs.com
+ * 
+ * http://www.extjs.com/license
+ */
+
+.x-layout-container{
     width:100%;
     height:100%;
     overflow:hidden;
 	 background-color:#c3daf9;
 }
-.ylayout-collapsed{
+.x-layout-container .x-layout-tabs-body{
+	border:0 none;
+}
+.x-layout-collapsed{
     position:absolute;
     left:-10000px;
     top:-10000px;
@@ -13,60 +24,66 @@
     width:20px;
     height:20px;
     overflow:hidden;
-	 border:1px solid #98c0f4;
-	 z-index:20;
+	border:1px solid #98c0f4;
+	z-index:20;
 }
-
-
-.ylayout-collapsed-over{
+.ext-border-box .x-layout-collapsed{
+    width:22px;
+    height:22px;
+}
+.x-layout-collapsed-over{
     cursor:pointer;
 	 background-color:#d9e8fb;
 }
-.ylayout-collapsed-west  .ylayout-tools-button{
-	float:right;
+.x-layout-collapsed-west .x-layout-collapsed-tools, .x-layout-collapsed-east .x-layout-collapsed-tools{
+	position:absolute;
+    top:0;
+    left:0;
+    width:20px;
+    height:20px;
 }
-.ylayout-collapsed-east  .ylayout-tools-button{
-	float:left;
+.x-layout-collapsed-north .x-layout-collapsed-tools, .x-layout-collapsed-south .x-layout-collapsed-tools{
+	position:absolute;
+    top:0;
+    right:0;
+    width:20px;
+    height:20px;
 }
-.ylayout-collapsed-north, .ylayout-collapsed-south{
-	text-align:right;
+.x-layout-collapsed .x-layout-tools-button{
+    margin:0;
 }
-.ylayout-collapsed .ylayout-tools-button{
-    margin:2px;
-	 width:12px;
-	 text-align:center;
+.x-layout-collapsed .x-layout-tools-button-inner{
+    width:16px;
+    height:16px;
 }
-.ylayout-inactive-content{
+.x-layout-inactive-content{
     position:absolute;
     left:-10000px;
     top:-10000px;
     visibility:hidden;
 }
-.ylayout-active-content{
+.x-layout-active-content{
     visibility:visible;
 }
-.ylayout-panel{
+.x-layout-panel{
     position:absolute;border:1px solid #98c0f4;overflow:hidden;background-color:white;
 }
-.ylayout-panel-east, .ylayout-panel-west {
+.x-layout-panel-east, .x-layout-panel-west {
     z-index:10;
 }
-.ylayout-panel-north, .ylayout-panel-south {
+.x-layout-panel-north, .x-layout-panel-south {
     z-index:11;
 }
-.ylayout-collapsed-north, .ylayout-collapsed-south, .ylayout-collapsed-east, .ylayout-collapsed-west {
+.x-layout-collapsed-north, .x-layout-collapsed-south, .x-layout-collapsed-east, .x-layout-collapsed-west {
     z-index:12;
 }
-.ylayout-panel{
-    position:absolute;border:1px solid #98c0f4;overflow:hidden;background-color:white;
-}
-.ylayout-panel-body{
+.x-layout-panel-body{
     overflow:hidden;
 }
-.ylayout-grid-wrapper{
+.x-layout-grid-wrapper{
 
 }
-.ylayout-split{
+.x-layout-split{
     position:absolute;
     height:5px;
     width:5px;
@@ -75,38 +92,40 @@
     z-index:3;
     background-color:#c3daf9;
 }
-.ylayout-panel-hd{
-    background-image: url(/img/layout/panel-title-light-bg.gif);
+.x-layout-panel-hd{
+    background-image: url(../images/default/layout/panel-title-light-bg.gif);
     color: black;
     border-bottom:1px solid #98c0f4;
     position:relative;
 }
-.ylayout-panel-hd-text{
+.x-layout-panel-hd-text{
     font:normal 11px tahoma, verdana, helvetica;
     padding: 4px;
     padding-left: 4px;
     display:block;
+	 white-space:nowrap;
 }
-.ylayout-panel-hd-tools{
+.x-layout-panel-hd-tools{
     position:absolute;
-    right:0px;
-    top:0px;
+    right:0;
+    top:0;
     text-align:right;
     padding-top:2px;
-    padding-right:2px;width:40px;
+    padding-right:2px;
+    width:60px;
 }
-.ylayout-tools-button{
+.x-layout-tools-button{
     z-index:6;
     padding:2px;
     cursor:pointer;
     float:right;
 }
-.ylayout-tools-button-over{
+.x-layout-tools-button-over{
     padding:1px;
     border:1px solid #98c0f4;
     background-color:white;
 }
-.ylayout-tools-button-inner{
+.x-layout-tools-button-inner{
     height:12px;
     width:12px;
     line-height:1px;
@@ -114,67 +133,67 @@
     background-repeat:no-repeat;
     background-position:center;
 }
-.ylayout-close{
-    background-image:url(/img/layout/panel-close.gif);
+.x-layout-close{
+    background-image:url(../images/default/layout/panel-close.gif);
 }
-.ylayout-collapse-west,.ylayout-expand-east{
-    background-image:url(/img/layout/collapse.gif);
+.x-layout-stick{
+    background-image:url(../images/default/layout/stick.gif);
 }
-.ylayout-expand-west,.ylayout-collapse-east{
-    background-image:url(/img/layout/expand.gif);
+.x-layout-collapse-west,.x-layout-expand-east{
+    background-image:url(../images/default/layout/collapse.gif);
 }
-.ylayout-collapse-north,.ylayout-expand-south{
-    background-image:url(/img/layout/ns-collapse.gif);
+.x-layout-expand-west,.x-layout-collapse-east{
+    background-image:url(../images/default/layout/expand.gif);
 }
-.ylayout-expand-north,.ylayout-collapse-south{
-    background-image:url(/img/layout/ns-expand.gif);
+.x-layout-collapse-north,.x-layout-expand-south{
+    background-image:url(../images/default/layout/ns-collapse.gif);
 }
-.ylayout-split-h{
-    background-image:url(/img/sizer/e-handle.gif);
+.x-layout-expand-north,.x-layout-collapse-south{
+    background-image:url(../images/default/layout/ns-expand.gif);
+}
+.x-layout-split-h{
+    background-image:url(../images/default/sizer/e-handle.gif);
     background-position: left;
 }
-.ylayout-split-v{
-    background-image:url(/img/sizer/s-handle.gif);
+.x-layout-split-v{
+    background-image:url(../images/default/sizer/s-handle.gif);
     background-position: top;
 }
-.ylayout-panel .ytab-wrap{
-    background:url(/img/layout/gradient-bg.gif);
+.x-layout-panel .x-tabs-wrap{
+    background:url(../images/default/layout/gradient-bg.gif);
 }
-.ylayout-panel .yui-ext-tabbody {
+.x-layout-panel .x-tabs-body {
     background-color:white;
     overflow:auto;height:100%;
 }
-.ylayout-component-panel, .ylayout-nested-layout {
+.x-layout-component-panel, .x-layout-nested-layout {
 	position:relative;
-   padding:0px;
+   padding:0;
 	overflow:hidden;
 	width:200px;
 	height:200px;
 }
-.ylayout-nested-layout .ylayout-panel {
-	  border:0px none;
+.x-layout-nested-layout .x-layout-panel {
+	  border:0 none;
 }
-.ylayout-nested-layout .ylayout-panel-north {
+.x-layout-nested-layout .x-layout-panel-north {
 	  border-bottom:1px solid #98c0f4;
 }
-.ylayout-nested-layout .ylayout-panel-south {
+.x-layout-nested-layout .x-layout-panel-south {
 	  border-top:1px solid #98c0f4;
 }
-.ylayout-nested-layout .ylayout-panel-east {
+.x-layout-nested-layout .x-layout-panel-east {
 	  border-left:1px solid #98c0f4;
 }
-.ylayout-nested-layout .ylayout-panel-west {
+.x-layout-nested-layout .x-layout-panel-west {
 	  border-right:1px solid #98c0f4;
 }
-.yui-ext-repaint{
-    zoom:1;
-	 background-color: transparent;
-}
-.ylayout-panel-dragover {
+
+.x-layout-panel-dragover {
 	border: 2px solid #6593cf;
 }
-.ylayout-panel-proxy {
-	background-image: url('/img/layout/gradient-bg.gif');
+.x-layout-panel-proxy {
+	background-image: url(../images/default/layout/gradient-bg.gif);
 	background-color:#c3daf9;
 	border:1px dashed #6593cf;
 	z-index:10001;
@@ -182,718 +201,52 @@
 	position:absolute;
 	left:0;top:0;
 }
-.ylayout-slider {
+.x-layout-slider {
 	z-index:15;
 	overflow:hidden;
 	position:absolute;
 }
 
-.ygrid-cell-text {
-	display: block;
-	font: normal 8pt arial;
-	overflow: hidden;
-	padding: 3px 5px;
-	white-space: nowrap;
-}
-.ygrid-col{
-	cursor: default;
-	height:21px !important;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	position:absolute;
-	display:block;
-	-moz-outline: none;
-	-moz-user-focus: normal;
-	overflow: hidden;
-	border-left: 1px solid #f1efe2;
-}
-.yeditgrid .ygrid-col{
-	-moz-outline: normal;
-}
-.ygrid-col, .ygrid-hd {
-	font: normal 8pt arial;
-	-o-text-overflow: ellipsis;
-	text-overflow: ellipsis;
-}
-.ygrid-col-0{
-	border-left: 0px;
-}
-.ygrid-col-last{
-	border-right: 1px solid #f1efe2;
-}
-.ygrid-editor{
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	position:absolute;
-	visibility:hidden;
-	font: normal 8pt arial;
-	border: 1px solid #afbdc9;
-	z-index:10;
-}
-.ygrid-editor input{
-	font: normal 8pt arial;
-	border: 0px;
-	padding-top:2px;
-	padding-left:3px;
-}
-.ygrid-editor-container{
-	overflow:hidden;
-	display:block;
-	background-color:white;
-}
-.ygrid-editor .pick-button{
-	width:15px;
-	height:20px;
-	position:absolute;
-	display:block;
-	right:0;
-	top:0;
-	z-index:2;
-	background-image: url(/img/grid/pick-button.gif);
-	background-repeat: no-repeat;
-}
-.ygrid-editor-invalid{
-	background-image: url(/img/grid/invalid_line.gif);
-	background-repeat: repeat-x;
-	background-position: bottom;
-	border: 1px solid #afbdc9;
-}
-.ygrid-checkbox-editor{
-	text-align: center;
-	overflow:hidden;
-	display:block;
-	background-color:white;
-}
-.ygrid-checkbox-editor input{
-	margin-top:3px;
-	height:13px;
-	width:13px;
-}
-select.ygrid-editor{
-	padding: 0px;
-	-moz-outline: none;
-	border: 1px solid #afbdc9;
-}
-.ygrid-num-editor{
-	text-align:right;
-	padding-top:2px;
-	padding-left:3px;
-}
-.ygrid-text-editor{
-	padding-top:2px;
-	padding-left:3px;
-}
-.ygrid-hd{
-	background-color: #ebeadb;
-	border-bottom: 1px solid #cbc7b8;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	display: block;
-	position: absolute;
-	overflow:hidden;
-}
-.ygrid-column-sizer {
-	width:1px;
-	border-right:1px dashed #6593cf;
-	background:none;
-	cursor: col-resize;
-}
-.ygrid-drag-proxy{
-	width:150px;
-	height:24px;
-	background-color:#3366cc;
-	border: 1px solid #002266;
-	position:absolute;
-	visibility:hidden;
-	z-index:10000;
-}
-.ygrid-drag-text{
-   font: normal 8pt arial;
-	color:white;
-	position:absolute;
-	top:0px;
-	left:26px;
-	padding:3px;
-	display:block;
-}
-.ygrid-drop-icon{
-   position:absolute;
-	top:0px;
-	left:0px;
-	display:block;
-	width:24px;
-	height:100%;
-	background-position: center;
-	background-repeat: no-repeat;
-}
-.ygrid-drop-nodrop{
-   background-image: url(/img/grid/drop-no.gif);
-}
-.ygrid-drop-ok{
-   background-image: url(/img/grid/drop-yes.gif);
-}
-.ygrid-hd .sort-asc {
-	background-image: url(/img/grid/sort_asc.gif);
-	background-position: right;
-	background-repeat: no-repeat;
-	display: none;
-	height: 14px;
-	width: 16px;
-}
-.ygrid-hd .sort-desc {
-	background-image: url(/img/grid/sort_desc.gif);
-	background-position: right;
-	background-repeat: no-repeat;
-	display: none;
-	height: 14px;
-	width: 16px;
-}
-.ygrid-hd-body {
-	border-bottom: 2px solid #d6d2c2;
-	cursor: default;
-	display: block;
-	font: normal 8pt arial;
-	left: 0;
-	overflow: hidden;
-	padding: 3px 5px;
-	position: relative;
-	top: 0;
-	white-space: nowrap;
-}
-.ygrid-hd-body span {
-	font: normal 8pt arial;
-	white-space: nowrap; 
-}
-.ygrid-hd-over{
-	border-bottom: 2px solid #fcc247;
-}
-.ygrid-hd-over .ygrid-hd-body{
-	background-color: #faf9f4;
-	border-bottom: 1px solid #f9a900;
-}
-.ygrid-hd-split {
-	background-image: url(/img/grid/grid-split.gif);
-	background-position: center;
-	background-repeat: no-repeat;
-	cursor: e-resize;
-	display: block;
-	font-size: 1px;
-	height: 16px;
-	overflow: hidden;
-	position: absolute;
-	top: 2px;
-	width: 6px;
-	z-index: 3;
-}
-.ygrid-hrow{
-	background-color: #ebeadb;
-	display: block;
-	height: 22px;
-	left: 0;
-	position: relative;
-	top: 0;
-	width: 10000px;
-	overflow:hidden;
-	z-index:2;
-}
-.ygrid-hrow-frame{
-	height: 22px;
-	left: 0;
-	display:block;
-	position: absolute;
-	top: 0;
-	width: 10000px;
-	z-index:1;
-}
-.ygrid-footer .ytoolbar{
-	border:0px;
-}
-.ygrid-page-number{
-	width:24px;
-	height:14px;	
-}
-.ygrid-page-first{
-	background-image: url(/img/grid/page-first.gif);
-}
-.ygrid-loading{
-	background-image: url(/img/grid/done.gif);
-}
-.ygrid-page-last{
-	background-image: url(/img/grid/page-last.gif);
-}
-.ygrid-page-next{
-	background-image: url(/img/grid/page-next.gif);
-}
-.ygrid-page-prev{
-	background-image: url(/img/grid/page-prev.gif);
-}
-.ytb-button-disabled .ygrid-loading{
-	background-image: url(/img/grid/loading.gif);
-}
-.ytb-button-disabled .ygrid-page-first{
-	background-image: url(/img/grid/page-first-disabled.gif);
-}
-.ytb-button-disabled .ygrid-page-last{
-	background-image: url(/img/grid/page-last-disabled.gif);
-}
-.ytb-button-disabled .ygrid-page-next{
-	background-image: url(/img/grid/page-next-disabled.gif);
-}
-.ytb-button-disabled .ygrid-page-prev{
-	background-image: url(/img/grid/page-prev-disabled.gif);
-}
-.ygrid-mso{
-}
-.ygrid-mso .ygrid-hd{
-	background:none;
-	border-bottom:0px;
-}
-.ygrid-mso .ygrid-footer {
-	border-top: 1px solid #6593cf;
-}
-
-.ygrid-mso .ygrid-footer .ygrid-fbutton{
-	border:0px;
-}
-.ygrid-mso .ygrid-hd-body {
-	border-bottom:0px;
-}
-.ygrid-mso .ygrid-hd-over{
-	border-bottom:0px;
-}
-.ygrid-mso .ygrid-hd-over .ygrid-hd-body{
-	background-color: transparent;
-}
-.ygrid-mso .ygrid-hd-split {
-	background-image: url(/img/grid/grid-blue-split.gif);
-}
-.ygrid-mso .ytoolbar .ytb-sep {
-	background-image: url(/img/grid/grid-blue-split.gif);
-}
-.ygrid-mso .ygrid-hrow{
-	background: url(/img/grid/mso-hd.gif);
-	border-bottom: 1px solid #6593cf;
-	height: 21px;
-}
-.ygrid-mso .ygrid-row-selected{
-	background-color: #b4c5d2  !important;
-	color: black;
-}
-.ygrid-mso .ygrid-row-selected span{
-	color: black !important;
-}
-
-.ygrid-row-over{
-	background-color: #f1f1f1;
-	color: black;
-}
-.ygrid-row-selected{
-	background-color: #316ac5 !important;
-	color: white;
-}
-.ygrid-row-selected span{
-	color: white !important;
-}
-/* 
-  To have the scrollbars overlap the header, change .ygrid-wrap top style to 0 and 
-  and ygrid-wrap-body top to 22px
-  Then grid.getView().scrollbarMode = YAHOO.ext.grid.GridView.SCROLLBARS_OVERLAP;
- */
-.ygrid-wrap {
-	height: 100%;
-	left: 0;
-	overflow: auto;
-	position: relative;
-	top: 22px;
-	width: 100%;
-}
-.ygrid-footer{
-	display: block;
-	padding:0px;
-	border-top: 1px solid #cbc7b8;
-}
-.ygrid-wrap-footer {
-	display: block;
-	overflow: hidden;
-	width:100%;
-	height:25px;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	background-color: #ebeadb;
-	position:absolute;
-	bottom:0px;
-}
-.ygrid-wrap-body {
-	left: 0;
-	overflow: hidden;
-	position: absolute;
-	top: 0;
-	display: block;
-}
-.ygrid-wrap-headers {
-	left: 0;
-	overflow: hidden;
-	position: absolute;
-	top: 0;
-	z-index: 12;
-}
-/* 
-The grid first check if a column style is defined as:
-#your-grid .ygrid-col-0
-if it doesn't find it, it uses one of the generic empty rules below.
-If you have more than one grid on your page - you MUST define you columns
-like above - #container-id .ygrid-col-0 and they must each be a separate rule
-*/
-.ygrid-col-0{
-}
-.ygrid-col-1{
-}
-.ygrid-col-10{
-}
-.ygrid-col-11{
-}
-.ygrid-col-12{
-}
-.ygrid-col-13{
-}
-.ygrid-col-14{
-}
-.ygrid-col-15{
-}
-.ygrid-col-16{
-}
-.ygrid-col-17{
-}
-.ygrid-col-18{
-}
-.ygrid-col-19{
-}
-.ygrid-col-2{
-}
-.ygrid-col-20{
-}
-.ygrid-col-3{
-}
-.ygrid-col-4{
-}
-.ygrid-col-5{
-}
-.ygrid-col-6{
-}
-.ygrid-col-7{
-}
-.ygrid-col-8{
-}
-.ygrid-col-9{
-}
-
-.ygrid-header-0{
-}
-.ygrid-header-1{
-}
-.ygrid-header-10{
-}
-.ygrid-header-11{
-}
-.ygrid-header-12{
-}
-.ygrid-header-13{
-}
-.ygrid-header-14{
-}
-.ygrid-header-15{
-}
-.ygrid-header-16{
-}
-.ygrid-header-17{
-}
-.ygrid-header-18{
-}
-.ygrid-header-19{
-}
-.ygrid-header-2{
-}
-.ygrid-header-20{
-}
-.ygrid-header-3{
-}
-.ygrid-header-4{
-}
-.ygrid-header-5{
-}
-.ygrid-header-6{
-}
-.ygrid-header-7{
-}
-.ygrid-header-8{
-}
-.ygrid-header-9{
-}
-
-
-
-      body {font:normal 9pt verdana; margin:0;padding:0;border:0px none;overflow:hidden;}
-
-	.ylayout-panel-north {
-	    border:0px none;
-	    background-color:#c3daf9;
-	}
-	#nav {
-	}
-	#autoTabs, #center1, #center2, #west {
-	    padding:10px;
-	}
-	#north, #south{
-	    font:normal 8pt arial, helvetica;
-	    padding:4px;
-	}
-	.ylayout-panel-center p {
-	    margin:5px;
-	}
-	#props-panel .ygrid-col-0{
-	}
-	#props-panel .ygrid-col-1{
-	}
-
-/* via css class selector */
-.ygtvtn {background: transparent;  width:1em; height:20px; }
-.ygtvtm { background: url(/img/tree/collapse.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-.ygtvtmh { background: url(/img/tree/collapseh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-.ygtvtp { background: url(/img/tree/expand.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-.ygtvtph { background: url(/img/tree/expandh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-.ygtvln { background: transparent; width:1em; height:20px; }
-.ygtvlm { background: url(/img/tree/collapse.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-.ygtvlmh { background: url(/img/tree/collapseh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-.ygtvlp { background: url(/img/tree/expand.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-.ygtvlph { background: url(/img/tree/expandh.gif) 0 6px no-repeat; width:1em; height:22px; cursor:pointer }
-.ygtvloading { background: url(/img/tree/loading.gif) 0 6px no-repeat; width:1em; height:22px; }
-.ygtvdepthcell { background: transparent; width:1em; height:20px; }
-.ygtvblankdepthcell {background: transparent;  width:1em; height:20px; }
-.ygtvitem { border: 0px solid grey; }  
-.ygtvchildren { }  
-
-
-
-#playlists .ygrid-hrow { 
-height: 0px;
-}
-#playlists .ygrid-wrap { 
-top: 0px;
-}
-#playlists .ygrid-wrap-body { 
-top: 0px;
-}
-
-
-.playlist-item {
-	background: white;
-	display:block;
-	margin: 1px;
-	padding: 2px;
-	vertical-align: middle;
-	font-size:11px;
-	border:1px solid grey;
-	border-bottom:1px solid #dddddd;
-	color:#222222;
+.x-scroller-up, .x-scroller-down {
+	background-color:#c3daf9;
+	border: 1px solid #6593cf;
+	border-top-color: #fff;
+	border-left-color: #fff;
+	border-right:0 none;
 	cursor:pointer;
-	line-height: 18px;
-	-moz-user-select: none;
-	-khtml-user-select:none;
+	overflow:hidden;
+	line-height:16px;
 }
-
-#songs .ygrid-col-0 {
+.x-scroller-down {
+	border-bottom: 0 none;
+	border-top: 1px solid #6593cf;
 }
-#songs .ygrid-col-1 {
+.x-scroller-btn-over {
+	background-color: #d9e8f8;
 }
-#songs .ygrid-col-2 {
+.x-scroller-btn-click {
+	background-color: #AECEF7;
 }
-
-#playlist-description
-{
-  margin-left: auto; 
-  margin-right: auto;
-  width: 50em;
-  text-align: center;
-  font: 14px "sans serif", tahoma, verdana, helvetica;
-}
-
-#show-user-admin-btn
-{
-  position:absolute;
-  right: 10px;
-  top: 5px;
-  cursor:pointer;
-  }
-
-.ylayout-collapsed-east
-{
-  background-image:url(/img/messages.gif);
-  background-repeat:no-repeat;
-  background-position:center;
-  }
-
-
-#loading
-{
-  position:absolute;
-  left:45%;
-  top:40%;
-  border:3px solid #B2D0F7;
-  background:white url(/img/layout/block-bg.gif) repeat-x;
-  padding:10px;
-  font:bold 14px verdana,tahoma,helvetica;
-  color:#003366;
-  width:150px;
-  text-align:center;
-  }
-
-.loading-indicator 
-{
-  font-size:8pt;
-  background-image:url('/img/grid/loading.gif');
-  background-repeat: no-repeat;
-  background-position:top left;
-  padding-left:20px;
-  height:18px;
-  text-align:left;
-  }
-
-
-.ytoolbar{
-	background-color: #ebeadb;
-	border: 1px solid #cbc7b8;
-	display: block;
-	padding:2px;
-}
-.mso .ytoolbar, .ygrid-mso .ytoolbar{
-	border: 0px none;
-	background: url(/img/grid/mso-hd.gif);
-}
-
-.ytoolbar td,.ytoolbar span,.ytoolbar input,.ytoolbar div{
-   font:normal 8pt arial,helvetica;
-}
-
-.ytoolbar .ytb-button-disabled .ytb-button-inner{
-	color:gray;
+.x-scroller-btn-disabled {
 	cursor:default;
+	background-color: #c3daf9;
+	-moz-opacity: 0.3;
+   opacity:.30;
+   filter: alpha(opacity=30);
 }
 
-.ytoolbar .ytb-button-inner{
-	background-position: center;
-	background-repeat: no-repeat;
-	display: block;
-	height: 16px;
-	width: 16px;
-	cursor:pointer;
-	white-space: nowrap;
+/* Reader Layout */
+
+.x-reader .x-layout-panel-north {
+    border:0 none;
 }
-
-.ytoolbar .ytb-text{
-
-   padding:2px;
-
+.x-reader .x-layout-panel-center{
+    border:0 none;
 }
-
-.ytoolbar .ytb-button{
-
-   padding:2px 3px;
-
-	display:block;
-
+.x-reader .x-layout-nested-layout .x-layout-panel-center{
+    border:1px solid #99bbe8;
+    border-top:0 none;
 }
-
-.ytoolbar .ytb-button-over{
-
-   background:#c3d3ed url(/img/toolbar/btn-over-bg.gif) repeat-x;
-
-	border:1px solid #6593cf;
-
-	padding:1px 2px;
-
-}
-
-.ytoolbar .ytb-sep {
-	background-image: url(/img/grid/grid-split.gif);
-	background-position: center;
-	background-repeat: no-repeat;
-	display: block;
-	font-size: 1px;
-	height: 16px;
-	width:4px;
-	overflow: hidden;
-	cursor:default;
-	margin: 0px 2px 0px;
-	border:0px;
-}
-
-.mso .ytoolbar .ytb-sep, .ygrid-mso .ytoolbar .ytb-sep{
-	background-image: url(/img/grid/grid-blue-split.gif);
-}
-
-.link{ 
-	cursor: pointer;
- }
-
-.ytoolbar .new-topic-button{
-	background-image: url('/img/user_add.gif');
-	background-position: 0px 0px;
-	background-repeat: no-repeat;
-	padding-left:18px;
-	padding-top:1px;
-	width:auto;
-	display:block;
-}
-
-#users-grid .ygrid-col-0{
-}
-#users-grid .ygrid-col-1{
-}
-#users-grid .ygrid-col-2{
-}
-#users-grid .ygrid-col-3{
-}
-#users-grid .ygrid-col-4{
-}
-
-#song-search-results .ygrid-col-0{
-}
-#song-search-results .ygrid-col-1{
-}
-#song-search-results .ygrid-col-2{
-}
-#song-search-results .ygrid-col-3{
-}
-#song-search-results .ygrid-col-4{
-}
-
-#song-search-field
-{
- padding-left:0.2em;
- font:normal 10px tahoma, verdana, helvetica;
-}
-
-
-.ygrid-mso .ygrid-row{
-	border-bottom: 1px solid #f1efe2;
-	overflow: visible;
-	white-space: nowrap;
-	height:21px;
-	width:10000px;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	display:block;
-	position:absolute;
-background-color: white;
-	color: black;
-	border-bottom: 1px solid #ddecfe;
-}
-
-.ygrid-mso .ygrid-row-alt {
-background-color: #f5f5f5;
-}
-
-#playerEmbed
-{
-	background-color: #ce0000ff;
+.x-reader .x-layout-nested-layout .x-layout-panel-south{
+    border:1px solid #99bbe8;
 }

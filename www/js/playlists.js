@@ -1,286 +1,159 @@
-PlaylistsDlg = function(){
-
-	// define some private variables
-	var dialog, showBtn;
-	var currentEditId;
-	var wait,error,errorMsg;
-        save = function(){
-		wait.setVisible(true);
-		params = YAHOO.util.Connect.setForm(document.getElementById('playlist-dlg-form'));
-		var cb = {
-		success: function(o){
-				YAHOO.log( "Playlist save req success" ); 
-				Playlists.refresh();
-				o.argument.wait.setVisible(false);
-				o.argument.dialog.hide();
-			},
-		failure: function(o){ 
-				YAHOO.log("Playlist save req failed"); 
-				o.argument.wait.setVisible(false);
-				o.argument.errorMsg.update('Save Failed: ' + o.responseText);
-				o.argument.error.setVisible(true);
-			},
-		argument: { 'wait':wait,'dialog':dialog,'error':error,'errorMsg': errorMsg }
-		}
-		if ( currentEditId == null ){
-			url='/pl/create';
-		} else {
-			url='/pl/modify';
-			params+='&pl_id='+currentEditId;
-		}
-		YAHOO.log( "Save params: " + params );
-		YAHOO.util.Connect.asyncRequest('POST', url, cb, params );
-        }
-    initDialog  = function(){
-	    if ( dialog ){
-		    return null;
-	    }
-	    dialog = new YAHOO.ext.BasicDialog("playlists-dlg", { 
-		    modal:true,
-		    autoTabs:true,
-		    width:350,
-		    height:300,
-		    shadow:true
-	    });
-	    dialog.addKeyListener(27, dialog.hide, dialog);
-	    dialog.addButton('Close', dialog.hide, dialog);
-	    dialog.addButton('Save', this.save, this );
-	    var sizeTextBox = function(){
-		    txtDesc.setSize(dialog.size.width-44, dialog.size.height-200);
-		    txtName.setSize(dialog.size.width-44 );
-	    };
-	    dialog.on('resize', sizeTextBox);
-	    sizeTextBox();
-	    dialog.on('hide', function(){
-			    wait.removeClass('active-msg');
-			    error.removeClass('active-msg');
-			    txtDesc.dom.value = '';
-			    txtName.dom.value = '';
-			    errorMsg.update('');
-		    });
-    }
-
-    showDialog = function(title){
-	    dialog.getTabs().getTab( 0 ).setText(title);
-	    showBtn = getEl('playlists-show-btn');
-	    wait.setVisible(false);
-	    error.setVisible(false);
-            dialog.show(showBtn.dom);
-    }
-
-    // return a public interface
-    return {
-        init : function(){
-		    txtDesc = getEl('playlist-dlg-desc');
-		    txtName = getEl('playlist-dlg-name');
-		    wait = getEl('playlist-dlg-save-wait');
-		    error = getEl('playlist-dlg-save-error');
-		    errorMsg = getEl('playlist-dlg-error-msg');
-        },
-
-	showAddDialog : function(){
-	    initDialog();
-	    txtDesc.dom.value = '';
-	    txtName.dom.value = '';
-	    currentEditId=null;
-	    showDialog("Create Playlist");
-	},
-
-	showEditDialog:function( pl ){
-	    initDialog();
-	    currentEditId	= pl.id;
-	    txtDesc.dom.value	= pl.description;
-	    txtName.dom.value	= pl.name;
-	    showDialog("Edit Playlist");		    
-	}
-    };
-}();
-
-YAHOO.ext.EventManager.onDocumentReady(PlaylistsDlg.init, PlaylistsDlg, true);
 
 
+var PlaylistsGrid = function(){
 
-Playlists = function(){ 
+    var grid;
+    var ds;
+    var currentId;
+    var cssOver;
 
-    var grid, dm, cm;
-    var selectedRow, origColor;
-    var descEl;
-
-
-    renderEdit = function(val){
-	return '<img src="/img/edit.gif">';
-    }
-
-    hiLightRow = function( rowIndex ){
-	rowEl = grid.getRow( rowIndex );
-	grid.clearSelections();
-	YAHOO.util.Dom.setStyle( grid.getRow( selectedRow ), 'background-color', origColor );
-	origColor=YAHOO.util.Dom.getStyle( rowEl, 'background-color' );
-	YAHOO.util.Dom.setStyle( rowEl, 'background-color', '#f30f15' );
-
-    }
-
-    onPlDblClick = function(grid, rowIndex, colIndex){
- 	YAHOO.log( "PL Cell DBL Click on " + colIndex  );
-	row=dm.getRow( rowIndex );
-	if ( colIndex == 0 ){
-	    PlaylistsDlg.showEditDialog( { 'id': dm.getRowId( rowIndex ), 'description':row[0], 'name':row[1] } );
-	} else if ( rowIndex != selectedRow ){
-	    
-	    hiLightRow( rowIndex );
-
-	    selectedRow = rowIndex;
-	    row=dm.getRow( rowIndex );
-	    descEl.update( row[0] );
-	    Songs.refreshListing();
+    onDblClick = function(grid, rowIndex, colIndex){
+	if ( 1 == colIndex ){
+	    var pl = this.ds.getAt( rowIndex );
+	    this.currentId = pl.id;
+	    SongsGrid.refreshListing();
 	}
     }
-
-    add = function( pl ){
-	YAHOO.log( "Begin Adding pl" );
-	reload();
-    }
-
-    onLoad = function(){
-	row=dm.getRow( selectedRow );
-	hiLightRow( selectedRow );
-
-	descEl.update( row[0] );
-	Songs.refreshListing();
-    }
-
-    onFirstLoad = function(){
-	hiLightRow( 0 );
-
-	row=dm.getRow( selectedRow );
-	descEl.update( row[0] );
-	Songs.init.call( Songs );
-	Layout.init();
-	dm.removeListener('load', onFirstLoad );
-	dm.addListener('load', onLoad, this, true);
-    }
-    handleDrag = function( style, last_style, event ){
-	rownum=grid.getTargetRow( event );
-	if ( rownum == null ) {
-	    rownum = dm.getRowCount()-1;
-	    style=last_style;
-	}
-	row = grid.getRow( rownum );
-	HighlightEvents.start( row, style );
+    afterEdit = function( edit ){
+	var params = 'pl_id=' + PlaylistsGrid.ds.getAt( edit.row ).id.toString() + '&text=' + encodeURIComponent(edit.value);
+	Ext.lib.Ajax.request( 'POST', '/pl/update/' + edit.field, null, params );
+	PlaylistsGrid.ds.commitChanges();
     }
     return {
-
-	refresh : function(){
-	    dm.load('/pl/list');
+	clearDNDcss : function() {
+	    Ext.util.CSS.updateRule( ".x-grid-row-over td", "border", "0px" );
+	    Ext.util.CSS.updateRule( ".x-grid-row-over td", "border-bottom" , "1px solid #c3daf9" );
+	    Ext.util.CSS.updateRule(  ".x-grid-row-over td, .x-grid-locked .x-grid-row-over td", "background-color", '#d9e8fb' );
 	},
-	elementOver : function( event ){
-	    row=grid.getTargetRow( event );
-	    if ( row != lastHighlighted ){
-		if ( lastHighlighted == null ){
-		    if ( dm.getRowCount() ){
-			grid.getRow( dm.getRowCount()-1 ).style.borderBottom = '';
-		    }
-		} else {
-		    old_row = grid.getRow( lastHighlighted );
-		    if ( old_row ){
-			old_row.style.border = '';
-		    }
-		}
-		if ( row == null ){
-		    new_row = grid.getRow( dm.getRowCount()-1 );
-		    new_row.style.border = '1px solid red';
-
-		} else {
-		    new_row = grid.getRow( row );
-		    if ( new_row ){
-			new_row.style.border = '1px solid red';
-		    }
-		}
-		lastHighlighted = row;
-	    }
+	refreshListing : function(){
+	    this.ds.load( { params: { } } );
 	},
-
-	dragOver : function( event, src_id ){
-	    if ( src_id == 'playlists' ){
-		handleDrag( 'borderTop', 'borderBottom', event );
-	    } else {
-		handleDrag( 'border','border',event );
-	    }
+	addNew : function(){
+	    PlaylistsGrid.ds.add(
+				 new Ext.data.Record( {
+				     description:'Unnamed Playlist',
+				     name: 'New Playlist',
+				     newRecord: true
+				 }, 0 ) );
 	},
-
 	init : function(){
-	    lastHighlighted=0;
-	    descEl=getEl('playlist-description');
-	    dm = new YAHOO.ext.grid.JSONDataModel( {
-		root: 'Playlists',
-		id: 'id',
-		fields: ['description','name']
-	    } );
-	    dm.addListener('load', onFirstLoad, this, true);
+            // create the Data Store
+	    this.ds = new Ext.data.Store({
+                // load using HTTP
+		proxy: new Ext.data.HttpProxy({url: '/pl/list'}),
 
-	    cm=new YAHOO.ext.grid.DefaultColumnModel( [
-						       {header: "Edit", width: 20,renderer:renderEdit},
-						       {header: "Name", width: 150 }
-						       ] );
-	    cm.setColumnWidth( 0,24 );
-	    grid = new SpinnyGrid( 'playlists', dm, cm );
-	    grid.reOrderUrl='/pl/reorder';
-//		    grid.addListener('cellclick', onPlClick, this, true )
-	    grid.addListener('celldblclick', onPlDblClick, this, true );
+                // the return will be XML, so lets set up a reader
+		reader: new Ext.data.JsonReader( {
+		    root: 'Playlists',
+		    id: 'id',
+		},[
+		   {description: 'description' },
+		   {name: 'name' }
+		   ] )
+	    });
+	    var cm = new Ext.grid.ColumnModel([
+					       {					       
+						   dataIndex:'name',
+						   editor: new Ext.grid.GridEditor( new Ext.form.TextField( { allowBlank: false } ) )
+					       },
+					       { fixed:true, width: 30,renderer:
+						   function(){ return '<img src="/images/custom/play.png" class="link">'; } },
 
-//	    grid.addListener("enddrag", function(grid,dd,id,e){ Layout.handlePlDrop( dd, id, e ) } );
+					   ]);
 
-	    YAHOO.log("PLaylists Grid id: " + grid.id);
+            // create the grid
+	    this.grid = new Ext.grid.EditorGrid('playlistsGrid', {
+		ds: this.ds,
+		cm: cm,
+		selModel: new Ext.grid.RowSelectionModel({singleSelect:true}),
+		autoSizeColumns:true,
+		monitorWindowResize: true,
+		trackMouseOver: true,
+		autoWidth:true,
+		enableDragDrop:true,
+		ddGroup : 'songsDD',
+	    });
+
+	    this.grid.autoWidth = true;
+	    this.grid.addListener('afteredit', afterEdit, this, true );
+	    this.grid.autoWidth = true;
+	    this.grid.addListener('celldblclick', onDblClick, this, true );
+
+	    this.grid.on( 'startdrag', function(grid,dd,e){
+		Layout.beginDrag( 'pl', PlaylistsGrid.grid.getSelectionModel().getSelected().id );
+	    });
+
+	    Layout.addPlGrid( this.grid );
 
 
-	    grid.autoSize = function(){
-		SpinnyGrid.superclass.autoSize.call(this);
-		model=this.colModel;
-		view=this.getView();
-		width = view.wrap.clientWidth;
-	    }
 
-	    grid.enableDragDrop = true;
-	    grid.selfTarget = true;
-	    grid.autoSizeColumns = false;
-	    grid.selectAfterDrop = true;
-	    dm.load('/pl/list');
-	    grid.render();
-	    selectedRow=0;
-
-	},
-	getGrid : function(){
-	    return grid;
-	},
-	selected : function(){
-	    return dm.getRowId( selectedRow );
-	},
-	songDropped : function( event, song_ids ){
-	    row=grid.getTargetRow( event );
-	    YAHOO.log("Song id " + song_ids + " Dropped on PL row " + row );
-	    pl_id=dm.getRowId( row );
-	    params='pl_id='+pl_id+'&position=0'
-	    for (x=0; x<song_ids.length;++x){
-		YAHOO.log( "ADDING ID: " + song_ids[x] );
-		params+='&song_id='+song_ids[x];
-	    }
-	    YAHOO.log("Song id " + song_ids + " Dropped on PL row " + row );
-
-	    var cb = {
-		success: function(o){ YAHOO.log( "PL Song add req success" ); 
-		    if ( o.argument ){
-			Songs.refreshListing();	      
+	    var drop = new Ext.dd.DropTarget( this.grid.container, {
+		ddGroup : 'songsDD',
+		notifyDrop : function( dd, e, data){
+		    PlaylistsGrid.clearDNDcss();
+		    var t = e.getTarget();
+		    var row = PlaylistsGrid.grid.view.findRowIndex(t);
+		    if ( ! row ){
+			row = PlaylistsGrid.ds.data.items.length-1;
 		    }
+
+		    var pl_id = PlaylistsGrid.ds.getAt( row ).id.toString()
+		    var drag_data = Layout.getDragData();
+		    var cb = ( pl_id == PlaylistsGrid.getCurrentId() ) ? { success: function(o){ SongsGrid.refreshListing(); } } : null;
+		    if ( "songsGrid" == drag_data.type ){
+			var params='pos=0&pl_id='+ pl_id;
+			for( var i=0; i < drag_data.ids.length; ++i ){
+			    params+="&song_id=" + drag_data.ids[i];
+			}
+			Ext.lib.Ajax.request( 'POST', '/pl/songs/addsongs', cb, params );
+		    } else if ( "pl" == drag_data.type ){
+			var dragData = dd.getDragData(e);
+			var params='rdr=1';
+			for( var i = 0, len = data.selections.length; i < len; i++) {
+       			    PlaylistsGrid.ds.remove(data.selections[i]);
+			}
+			PlaylistsGrid.grid.selModel.clearSelections();
+			var pos = dragData.rowIndex;
+			if ( ! pos ){
+			    pos = PlaylistsGrid.ds.data.items.length;
+			}
+			PlaylistsGrid.ds.insert(pos, data.selections);
+			for ( var x = 0, len = PlaylistsGrid.ds.data.getCount(); x < len; x++ ) {
+			    params+="&" + PlaylistsGrid.ds.getAt( x ).id.toString() + "=" + (x+1).toString();
+			}
+			Ext.lib.Ajax.request( 'POST', '/pl/reorder', null, params );
+		    } else {
+			Ext.lib.Ajax.request( 'POST', '/pl/songs/add/' + drag_data.type, cb,
+					     'pl_id='+pl_id+'&id='+drag_data.ids+'&pos='+0 );
+		    }
+	    	    return true;
 		},
-		argument: ( Playlists.selected() == pl_id ),
-		failure: function(o){ YAHOO.log("PL Song add req failed"); }
-	    }
-	    YAHOO.log( "PL About to send song additions " + params );
-//	    YAHOO.util.Connect.asyncRequest( 'POST', '/pl/songs/add', cb, params );
+ 		notifyEnter: function( src, e, data ){
+		    PlaylistsGrid.cssOver = Ext.util.CSS.getRule( ".x-grid-row-over td",true );
+		    Ext.util.CSS.updateRule( ".x-grid-row-over td", "border-top" , "1px solid red" );
+		    if ( 'pl' != Layout.getDragData().type ){
+			Ext.util.CSS.updateRule( ".x-grid-row-over td", "border-bottom" , "1px solid red" );
+		    } else {
+			Ext.util.CSS.updateRule(  ".x-grid-row-over td, .x-grid-locked .x-grid-row-over td", "background-color", 'white' );
+		    }
+ 		    return drop.dropAllowed;
+ 		},
+ 		notifyOut: function( src, e, data ){
+		    PlaylistsGrid.clearDNDcss();
+ 		    return drop.dropAllowed;
+ 		}
+	    });
+
+	    this.grid.render();
+
+	    PlaylistsGrid.refreshListing();
 	},
+
+	getCurrentId : function(){
+	    return this.currentId || 1;
+	}
 
     };
-
 }();
 
-YAHOO.ext.EventManager.onDocumentReady( Playlists.init, Playlists, Playlists, true);
+Ext.EventManager.onDocumentReady( PlaylistsGrid.init, PlaylistsGrid, true);

@@ -1,191 +1,165 @@
-.ygrid-cell-text {
-	display: block;
-	font: normal 8pt arial;
-	overflow: hidden;
-	padding: 3px 5px;
-	white-space: nowrap;
+/*
+ * Ext JS Library 1.0.1
+ * Copyright(c) 2006-2007, Ext JS, LLC.
+ * licensing@extjs.com
+ * 
+ * http://www.extjs.com/license
+ */
+
+/* Grid2 styles */
+.x-grid {
+	position:relative;
+	overflow:hidden;
+    background-color:#fff;
 }
-.ygrid-col{
-	cursor: default;
-	height:21px !important;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
+.x-grid-scroller {
+	overflow:auto;
+}
+.x-grid-viewport, .x-grid-locked{
 	position:absolute;
-	display:block;
-	-moz-outline: none;
-	-moz-user-focus: normal;
-	overflow: hidden;
-	border-left: 1px solid #f1efe2;
+	left:0; top: 0;
+	z-index:2;
+	overflow:hidden;
+	visibility:hidden;
 }
-.yeditgrid .ygrid-col{
-	-moz-outline: normal;
-}
-.ygrid-col, .ygrid-hd {
-	font: normal 8pt arial;
+.x-grid-cell-inner, .x-grid-hd-inner{
+	overflow:hidden;
 	-o-text-overflow: ellipsis;
 	text-overflow: ellipsis;
 }
-.ygrid-col-0{
-	border-left: 0px;
-}
-.ygrid-col-last{
-	border-right: 1px solid #f1efe2;
-}
-.ygrid-editor{
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	position:absolute;
-	visibility:hidden;
-	font: normal 8pt arial;
-	border: 1px solid #afbdc9;
-	z-index:10;
-}
-.ygrid-editor input{
-	font: normal 8pt arial;
-	border: 0px;
-	padding-top:2px;
-	padding-left:3px;
-}
-.ygrid-editor-container{
-	overflow:hidden;
-	display:block;
-	background-color:white;
-}
-.ygrid-editor .pick-button{
-	width:15px;
-	height:20px;
-	position:absolute;
-	display:block;
-	right:0;
-	top:0;
-	z-index:2;
-	background-image: url(/img/grid/pick-button.gif);
-	background-repeat: no-repeat;
-}
-.ygrid-editor-invalid{
-	background-image: url(/img/grid/invalid_line.gif);
-	background-repeat: repeat-x;
-	background-position: bottom;
-	border: 1px solid #afbdc9;
-}
-.ygrid-checkbox-editor{
-	text-align: center;
-	overflow:hidden;
-	display:block;
-	background-color:white;
-}
-.ygrid-checkbox-editor input{
-	margin-top:3px;
-	height:13px;
-	width:13px;
-}
-select.ygrid-editor{
-	padding: 0px;
+.x-grid-hd-row td, .x-grid-row td{
+	font:normal 11px arial, tahoma, helvetica, sans-serif;
+    line-height:13px;
+    white-space: nowrap;
+	vertical-align: top;
 	-moz-outline: none;
-	border: 1px solid #afbdc9;
+	-moz-user-focus: normal;
 }
-.ygrid-num-editor{
-	text-align:right;
-	padding-top:2px;
-	padding-left:3px;
+.x-grid-hd-row td {
+    line-height:14px;
 }
-.ygrid-text-editor{
-	padding-top:2px;
-	padding-left:3px;
+.x-grid-col {
+	border-right: 1px solid #ebebeb;
+	border-bottom: 1px solid #ebebeb;
 }
-.ygrid-hd{
-	background-color: #ebeadb;
-	border-bottom: 1px solid #cbc7b8;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	display: block;
-	position: absolute;
-	overflow:hidden;
+/* Locked styles */
+
+.x-grid-locked .x-grid-body td {
+	background-color: #FBFDFF;
+	border-right: 1px solid #deecfd;
+	border-bottom: 1px solid #deecfd !important;
 }
-.ygrid-column-sizer {
-	width:1px;
-	border-right:1px dashed #6593cf;
-	background:none;
-	cursor: col-resize;
+.x-grid-locked .x-grid-body td .x-grid-cell-inner {
+	border-top:0 none;
 }
-.ygrid-drag-proxy{
-	width:150px;
-	height:24px;
-	background-color:#3366cc;
-	border: 1px solid #002266;
-	position:absolute;
-	visibility:hidden;
-	z-index:10000;
+.x-grid-locked .x-grid-row-alt td{
+	background-color: #F5FAFE;
 }
-.ygrid-drag-text{
-   font: normal 8pt arial;
-	color:white;
-	position:absolute;
-	top:0px;
-	left:26px;
-	padding:3px;
-	display:block;
+
+.x-grid-locked .x-grid-header table{
+    border-right:1px solid transparent;
 }
-.ygrid-drop-icon{
-   position:absolute;
-	top:0px;
-	left:0px;
-	display:block;
-	width:24px;
-	height:100%;
-	background-position: center;
-	background-repeat: no-repeat;
+.x-grid-locked .x-grid-body table{
+    border-right:1px solid #c3daf9;
 }
-.ygrid-drop-nodrop{
-   background-image: url(/img/grid/drop-no.gif);
+
+.x-grid-locked .x-grid-body td .x-grid-cell-inner {
+	
 }
-.ygrid-drop-ok{
-   background-image: url(/img/grid/drop-yes.gif);
-}
-.ygrid-hd .sort-asc {
-	background-image: url(/img/grid/sort_asc.gif);
-	background-position: right;
-	background-repeat: no-repeat;
-	display: none;
-	height: 14px;
-	width: 16px;
-}
-.ygrid-hd .sort-desc {
-	background-image: url(/img/grid/sort_desc.gif);
-	background-position: right;
-	background-repeat: no-repeat;
-	display: none;
-	height: 14px;
-	width: 16px;
-}
-.ygrid-hd-body {
-	border-bottom: 2px solid #d6d2c2;
+.x-grid-row {
 	cursor: default;
+}
+.x-grid-row-alt{
+	background-color:#f1f1f1;
+}
+.x-grid-row-over td{
+	background-color:#d9e8fb;
+}
+.x-grid-resize-proxy {
+	width:3px;
+	background-color:#cccccc;
+	cursor: e-resize;
+	cursor: col-resize;
+	position:absolute;
+	top:0;
+	height:100px;
+	overflow:hidden;
+	visibility:hidden;
+	border:0 none;
+	z-index:7;
+}
+.x-grid-focus {
+	position:absolute;
+	top:0;
+	-moz-outline:0 none;
+    outline:0 none;
+    -moz-user-select: normal;
+    -khtml-user-select: normal;
+}
+
+/* header styles */
+.x-grid-header{
+	background: #ebeadb url(../images/default/grid/grid-hrow.gif) repeat-x;
+	overflow:hidden;
+	position:relative;
+	cursor:default;
+	width:100%;
+}
+.x-grid-hd-row{
+	height:22px;
+}
+.x-grid-hd {
+	padding-right:1px;
+}
+.x-grid-hd-over .x-grid-hd-inner {
+	border-bottom: 1px solid #c3daf9;
+}
+.x-grid-hd-over .x-grid-hd-text {
+	background: #fafafa url(../images/default/grid/grid-hrow.gif) repeat-x 0 1px;
+	padding-bottom:1px;
+    border-bottom: 1px solid #b3cae9;
+}
+.x-grid-sort-icon{
+	background-repeat: no-repeat;
+	display: none;
+	height: 4px;
+	width: 13px;
+	margin-left:3px;
+	vertical-align: middle;
+}
+.x-grid-header .sort-asc .x-grid-sort-icon {
+	background-image: url(../images/default/grid/sort_asc.gif);
+	display: inline;
+}
+.x-grid-header .sort-desc .x-grid-sort-icon {
+	background-image: url(../images/default/grid/sort_desc.gif);
+	display: inline;
+}
+
+/* Body Styles */
+.x-grid-body {
+	overflow:hidden;
+	position:relative;
+	width:100%;
+	zoom:1;
+}
+
+.x-grid-cell-text,.x-grid-hd-text {
 	display: block;
-	font: normal 8pt arial;
-	left: 0;
-	overflow: hidden;
-	padding: 3px 5px;
-	position: relative;
-	top: 0;
-	white-space: nowrap;
+	padding: 3px 5px 3px 5px;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	color:black;
 }
-.ygrid-hd-body span {
-	font: normal 8pt arial;
-	white-space: nowrap; 
+.x-grid-hd-text {
+    padding-top:4px;
 }
-.ygrid-hd-over{
-	border-bottom: 2px solid #fcc247;
-}
-.ygrid-hd-over .ygrid-hd-body{
-	background-color: #faf9f4;
-	border-bottom: 1px solid #f9a900;
-}
-.ygrid-hd-split {
-	background-image: url(/img/grid/grid-split.gif);
+.x-grid-split {
+	background-image: url(../images/default/grid/grid-split.gif);
 	background-position: center;
 	background-repeat: no-repeat;
 	cursor: e-resize;
+	cursor: col-resize;
 	display: block;
 	font-size: 1px;
 	height: 16px;
@@ -195,488 +169,127 @@ select.ygrid-editor{
 	width: 6px;
 	z-index: 3;
 }
-.ygrid-hrow{
-	background-color: #ebeadb;
-	display: block;
-	height: 22px;
-	left: 0;
-	position: relative;
-	top: 0;
-	width: 10000px;
-	overflow:hidden;
-	z-index:2;
+
+.x-grid-hd-text {
+	color:#15428b;
 }
-.ygrid-hrow-frame{
-	height: 22px;
-	left: 0;
-	display:block;
-	position: absolute;
-	top: 0;
-	width: 10000px;
-	z-index:1;
-}
-.ygrid-footer .ytoolbar{
-	border:0px;
-}
-.ygrid-page-number{
-	width:24px;
-	height:14px;	
-}
-.ygrid-page-first{
-	background-image: url(/img/grid/page-first.gif);
-}
-.ygrid-loading{
-	background-image: url(/img/grid/done.gif);
-}
-.ygrid-page-last{
-	background-image: url(/img/grid/page-last.gif);
-}
-.ygrid-page-next{
-	background-image: url(/img/grid/page-next.gif);
-}
-.ygrid-page-prev{
-	background-image: url(/img/grid/page-prev.gif);
-}
-.ytb-button-disabled .ygrid-loading{
-	background-image: url(/img/grid/loading.gif);
-}
-.ytb-button-disabled .ygrid-page-first{
-	background-image: url(/img/grid/page-first-disabled.gif);
-}
-.ytb-button-disabled .ygrid-page-last{
-	background-image: url(/img/grid/page-last-disabled.gif);
-}
-.ytb-button-disabled .ygrid-page-next{
-	background-image: url(/img/grid/page-next-disabled.gif);
-}
-.ytb-button-disabled .ygrid-page-prev{
-	background-image: url(/img/grid/page-prev-disabled.gif);
-}
-.ygrid-mso{
-}
-.ygrid-mso .ygrid-hd{
-	background:none;
-	border-bottom:0px;
-}
-.ygrid-mso .ygrid-footer {
-	border-top: 1px solid #6593cf;
+/* Column Reorder DD */
+.x-dd-drag-proxy .x-grid-hd-inner{
+	background: #ebeadb url(../images/default/grid/grid-hrow.gif) repeat-x;
+	height:22px;
+	width:120px;
 }
 
-.ygrid-mso .ygrid-footer .ygrid-fbutton{
-	border:0px;
-}
-.ygrid-mso .ygrid-hd-body {
-	border-bottom:0px;
-}
-.ygrid-mso .ygrid-hd-over{
-	border-bottom:0px;
-}
-.ygrid-mso .ygrid-hd-over .ygrid-hd-body{
-	background-color: transparent;
-}
-.ygrid-mso .ygrid-hd-split {
-	background-image: url(/img/grid/grid-blue-split.gif);
-}
-.ygrid-mso .ytoolbar .ytb-sep {
-	background-image: url(/img/grid/grid-blue-split.gif);
-}
-.ygrid-mso .ygrid-hrow{
-	background: url(/img/grid/mso-hd.gif);
-	border-bottom: 1px solid #6593cf;
-	height: 21px;
-}
-.ygrid-mso .ygrid-row{
-	color: black;
-	border-bottom: 1px solid #ddecfe;
-}
-.ygrid-mso .ygrid-row-alt{
-	background-color: #f5f5f5;
-}
-.ygrid-mso .ygrid-row-selected{
-	background-color: #b3c8e8  !important;
-	color: black;
-}
-.ygrid-mso .ygrid-row-selected span{
-	color: black !important;
-}
-.yprops-grid .ygrid-col-1{
-	 background-color: #f1efe2;
-}
-.yprops-grid .ygrid-col-1 .ygrid-cell-text{
-	 background-color: white;
-}
-.yprops-grid .ygrid-col-0{
-	 background-color: #f1efe2;
-}
-.yprops-grid .ygrid-col-0 .ygrid-cell-text{
-	 background-color: white;
-	 margin-left:10px;
-}
-.yprops-grid .ygrid-prop-edting .ygrid-col-0 .ygrid-cell-text{
-	 background-color: #316ac5;
-	 color: white;
-}
-.yprops-grid .ygrid-prop-edting .ygrid-col-0{
-	 color: white;
-}
-.yprops-grid .ygrid-num-editor{
-	text-align:left;
-}
-.ygrid-row{
-	border-bottom: 1px solid #f1efe2;
-	overflow: visible;
-	white-space: nowrap;
-	height:21px;
-	width:10000px;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	display:block;
+.col-move-top, .col-move-bottom{
+	width:9px;
+	height:9px;
 	position:absolute;
+	top:0;
+	line-height:1px;
+	font-size:1px;
+	overflow:hidden;
+	visibility:hidden;
+	z-index:20000;
 }
-.ygrid-row-alt{
-	background-color: #fcfaf6;
+.col-move-top{
+	background:transparent url(../images/default/grid/col-move-top.gif) no-repeat left top;
 }
-.ygrid-row-over{
-	background-color: #f1f1f1;
-	color: black;
+.col-move-bottom{
+	background:transparent url(../images/default/grid/col-move-bottom.gif) no-repeat left top;
 }
-.ygrid-row-selected{
+
+/* Selection Styles */
+.x-grid-row-selected td, .x-grid-locked .x-grid-row-selected td{
 	background-color: #316ac5 !important;
 	color: white;
 }
-.ygrid-row-selected span{
+.x-grid-row-selected span, .x-grid-row-selected b, .x-grid-row-selected div, .x-grid-row-selected strong, .x-grid-row-selected i{
 	color: white !important;
 }
-.ygrid-vista{
-	 border:1px solid #535353;
-}
-.ygrid-vista .ygrid-hd{
-	border-bottom:0px;
-}
-.ygrid-vista .ygrid-hd-body {
-	border-bottom: 1px solid #b3bcc0;
-}
-.ygrid-vista .ygrid-hd-over{
-	border-bottom:0px;
-}
-.ygrid-vista .ygrid-hd-over .ygrid-hd-body{
-	background-color: transparent;
-	border-bottom:0px;
-}
-.ygrid-vista .ygrid-hd-split {
-	background-image: url(/img/grid/grid-split.gif);
-}
-.ygrid-vista .ygrid-hrow{
-	background: url(/img/grid/grid-vista-hd.gif);
-	height: 21px;
-}
-.ygrid-vista .ygrid-row-alt{
-	background-color: #f5f5f5;
-}
-.ygrid-vista .ygrid-row-selected{
-	background-color: #535353  !important;
+.x-grid-row-selected .x-grid-cell-text{
 	color: white;
 }
-.ygrid-vista .ygrid-row-selected span{
+.x-grid-cell-selected{
+	background-color: #316ac5 !important;
+	color: white;
+}
+.x-grid-cell-selected span{
 	color: white !important;
 }
-.ygrid-vista .ygrid-wrap-body {
-}
-/* 
-  To have the scrollbars overlap the header, change .ygrid-wrap top style to 0 and 
-  and ygrid-wrap-body top to 22px
-  Then grid.getView().scrollbarMode = YAHOO.ext.grid.GridView.SCROLLBARS_OVERLAP;
- */
-.ygrid-wrap {
-	height: 100%;
-	left: 0;
-	overflow: auto;
-	position: relative;
-	top: 22px;
-	width: 100%;
-}
-.ygrid-footer{
-	display: block;
-	padding:0px;
-	border-top: 1px solid #cbc7b8;
-}
-.ygrid-wrap-footer {
-	display: block;
-	overflow: hidden;
-	width:100%;
-	height:25px;
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	background-color: #ebeadb;
-	position:absolute;
-	bottom:0px;
-}
-.ygrid-wrap-body {
-	left: 0;
-	overflow: hidden;
-	position: absolute;
-	top: 0;
-	display: block;
-}
-.ygrid-wrap-headers {
-	left: 0;
-	overflow: hidden;
-	position: absolute;
-	top: 0;
-	z-index: 12;
-}
-/* 
-The grid first check if a column style is defined as:
-#your-grid .ygrid-col-0
-if it doesn't find it, it uses one of the generic empty rules below.
-If you have more than one grid on your page - you MUST define you columns
-like above - #container-id .ygrid-col-0 and they must each be a separate rule
-*/
-.ygrid-col-0{
-}
-.ygrid-col-1{
-}
-.ygrid-col-10{
-}
-.ygrid-col-11{
-}
-.ygrid-col-12{
-}
-.ygrid-col-13{
-}
-.ygrid-col-14{
-}
-.ygrid-col-15{
-}
-.ygrid-col-16{
-}
-.ygrid-col-17{
-}
-.ygrid-col-18{
-}
-.ygrid-col-19{
-}
-.ygrid-col-2{
-}
-.ygrid-col-20{
-}
-.ygrid-col-3{
-}
-.ygrid-col-4{
-}
-.ygrid-col-5{
-}
-.ygrid-col-6{
-}
-.ygrid-col-7{
-}
-.ygrid-col-8{
-}
-.ygrid-col-9{
-}
-
-.ygrid-header-0{
-}
-.ygrid-header-1{
-}
-.ygrid-header-10{
-}
-.ygrid-header-11{
-}
-.ygrid-header-12{
-}
-.ygrid-header-13{
-}
-.ygrid-header-14{
-}
-.ygrid-header-15{
-}
-.ygrid-header-16{
-}
-.ygrid-header-17{
-}
-.ygrid-header-18{
-}
-.ygrid-header-19{
-}
-.ygrid-header-2{
-}
-.ygrid-header-20{
-}
-.ygrid-header-3{
-}
-.ygrid-header-4{
-}
-.ygrid-header-5{
-}
-.ygrid-header-6{
-}
-.ygrid-header-7{
-}
-.ygrid-header-8{
-}
-.ygrid-header-9{
-}
-/* The styles below are for the examples and can be removed */
-#grid-example{
-	border: 1px solid #cbc7b8;
-	left: 0;
-	position: relative;
-	top: 0;
-}
-#grid-example .ygrid-col-0 {
-}
-#grid-example .ygrid-col-1 {
-	text-align: right;
-}
-#grid-example .ygrid-col-2{
-	text-align: right;
-}
-#grid-example .ygrid-col-3 {
-	text-align: right;
-}
-#grid-example .ygrid-col-4 {
-	text-align: right;
-}
-#grid-example.ygrid-mso{
-	border: 1px solid #6593cf;
-}
-#grid-example.ygrid-vista{
-	border: 1px solid #b3bcc0;
-}
-#xml-grid-example{
-	border: 1px solid #cbc7b8;
-	left: 0;
-	position: relative;
-	top: 0;
-}
-#xml-grid-example .ygrid-col-0 {
-}
-#xml-grid-example .ygrid-col-1 {
-}
-#xml-grid-example .ygrid-col-2{
-}
-#xml-grid-example .ygrid-col-3 {
-}
-#xml-grid-example.ygrid-mso{
-	border: 1px solid #6593cf;
-}
-#xml-grid-example.ygrid-vista{
-	border: 1px solid #b3bcc0;
-}
-#editor-grid .ygrid-col-2{
-    text-align:right;
-}
-.ypopcal{
-	background: white;
-	padding:2px;
-	border: 1px solid gray;
-}
-.ypopcal-shadow {
-	background: #dddddd;
-	filter: progid:DXImageTransform.Microsoft.Blur(MakeShadow=true,pixelradius=1) Alpha(opacity=35,style=1,startX=0,finishX=200,FinishOpacity=35);
-	padding: 0px;
-	position:absolute;
-}
-.ypopcal-head{
-	width:150px;
-	background: #93b5e4;
-}
-.ypopcal-head td{
-	padding:1px;
-}
-.ypopcal-month{
+.x-grid-cell-selected .x-grid-cell-text{
 	color: white;
-	font: bold 7pt verdana;
-	text-decoration: none;
-	text-align:center;
-}
-.ypopcal-head .ypopcal-arrow{
-	width:16px;
-	text-align:center;
-	cursor:pointer;
-	-moz-user-select: none;
 }
 
-.ypopcal-head .next-month{
-	width:16px;
-	background-image: url(/img/grid/arrow-right-white.gif);
-	background-position: center;
-	background-repeat: no-repeat;
-	cursor:pointer;
+.x-grid-locked td.x-grid-row-marker, .x-grid-locked .x-grid-row-selected td.x-grid-row-marker{
+    background: #ebeadb url(../images/default/grid/grid-hrow.gif) repeat-x 0 bottom !important;
+    vertical-align:middle !important;
+    color:black;
+    padding:0;
+    border-top:1px solid white;
+    border-bottom:none !important;
+    border-right:1px solid #6fa0df !important;
+    text-align:center;
 }
-.ypopcal-head .prev-month{
-	width:16px;
-	background-image: url(/img/grid/arrow-left-white.gif);
-	background-position: center;
-	background-repeat: no-repeat;
-	cursor:pointer;
-}
-
-.ypopcal-table {
-	background:white;
-	border-bottom: 1px solid #cccccc;
-}
-.ypopcal-table tr{
-	
-}
-.ypopcal-table td{
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	border: 1px solid white;
-	text-align:right;
-	color:#aaaaaa;
-	cursor:pointer;
-	font:normal 8pt arial;
-	background:white;
-	padding:1px 2px;
-	width:12px;
-	height:12px;
-}
-.ypopcal-table td.today{
-	border: 1px solid darkred;
-}
-.ypopcal-table .ypopcal-daynames td{
-	text-align:center !important;
-	border:0px;
-	border-bottom: 1px solid #cccccc;
-	font-size: 8pt;
-	font-weight: normal;
-	text-align:right;
-	color:black;
-	cursor:default;
-}
-.ypopcal-table td.active{
-	cursor:pointer;
-	color:black;
-}
-.ypopcal-table td.ypopcal-disabled{
-	cursor:default;
-	background:#eeeeee;
-	border: 1px solid #eeeeee;
-	color:#bbbbbb;
-}
-.ypopcal-table td.selected{
-	background: #ddecfe;
-	border: 1px solid #c3daf9;
-}
-.ypopcal-today{
-	color: black;
-	cursor: hand;
-	display: inline-block;
-	font: normal 8pt arial;
-	margin-left: 2px;
-	text-decoration: none;
-	margin-top:0px;
+.x-grid-locked td.x-grid-row-marker div, .x-grid-locked .x-grid-row-selected td.x-grid-row-marker div{
+    padding:0 4px;
+    color:#15428b !important;
+    text-align:center;
 }
 
-.ygrid-simple-view .ygrid-col{
-	 height:100% !important;
-	 position:static;
-	 display:table-cell;
-	 display:inline-block;
+/* dirty cells */
+.x-grid-dirty-cell {
+    background: transparent url(../images/default/grid/dirty.gif) no-repeat 0 0;
 }
-.ygrid-simple-view .ygrid-row{
-	 position:static; 
-	 display: table-row;
+
+/* Grid Toolbars */
+.x-grid-topbar, .x-grid-bottombar{
+	font:normal 11px arial, tahoma, helvetica, sans-serif;
+    overflow:hidden;
+	display:none;
+	zoom:1;
+    position:relative;
+}
+.x-grid-topbar .x-toolbar{
+	border-right:0 none;
+}
+.x-grid-bottombar .x-toolbar{
+	border-right:0 none;
+	border-bottom:0 none;
+	border-top:1px solid #a9bfd3;
+}
+/* Props Grid Styles */
+.x-props-grid .x-grid-cell-selected .x-grid-cell-text{
+	 background-color: #316ac5 !important;
+}
+.x-props-grid .x-grid-col-value .x-grid-cell-text{
+	background-color: white;
+}
+.x-props-grid .x-grid-col-name{
+	 background-color: #c3daf9;
+}
+.x-props-grid .x-grid-col-name .x-grid-cell-text{
+	background-color: white;
+    margin-left:10px;
+}
+.x-props-grid .x-grid-split-value {
+    visibility:hidden;
+}
+
+/* header menu */
+.xg-hmenu-sort-asc .x-menu-item-icon{
+	background-image: url(../images/default/grid/hmenu-asc.gif);
+}
+.xg-hmenu-sort-desc .x-menu-item-icon{
+	background-image: url(../images/default/grid/hmenu-desc.gif);
+}
+.xg-hmenu-lock .x-menu-item-icon{
+	background-image: url(../images/default/grid/hmenu-lock.gif);
+}
+.xg-hmenu-unlock .x-menu-item-icon{
+	background-image: url(../images/default/grid/hmenu-unlock.gif);
+}
+
+/* dd */
+.x-dd-drag-ghost .x-grid-dd-wrap {
+    padding:1px 3px 3px 1px;
 }
