@@ -97,6 +97,10 @@ Song::initialize_from_db( const sqlite::reader *reader ) {
 	_length	   = reader->get<int>(6);
 	_bitrate   = reader->get<int>(7);
 	_year	   = reader->get<int>(8);
+	if ( reader->num_columns() == 12 ){
+		_artist_name = reader->get<std::string>(9);
+		_album_name = reader->get<std::string>(10);
+	}
 }
 
 
@@ -157,23 +161,6 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
 		song->_bitrate= 0;
 	}
 
-// 	const Mp3_Headerinfo *header = tag.GetMp3HeaderInfo();
-// 	if ( header ) {
-// 		 header->time;
-// 		song->_bitrate= header->bitrate;
-		
-// 	} else {
-// 		song->_length = 0;
-// 	}
-
-// 	try {
-// 		frame = tag.Find( ID3FID_YEAR );
-// 		if ( frame && ( field = frame->GetField(ID3FN_TEXT) ) ) {
-// 			song->_year=boost::lexical_cast<int>( field->GetRawText() );
-// 		}
-// 	} catch( boost::bad_lexical_cast & ){
-// 		song->_year=0;
-// 	}
 	song->save();
 
 	BOOST_LOGL( app,info ) << "Added song " << song->_title << " id:" << song->db_id() << " artist: " << song->_artist_id
@@ -240,6 +227,21 @@ Song::title() const {
 	return _title;
 }
 
+std::string
+Song::album_name() const {
+	if ( _album_name.empty() ){
+		_album_name = this->album()->name();
+	}
+	return _album_name;
+}
+
+std::string
+Song::artist_name() const {
+	if ( _artist_name.empty() ){
+		_artist_name = this->artist()->name();
+	}
+	return _artist_name;
+}
 
 std::string
 Song::name() const {

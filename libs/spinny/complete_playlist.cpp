@@ -27,7 +27,6 @@ CompletePlayList::songs( std::string order, unsigned int start, unsigned int lim
 	if ( start && limit ){
 		*con << " limit " << start << ',' << limit;
 	}
-
 	return con->load_stored<Song>();
 }
 

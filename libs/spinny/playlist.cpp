@@ -222,7 +222,9 @@ PlayList::songs( std::string order, unsigned int start, unsigned int limit ) con
 	sqlite::connection *con = sqlite::db();
 	*con << "select ";
 	Song::table_description()->insert_fields( *con );
-	*con << ",playlist_songs.rowid from songs, playlist_songs where songs.rowid "
+	*con << ",(select name from artists where artist.rowid=songs.artist_id) "
+	     << ",(select name from albums where album.rowid=songs.album_id) "
+	     << "playlist_songs.rowid from songs, playlist_songs where songs.rowid "
 	      << "= playlist_songs.song_id and playlist_songs.playlist_id = "
 	     << this->db_id() << " order by ";
 	if ( order.empty() ){
@@ -234,7 +236,6 @@ PlayList::songs( std::string order, unsigned int start, unsigned int limit ) con
 		*con << " limit " << start << ',' << limit;
 	}
 
-	BOOST_LOGL(sql,debug) << "SQL: " << con->current_statement();
 	return con->load_stored<Song>();
 }
 

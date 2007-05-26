@@ -75,7 +75,7 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 			throw ews::error("Unable to load playlist");
 		}
 		if ( req.u3 == "list" ){
-			Spinny::Song::result_set songs = pl->songs( req.svalue("order"),
+			Spinny::Song::result_set songs = pl->songs( req.svalue("sort"),
 								    req.single_value<sqlite::id_t>("start"),
 								    req.single_value<sqlite::id_t>("limit") );
 			rep.content << "{ Songs:  [ \n";

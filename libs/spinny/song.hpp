@@ -33,6 +33,8 @@ class Song : public sqlite::table {
 	int _length;
 	int _bitrate;
 	int _year;
+	mutable std::string _album_name;
+	mutable std::string _artist_name;
 
 	virtual void table_insert_values( std::ostream &str ) const;
 	virtual void table_update_values( std::ostream &str ) const;
@@ -68,6 +70,12 @@ public:
 
 	boost::shared_ptr<Artist>
 	artist() const;
+
+	std::string
+	artist_name() const;
+
+	std::string
+	album_name() const;
 
 	std::string
 	title() const;
