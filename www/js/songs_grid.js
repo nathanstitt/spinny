@@ -40,9 +40,9 @@ var SongsGrid = function(){
 	removeSong : function( song ){
 	    SongsGrid.ds.remove( song );//data.removeAt( rowIndex );
 	},
-	refreshListing : function(){
-	    YAHOO.log( "Loaded dyna Playlist data for pl id " + PlaylistsGrid.getCurrentId() );
-	    SongsGrid.ds.load( { params: { pl_id: PlaylistsGrid.getCurrentId(), start:25*SongsGrid.currentPage, limit:25  } } );
+	refresh: function(){
+	    SongsGrid.ds.baseParams.pl_id = PlaylistsGrid.getCurrentId();
+	    SongsGrid.ds.load( { params: { start:1, limit:25  } } );
 	},
 	init : function(){
             // create the Data Store
@@ -61,7 +61,8 @@ var SongsGrid = function(){
 		   {name: 'artist', mapping: 'at'},
 		   {name: 'album', mapping: 'al'},
 		   {name: 'length', mapping: 'ln', type: 'int'}
-		   ] )
+		   ] ),
+		remoteSort: true
 	    });
 	    this.currentPage = 1;
 	    cm = new Ext.grid.ColumnModel([
@@ -121,7 +122,7 @@ var SongsGrid = function(){
 		    } else {
 			var cb = {
  			    success: function(o){ YAHOO.log( "Song add req success" );
-				SongsGrid.refreshListing();
+				SongsGrid.refresh();
  			    },
  		    	    failure: function(o){ YAHOO.log("Song add req failed"); }
  			}
@@ -157,7 +158,7 @@ var SongsGrid = function(){
         displayMsg: 'Displaying songs {0} - {1} of {2}',
         emptyMsg: "No songs to display"
     });
-	    SongsGrid.refreshListing();
+	    SongsGrid.refresh();
 	}
     };
 }();

@@ -11,7 +11,7 @@ var PlaylistsGrid = function(){
 	if ( 1 == colIndex ){
 	    var pl = this.ds.getAt( rowIndex );
 	    this.currentId = pl.id;
-	    SongsGrid.refreshListing();
+	    SongsGrid.refresh();
 	}
     }
     afterEdit = function( edit ){
@@ -99,7 +99,7 @@ var PlaylistsGrid = function(){
 
 		    var pl_id = PlaylistsGrid.ds.getAt( row ).id.toString()
 		    var drag_data = Layout.getDragData();
-		    var cb = ( pl_id == PlaylistsGrid.getCurrentId() ) ? { success: function(o){ SongsGrid.refreshListing(); } } : null;
+		    var cb = ( pl_id == PlaylistsGrid.getCurrentId() ) ? { success: function(o){ SongsGrid.refresh(); } } : null;
 		    if ( "songsGrid" == drag_data.type ){
 			var params='pos=0&pl_id='+ pl_id;
 			for( var i=0; i < drag_data.ids.length; ++i ){
@@ -146,7 +146,7 @@ var PlaylistsGrid = function(){
 
 	    this.grid.render();
 
-	    PlaylistsGrid.refreshListing();
+
 	},
 
 	getCurrentId : function(){

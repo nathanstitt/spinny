@@ -12,7 +12,7 @@
 #include "handlers/login.hpp"
 #include "handlers/users.hpp"
 #include "handlers/info.hpp"
-#include "handlers/stream.hpp"
+
 
 void
 handlers::link_up(){
@@ -24,7 +24,6 @@ handlers::link_up(){
 	static handlers::Login login_;
 	static handlers::Users users_;
 	static handlers::Info info_;
-	static handlers::Stream stream_;
 
 	BOOST_LOGL(www,info) << "LINKING UP HANDLERS";
 };

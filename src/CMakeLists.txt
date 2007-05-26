@@ -17,7 +17,7 @@ ELSE(CMAKE_COMPILER_IS_GNUCXX)
    ADD_EXECUTABLE( spinny win_main.cpp )
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
-TARGET_LINK_LIBRARIES( spinny handlers json ews libspinny taglib zlib sqlite unit_test cs streaming lame boost )
+TARGET_LINK_LIBRARIES( spinny handlers json ews libspinny taglib zlib sqlite unit_test cs boost )
 
 IF( HAVE_PTHREAD_H )
   TARGET_LINK_LIBRARIES( spinny pthread )

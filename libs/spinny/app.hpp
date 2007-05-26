@@ -10,7 +10,7 @@
 #include "boost/program_options.hpp"
 #include "boost/log/log.hpp"
 #include "boost/asio.hpp"
-#include "streaming/server.hpp"
+
 
 
 BOOST_DECLARE_LOG(app)
@@ -46,14 +46,8 @@ public:
 		return _vm[name].as<T>(); 
 	}
 
-	Streaming::Server *streaming;
 
-	::ews::server *www;
-
-// 	static
-// 	bool
-// 	add_streaming_client( Spinny::PlayList::ptr, boost::shared_ptr<asio::ip::tcp::socket> );
-
+	ews::server *www;
 	
 };
 

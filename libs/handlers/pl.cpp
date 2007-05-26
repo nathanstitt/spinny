@@ -130,7 +130,6 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 		} else if ( req.u3 == "select" ){
 			BOOST_LOGL(www,debug) << "Loading song " << req.single_value<sqlite::id_t>( "song_id" );
 			Spinny::Song::ptr song = pl->load_song( req.single_value<sqlite::id_t>( "song_id" ) );
-			Spinny::App::instance()->streaming->select_song( pl, song );
 		}
 	} else if ( req.u2 == "list" ){
 

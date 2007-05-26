@@ -6,7 +6,6 @@
 #include "boost/thread/xtime.hpp"
 #include <boost/thread/tss.hpp>
 #include "handlers/shared.hpp"
-#include "streaming/server.hpp"
 #include <cassert>
 
 
