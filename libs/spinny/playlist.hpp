@@ -33,9 +33,10 @@ private:
 	void initialize_from_db( const sqlite::reader *reader );
  	virtual const description* m_table_description() const;
 
-        int bitrate_;
 	string name_;
 	string description_;
+	string order_by_;
+	string limit_;
 	int present_order_;
 public:
  	static const sqlite::table::description* table_description();
@@ -47,7 +48,7 @@ public:
 	all();
 
 	static ptr
-	create( const std::string &name="New Playlist", const std::string &desc="", int bitrate=128 );
+	create( const std::string &name="New Playlist", const std::string &desc="" );
 
 	static void
 	set_order( sqlite::id_t db_id, int order );
@@ -68,19 +69,18 @@ public:
 	set_description( const std::string& desc );
 
 	int
-	bitrate() const;
-
-	int
-	set_bitrate( int br );
-
-	int
 	present_order() const;
 
 	int
 	set_present_order( int br );
 
+	void
+	virtual
+	set_order( std::string order, bool descending=true );
+
 	Song::result_set
-	virtual songs( std::string order="", unsigned int start=0, unsigned int limit=0 ) const;
+	virtual
+	songs( unsigned int start=0, unsigned int limit=0 ) const;
 
 	void
 	insert( Spinny::Song::result_set songs, int position );

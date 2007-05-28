@@ -144,7 +144,7 @@ Song::create_from_file(  const MusicDir &md, const std::string name ){
  	Artist::ptr artist = Artist::find_or_create( tag->artist().to8Bit() );
  	song->_artist_id=artist->db_id();
 
- 	Album::ptr album = Album::find_or_create( artist, tag->album().to8Bit() );
+ 	Album::ptr album = Album::find_or_create( tag->album().to8Bit() );
  	song->_album_id=album->db_id();
 
 	song->_track=tag->track();

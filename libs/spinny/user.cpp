@@ -143,6 +143,15 @@ User::is_admin() const {
 }
 
 
+void
+User::update_access_time(){
+	sqlite::connection *con = sqlite::db();
+	this->last_visit = boost::posix_time::second_clock::local_time();
+	*con << "update users set last_visit=" << sqlite::q( boost::posix_time::to_iso_string( last_visit ) )
+	     << " where rowid=" << this->db_id();
+	con->exec<sqlite::none>();
+}
+
 bool
 User::has_modify_role() const {
 	return has_at_least( ModifyRole );

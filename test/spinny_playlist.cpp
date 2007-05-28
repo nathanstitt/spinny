@@ -118,26 +118,26 @@ TEST( Update ){
 	pl->save();
  	CHECK_EQUAL( "128 Kbs", pl->name() );
 	CHECK_EQUAL( "BooYah", pl->description() );
-	CHECK_EQUAL( 128, pl->bitrate() );
+
 	pl->set_name("Funny Name");
 	pl->set_description("A longer descrip is needed");
-	pl->set_bitrate( 24 );
+
  	CHECK_EQUAL( "Funny Name", pl->name() );
 	CHECK_EQUAL( "A longer descrip is needed", pl->description() );
-	CHECK_EQUAL( 24, pl->bitrate() );
+
 
 	sqlite::id_t id = pl->db_id();
 
 	PlayList::ptr pl2 = PlayList::load( id );
  	CHECK_EQUAL( "128 Kbs", pl2->name() );
 	CHECK_EQUAL( "BooYah", pl2->description() );
-	CHECK_EQUAL( 128, pl2->bitrate() );
+
 
 	pl->save();
 	PlayList::ptr pl3 = PlayList::load( id );
 	CHECK_EQUAL( "Funny Name", pl3->name() );
 	CHECK_EQUAL( "A longer descrip is needed", pl3->description() );
-	CHECK_EQUAL( 24, pl3->bitrate() );
+
 	
 }
 

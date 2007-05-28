@@ -42,7 +42,7 @@ var SongsGrid = function(){
 	},
 	refresh: function(){
 	    SongsGrid.ds.baseParams.pl_id = PlaylistsGrid.getCurrentId();
-	    SongsGrid.ds.load( { params: { start:1, limit:25  } } );
+	    SongsGrid.ds.load( { params: { start:0, limit:25  } } );
 	},
 	init : function(){
             // create the Data Store
@@ -152,15 +152,15 @@ var SongsGrid = function(){
 	    var gridFoot = this.grid.getView().getFooterPanel(true);
 
     // add a paging toolbar to the grid's footer
-    this.paging = new Ext.PagingToolbar( gridFoot, this.ds, {
-        pageSize: 25,
-        displayInfo: true,
-        displayMsg: 'Displaying songs {0} - {1} of {2}',
-        emptyMsg: "No songs to display"
-    });
+	    this.paging = new Ext.PagingToolbar( gridFoot, this.ds, {
+		pageSize: 25,
+		displayInfo: true,
+		displayMsg: 'Displaying songs {0} - {1} of {2}',
+		emptyMsg: "No songs to display"
+	    });
 	    SongsGrid.refresh();
 	}
     };
 }();
 
-Ext.EventManager.onDocumentReady( SongsGrid.init, SongsGrid, true);
+//Ext.EventManager.onDocumentReady( SongsGrid.init, SongsGrid, true);

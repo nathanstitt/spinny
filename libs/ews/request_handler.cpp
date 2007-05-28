@@ -103,8 +103,7 @@ namespace ews {
 			ticket += rep.user->ticket;
 			ticket += "; path=/;";
 			rep.set_header( "Set-Cookie", ticket );
-			rep.user->last_visit = boost::posix_time::second_clock::local_time();
-			rep.user->save();
+			rep.user->update_access_time();
 		}
 		if ( Stop != status ){
 			rep.set_to( reply::not_found );

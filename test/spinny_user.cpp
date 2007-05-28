@@ -50,6 +50,25 @@ TEST( Roles ){
 	CHECK( u->has_at_least( User::ReadOnlyRole ) );
 }
 
+TEST( ChangeLogin ){
+	DummyApp da;
+	User::ptr u = User::create( "test-login", "test" );
+
+	CHECK_EQUAL( u->login, "test-login" );
+
+	u->login = "foo";
+
+	CHECK_EQUAL( u->login, "foo" );
+
+	u->save();
+
+	User::ptr u2 = User::load( u->db_id() );
+
+	CHECK_EQUAL( u2->login, "foo" );
+
+
+}
+
 TEST( Authen ){
 	DummyApp da;
 	User::ptr u = User::create( "test-login", "test" );

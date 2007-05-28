@@ -32,33 +32,10 @@ public:
 	};
 };
 
-class albums_artists_desc : public sqlite::table::description {
-public:
-	virtual const char* table_name() const {
-		return "albums_artists";
-	};
-	virtual int num_fields() const {
-		return 2;
-	}
-	virtual const char** fields() const {
-		static const char *fields[] = {
-			"album_id",
-			"artist_id",
-		};
-		return fields;
-	}
-	virtual const char** field_types() const {
-		static const char *field_types[] = {
-			"int",
-			"int",
-		};
-		return field_types;
-	};
-};
 
 
 static artist_desc table_desc;
-static albums_artists_desc albums_artists_table_desc;
+
 
 
 const sqlite::table::description*
@@ -132,8 +109,8 @@ Artist::with_album( const Album *alb ){
 	sqlite::connection *con = sqlite::db();
 	*con << "select ";
 	table_desc.insert_fields( *con );
-	*con << ",artists.rowid from artists, albums_artists where artists.rowid=albums_artists.artist_id"
-	     << " and albums_artists.album_id = " << alb->db_id() << " order by upper(name)";
+	*con << ",artists.rowid from artists, songs where artists.rowid=songs.artist_id and songs.album_id = "
+	     << alb->db_id() << " order by upper(albums.name)";
 	return con->load_stored<Artist>();
 }
 
@@ -142,9 +119,7 @@ Artist::name_starts_with( const std::string &name ){
 	sqlite::connection *con = sqlite::db();
 	*con << "select ";
 	table_desc.insert_fields( *con );
-	*con << ",(select count(*) from songs where artist_id=artists.rowid)"
-		",(select count(*) from albums_artists where artist_id=artists.rowid),artists.rowid"
-	     << " from artists where upper(name) like '" << sqlite::q( name, false ) << "%'" << "order by upper(name)";
+	*con << ",rowid from artists where upper(name) like '" << sqlite::q( name, false ) << "%'" << " order by upper(name)";
 	return sqlite::db()->load_stored<Artist>();
 }
 
@@ -170,7 +145,7 @@ Artist::num_albums(){
 		return num_albums_;
 	} else {
 		sqlite::connection *con = sqlite::db();
-		*con << "select count(*) from albums_artists where artist_id = "
+		*con << "select count( distinct(album_id) ) from songs where  songs.artist_id = "
 		     << this->db_id();
 		return con->exec<sqlite::id_t>();
 	}
@@ -197,9 +172,8 @@ Artist::albums() const {
 	const sqlite::table::description *td = Album::table_description();
 	*con << "select ";
 	td->insert_fields( *con );
-	*con << ",(select count(*) from songs where album_id=albums.rowid), "
-	     << "albums.rowid from albums, albums_artists where albums.rowid=albums_artists.album_id"
-	     << " and albums_artists.artist_id = " << this->db_id() << "order by upper(name)";
+	*con << ",albums.rowid from albums,songs where albums.rowid=songs.album_id and songs.artist_id = "
+	     << this->db_id() << " order by upper(albums.name)";
 	return con->load_stored<Album>();
 }
 

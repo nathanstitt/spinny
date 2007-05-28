@@ -19,7 +19,6 @@ Users::handle( const ews::request& req, ews::reply& rep ) const {
 	}
 	requireAuth( req.user, Spinny::User::AdminRole );
 
-
 	rep.set_basic_headers( "json" );
 
 	if ( req.u2 == "list" ){
@@ -40,8 +39,8 @@ Users::handle( const ews::request& req, ews::reply& rep ) const {
 			rep.content << comma << "{ 'id':" << user->db_id() << ",'login':'"
 				    << boost::replace_all_copy( user->login, "\"", "\\\"")
 				    << "','password':'********','last_visit':'"
-				    << boost::posix_time::to_simple_string(last) << "','role':"
-				    << user->role() << "}\n";
+				    << boost::posix_time::to_simple_string(last) << "','role':\'"
+				    << user->role() << "\'}\n";
 		}
 		rep.content << "]}\n";
 	} else if ( req.u2 == "del" ){
@@ -50,9 +49,9 @@ Users::handle( const ews::request& req, ews::reply& rep ) const {
 	} else if ( req.u2 == "save" ){
 		Json::Reader reader;
 		Json::Value json;
-		std::string data = req.svalue("json");
+		std::string data = req.svalue("data");
 		if ( data.empty() || ! reader.parse( data, json ) || json.type() != Json::arrayValue ){
-			BOOST_LOGL( www, err ) << "Failed to parse initial json";
+			BOOST_LOGL( www, err ) << "Failed to parse initial json: " << data;
 			throw ews::error("Malformed JSON data received" );
 		} else {
 			int size = json.size();
@@ -60,18 +59,22 @@ Users::handle( const ews::request& req, ews::reply& rep ) const {
 				Json::Value json_user = json[ index ];
 				sqlite::id_t uid = json_user["id"].asUInt();
 				BOOST_LOGL(www,info) << "Saving User id: " << uid 
-						     << "\nLogin: " << json_user["login"].asString()
-						     << "\n Pass: " << (json_user["password"].asString() == "********"
-								       ? "(Unchanged)" : json_user["password"].asString() )
-						     << "\n Role: " << json_user["role"].asInt();
+ 						     << "\nLogin: " << json_user["login"].asString()
+ 						     << "\n Pass: " << (json_user["password"].asString() == "********"
+ 								       ? "(Unchanged)" : json_user["password"].asString() )
+ 						     << "\n Role: " << json_user["role"].asString();
 				if ( uid ){
 					Spinny::User::ptr user = Spinny::User::load( uid );
 					user->login = json_user["login"].asString();
 					if (  json_user["password"].asString() != "********" ){
 						user->set_password( json_user["password"].asString() );
 					}
-					user->set_role( static_cast<Spinny::User::Role>( json_user["role"].asInt() ) );
+					user->set_role(
+						static_cast<Spinny::User::Role>(
+							boost::lexical_cast<int>( json_user["role"].asString() ) ) );
+					BOOST_LOGL(www,info) << "Login: " << user->login;
 					user->save();
+					BOOST_LOGL(www,info) << "Login: " << user->login;
 				} else {
 					Spinny::User::ptr user = Spinny::User::create( json_user["login"].asString(),
 								     json_user["password"].asString() );

@@ -90,7 +90,7 @@ Album::all(){
 
 Album::result_set
 Album::with_artist_id( sqlite::id_t db_id ){
-	std::string where("rowid in ( select album_id from albums_artists where artist_id = ");
+	std::string where("rowid in ( select album_id from songs where artist_id = ");
 	where += boost::lexical_cast<std::string>( db_id );
 	where += ")";
 	return sqlite::db()->load_where<Album>( where,"upper(name)" );
@@ -133,17 +133,6 @@ Album::num_songs(){
 	}
 }
 
-void
-Album::add_artist( const Artist::ptr &artist ){
-	sqlite::connection *con = sqlite::db();
-	*con << "select count(*) from albums_artists where album_id = " << this->db_id() << " and artist_id = " << artist->db_id();
-	if ( ! con->exec<int>() ){
-		this->save_if_needed();
-		*con << "insert into albums_artists( album_id, artist_id ) values ( " << this->db_id() << "," << artist->db_id() << ")";
-		BOOST_LOGL( app,info ) << "Added artist " << artist->db_id() << " to " << this->db_id();
-		con->exec<sqlite::none>();
-	}
-}
 
 Song::result_set
 Album::songs() const {
@@ -151,13 +140,12 @@ Album::songs() const {
 }
 
 Album::ptr
-Album::find_or_create( const Artist::ptr &artist, const std::string &name ){
+Album::find_or_create( const std::string &name ){
 	Album::ptr ret=sqlite::db()->load_one<Album>( "name", name );
 	if ( ! ret ){
 		Album *a = new Album;
 		a->_name=name;
 		a->save();
-		a->add_artist( artist );
 		ret.reset( a );
 	}
 	return ret;

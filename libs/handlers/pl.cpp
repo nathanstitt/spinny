@@ -75,16 +75,18 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 			throw ews::error("Unable to load playlist");
 		}
 		if ( req.u3 == "list" ){
-			Spinny::Song::result_set songs = pl->songs( req.svalue("sort"),
-								    req.single_value<sqlite::id_t>("start"),
+			if ( req.varibles.count("sort") ) {
+				pl->set_order( req.svalue("sort"), ( req.svalue("dir") == "DESC" ) );
+			}
+			Spinny::Song::result_set songs = pl->songs( req.single_value<sqlite::id_t>("start"),
 								    req.single_value<sqlite::id_t>("limit") );
 			rep.content << "{ Songs:  [ \n";
 			for ( Spinny::Song::result_set::iterator song = songs.begin(); song != songs.end(); ++song ){
 				rep.content << comma << "{ 'id':" << song->db_id()
 					    << ",'tr':" << song->track() 
 					    << ",'tt':'" << json_q( song->title() ) << "', "
-					    << "'at':'" << json_q( song->artist()->name() ) << "', "
-					    << "'al':'" << json_q( song->album()->name() ) << "',"
+					    << "'at':'" << json_q( song->artist_name() ) << "', "
+					    << "'al':'" << json_q( song->album_name() ) << "',"
 					    << "'ln':" << song->length() << "}\n";
 			}
 			rep.content  << "], Size: " << pl->size() << " }\n";
@@ -97,6 +99,7 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 							     boost::lexical_cast<int>( var->second.front() ) );
 				}
 			}
+			pl->set_order( "playlist_songs" );
 		} else if ( req.u3 == "addsongs" ){
 			ews::request::varibles_t::const_iterator song_ids=req.varibles.find( "song_id" );
 			if ( song_ids != req.varibles.end() ){
@@ -126,7 +129,6 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 					pl->insert( p, req.single_value<sqlite::id_t>( "position" ) );
 				}
 			}
-			
 		} else if ( req.u3 == "select" ){
 			BOOST_LOGL(www,debug) << "Loading song " << req.single_value<sqlite::id_t>( "song_id" );
 			Spinny::Song::ptr song = pl->load_song( req.single_value<sqlite::id_t>( "song_id" ) );

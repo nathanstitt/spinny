@@ -25,7 +25,7 @@ var PlaylistsGrid = function(){
 	    Ext.util.CSS.updateRule( ".x-grid-row-over td", "border-bottom" , "1px solid #c3daf9" );
 	    Ext.util.CSS.updateRule(  ".x-grid-row-over td, .x-grid-locked .x-grid-row-over td", "background-color", '#d9e8fb' );
 	},
-	refreshListing : function(){
+	refresh : function(){
 	    this.ds.load( { params: { } } );
 	},
 	addNew : function(){
@@ -145,7 +145,7 @@ var PlaylistsGrid = function(){
 	    });
 
 	    this.grid.render();
-
+	    this.refresh();
 
 	},
 

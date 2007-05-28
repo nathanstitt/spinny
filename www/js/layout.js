@@ -107,7 +107,6 @@ Layout = function(){
 	    westLayout.addListener('layout', function(region,newSize) { this.getView().autoSizeColumns(); }, grid );
 	},
 	beginDrag : function( type, ids ){
-	    console.log( "Begin drag " + type + " : " + ids );
 	    DD = { type: type, ids: ids };
 	},
 	getDragData :function(){

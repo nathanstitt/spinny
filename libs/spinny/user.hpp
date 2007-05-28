@@ -51,7 +51,10 @@ public:
 
 	static unsigned int
 	count();
-	
+
+	void
+	update_access_time();
+
 	std::string login;
 	std::string ticket;
 	boost::posix_time::ptime last_visit;

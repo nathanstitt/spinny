@@ -152,9 +152,7 @@ MusicDir::children_of( sqlite::id_t db_id ) {
 	sqlite::connection *con=sqlite::db();
 	*con << "select ";
 	table_desc.insert_fields( *con );
-	*con << ",( select count(*) from music_dirs b where b.parent_id=music_dirs.rowid )"
-	     << ",( select count(*) from songs where dir_id = music_dirs.rowid)"
-	     << ",rowid from music_dirs where parent_id = "
+	*con << ",rowid from music_dirs where parent_id = "
 	     << db_id << " order by upper(name)";
 	return con->load_stored<MusicDir>();
 }

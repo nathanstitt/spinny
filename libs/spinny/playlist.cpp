@@ -56,16 +56,16 @@ public:
 	}
 	virtual const char** fields() const {
 		static const char *fields[] = {
-			"bitrate",
 			"name",
 			"description",
+			"order_by",
 			"present_order",
 		};
 		return fields;
 	}
 	virtual const char** field_types() const {
 		static const char *field_types[] = {
-			"int",
+			"string",
 			"string",
 			"string",
 			"int",
@@ -91,25 +91,25 @@ PlayList::m_table_description() const {
 
 void
 PlayList::table_insert_values( std::ostream &str ) const {
-	str << bitrate_ << ',' << sqlite::q(name_) << ',' << sqlite::q(description_) << ',' << present_order_;
+	str << sqlite::q(name_) << ',' << sqlite::q(description_) << ',' << sqlite::q(order_by_) << ',' << present_order_;
 }
 
 void
 PlayList::table_update_values( std::ostream &str ) const {
-	str << "bitrate=" << bitrate_ << ",name=" << sqlite::q(name_) 
-	    << ",description=" << sqlite::q(description_) << ",present_order=" << present_order_;
+	str << "name=" << sqlite::q(name_) 
+	    << ",description=" << sqlite::q(description_) << ",order_by=" << sqlite::q(order_by_) << ",present_order=" << present_order_;
 }
 
 
 void
 PlayList::initialize_from_db( const sqlite::reader *reader ) {
-	bitrate_ = reader->get<int>(0);
-	name_	   = reader->get<std::string>(1);
-	description_ = reader->get<std::string>(2);
+	name_	   = reader->get<std::string>(0);
+	description_ = reader->get<std::string>(1);
+	order_by_ = reader->get<std::string>(2);
 	present_order_ = reader->get<int>(3);
 }
 
-PlayList::PlayList() : sqlite::table(), bitrate_(0), name_("") , description_(""),present_order_(0) {
+PlayList::PlayList() : sqlite::table(), order_by_("present_order desc"),present_order_(0) {
 
 }
 
@@ -134,11 +134,10 @@ PlayList::all(){
 
 
 PlayList::ptr
-PlayList::create( const std::string &name, const std::string &description,int bitrate ){
+PlayList::create( const std::string &name, const std::string &description ){
 	PlayList::ptr pl( new PlayList );
 	pl->name_=name;
 	pl->description_ = description;
-	pl->bitrate_ = bitrate;
 	pl->present_order_=sqlite::db()->exec<int>( "select max(present_order)+1 from playlists" );
 	return pl;
 }
@@ -175,10 +174,6 @@ PlayList::set_description(  const std::string& desc ){
 	return description_=desc;
 }
 
-int
-PlayList::bitrate() const {
-	return bitrate_;
-}
 
 Song::ptr
 PlayList::at( unsigned int pos ){
@@ -187,8 +182,8 @@ PlayList::at( unsigned int pos ){
 	Song::table_description()->insert_fields( *con );
 	*con << ", playlist_songs.rowid from songs, playlist_songs where songs.rowid "
 	      << "= playlist_songs.song_id and playlist_songs.playlist_id = "
-	     << this->db_id() << " order by playlist_songs.present_order limit "
-	     << pos << ",1" ;
+	     << this->db_id() << " order by " << sqlite::q(order_by_,false)
+	     << " limit " << pos << ",1" ;
 	return con->load_one<Song>();
 }
 
@@ -202,10 +197,6 @@ PlayList::load_song( sqlite::id_t song_id ){
 	return con->load_one<Song>();
 }
 
-int
-PlayList::set_bitrate( int bitrate ){
-	return bitrate_=bitrate;
-}
 
 int
 PlayList::present_order() const {
@@ -217,22 +208,33 @@ PlayList::set_present_order( int present_order ){
 	return present_order_=present_order;
 }
 
+void
+PlayList::set_order( std::string order, bool descending ){
+	std::string new_order = "upper(";
+	new_order += order;
+	if ( descending ){
+		new_order += ") desc";
+	} else {
+		new_order += ") asc";
+	}
+	if ( new_order != order_by_ ){
+		this->order_by_ = new_order;
+		this->save();
+	}
+}
+
 Song::result_set
-PlayList::songs( std::string order, unsigned int start, unsigned int limit ) const {
+PlayList::songs( unsigned int start, unsigned int limit ) const {
 	sqlite::connection *con = sqlite::db();
 	*con << "select ";
 	Song::table_description()->insert_fields( *con );
-	*con << ",(select name from artists where artist.rowid=songs.artist_id) as artist"
-	     << ",(select name from albums where album.rowid=songs.album_id) as album"
-	     << "playlist_songs.rowid from songs, playlist_songs where songs.rowid "
+	*con << ",(select name from artists where artists.rowid=songs.artist_id) as artist"
+	     << ",(select name from albums where albums.rowid=songs.album_id) as album"
+	     << ",playlist_songs.rowid from songs, playlist_songs where songs.rowid "
 	      << "= playlist_songs.song_id and playlist_songs.playlist_id = "
-	     << this->db_id() << " order by ";
-	if ( order.empty() ){
-		*con << "playlist_songs.present_order";
-	} else {
-		*con << sqlite::q( order );
-	}
-	if ( start && limit ){
+	     << this->db_id() << " order by "
+	     << sqlite::q(order_by_,false);
+	if ( limit ){
 		*con << " limit " << start << ',' << limit;
 	}
 
@@ -245,7 +247,6 @@ PlayList::set_song_order( sqlite::id_t db_id, int order ){
 	*con << "update playlist_songs set present_order="
 	     << order << " where playlist_songs.rowid = " << db_id << " and playlist_id = " << this->db_id();
 	con->exec<sqlite::none>();
-//	Spinny::App::instance()->streaming->song_order_changed( this->db_id(), db_id, order );
 }
 
 
@@ -293,7 +294,8 @@ PlayList::insert( PlayList::ptr pl, int position ) {
 	con->exec<sqlite::none>();
 
 	*con << "select song_id from playlist_songs where playlist_id = "
-	     << this->db_id() << " order by present_order";
+	     << this->db_id() << " order by "
+	     << sqlite::q(order_by_,false);
 
 	std::list<sqlite::id_t> song_ids;
 	sqlite::command cmd(con);

@@ -3,7 +3,6 @@
   <head>
     <title>Spinny</title>
     <link rel="stylesheet" type="text/css" href="/css/ext-all.css" />
-    <link rel="stylesheet" type="text/css" href="/css/ytheme-aero.css" />
     <link rel="stylesheet" type="text/css" href="/css/custom.css" />
   </head>
   <body> <!--scroll="no"-->
@@ -18,6 +17,7 @@
     <script type="text/javascript" src="/js/trees.js"></script>
     <script type="text/javascript" src="/js/playlists.js"></script>
     <script type="text/javascript" src="/js/songs_grid.js"></script>
+    <script type="text/javascript" src="/js/user_admin.js"></script>
 
     <div id="west" class="ylayout-inactive-content">
       Hi. I'm the west panel.
@@ -42,23 +42,26 @@
     </div>
 
     <?cs if:isAdmin ?>
-      <div id="user-edit-dlg" style="visibility:hidden;position:absolute;top:0px;right:0px;">
-	<div class="ydlg-hd">Users</div>
-
-	<div class="ydlg-bd">
-	   <div id="users-grid" style="width:200px;height:200px;overflow:hidden;" class="ygrid-mso">&nbsp;</div>
-	   <select id="role-selector" class="ygrid-editor" style="visibility:hidden;">
-	     <option value="0">ReadOnly</option>
-	     <option value="1">Modify Playlists</option>
-	     <option value="2">Admin</option>
-	   </select>
-	</div>
-
-	<div class="ydlg-ft">
-	  <span id="user-admin-dlg-save-wait" class="posting-msg"><img src="/images/default/grid/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
-	  <span id="user-admin-dlg-error-msg"></span>
-	</div>
+    <div id="user-edit-dlg" style="visibility:hidden;position:absolute;top:0px;right:0px;">
+      <div class="x-dlg-hd">Users</div>
+      <div class="x-dlg-bd">
+	<div id="users-grid" style="width:200px;height:200px;overflow:hidden;">&nbsp;</div>
+	<select id="role-selector" style="display:none;" name="role-selector">
+	  <option value="0">ReadOnly</option>
+	  <option value="1">Modify Playlists</option>
+	  <option value="2">Admin</option>
+	</select>
       </div>
+
+      <div class="x-dlg-ft">
+	<span id="user-admin-dlg-save-wait" class="posting-msg"><img src="/images/default/grid/loading.gif" alt="" width="16" height="16"/>&nbsp;Saving Playlist...</span>
+	<span id="user-admin-dlg-error-msg"></span>
+      </div>
+
+      <form id="updategrid">
+      </form>
+
+    </div>
 
     <?cs /if ?>
 
