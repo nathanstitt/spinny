@@ -16,6 +16,7 @@ namespace ews {
 			 { "png",  "image/png" },
 			 { "gif",  "image/gif" },
 			 { "xml",  "text/xml" },
+			 { "xspf", "application/xspf+xml" },
 			 { "json", "application/json" },
 			 { "jpg",  "image/jpeg" },
 			 { 0, 0 }	// Marks end of list.

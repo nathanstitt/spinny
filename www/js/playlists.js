@@ -4,6 +4,7 @@ var PlaylistsGrid = function(){
 
     var grid;
     var ds;
+    var cm;
     var currentId;
     var cssOver;
 
@@ -11,7 +12,7 @@ var PlaylistsGrid = function(){
 	if ( 1 == colIndex ){
 	    var pl = this.ds.getAt( rowIndex );
 	    this.currentId = pl.id;
-	    SongsGrid.refresh();
+	    PlaylistsGrid.grid.getView().refresh();//nderRows( 0rowIndex, rowIndex );
 	}
     }
     afterEdit = function( edit ){
@@ -23,7 +24,7 @@ var PlaylistsGrid = function(){
 	clearDNDcss : function() {
 	    Ext.util.CSS.updateRule( ".x-grid-row-over td", "border", "0px" );
 	    Ext.util.CSS.updateRule( ".x-grid-row-over td", "border-bottom" , "1px solid #c3daf9" );
-	    Ext.util.CSS.updateRule(  ".x-grid-row-over td, .x-grid-locked .x-grid-row-over td", "background-color", '#d9e8fb' );
+	    Ext.util.CSS.updateRule( ".x-grid-row-over td, .x-grid-locked .x-grid-row-over td", "background-color", '#d9e8fb' );
 	},
 	refresh : function(){
 	    this.ds.load( { params: { } } );
@@ -37,42 +38,47 @@ var PlaylistsGrid = function(){
 				 }, 0 ) );
 	},
 	init : function(){
-            // create the Data Store
 	    this.ds = new Ext.data.Store({
-                // load using HTTP
-		proxy: new Ext.data.HttpProxy({url: '/pl/list'}),
-
-                // the return will be XML, so lets set up a reader
-		reader: new Ext.data.JsonReader( {
+		proxy: new Ext.data.HttpProxy({
+		    url: '/pl/list'
+		}),
+		reader: new Ext.data.JsonReader({
 		    root: 'Playlists',
-		    id: 'id',
-		},[
-		   {description: 'description' },
-		   {name: 'name' }
-		   ] )
+		    id: 'id'
+		}, [
+		    {name: 'name' },
+		    {name: 'description' }
+		    ])
 	    });
-	    var cm = new Ext.grid.ColumnModel([
+	    
+	    this.cm = new Ext.grid.ColumnModel([
 					       {					       
 						   dataIndex:'name',
 						   editor: new Ext.grid.GridEditor( new Ext.form.TextField( { allowBlank: false } ) )
 					       },
 					       { fixed:true, width: 30,renderer:
-						   function(){ return '<img src="/images/custom/play.png" class="link">'; } },
-
+						   function( val, cell, rec, row, col, ds ){
+						       if ( PlaylistsGrid.getCurrentId() == (parseInt(row)+1) ){
+							   return '<object type="application/x-shockwave-flash" id="Mplayer" width="17" height="17" data="/player.swf"><param id="Mplayer" name="movie" value="/player.swf" /></object>';
+						       } else {
+							   return '<img src="/images/custom/play.png" class="link">'; 
+						       }
+						   }
+					       },
 					   ]);
 
             // create the grid
 	    this.grid = new Ext.grid.EditorGrid('playlistsGrid', {
 		ds: this.ds,
-		cm: cm,
+		cm: this.cm,
 		selModel: new Ext.grid.RowSelectionModel({singleSelect:true}),
 		autoSizeColumns:true,
 		monitorWindowResize: true,
 		trackMouseOver: true,
 		autoWidth:true,
 		enableDragDrop:true,
-		ddGroup : 'songsDD',
-	    });
+		ddGroup : 'songsDD'
+	    } );
 
 	    this.grid.autoWidth = true;
 	    this.grid.addListener('afteredit', afterEdit, this, true );

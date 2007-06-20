@@ -3,10 +3,15 @@ Layout = function(){
     var layout;
     var innerLayout;
     var westLayout;
+    var musicPlayer;
     var DD=[];
     return {
-
+	setTrack :function( num ){
+	    SongsGrid.hiLightRow( num );
+	},
 	init : function(){
+	    this.musicPlayer = document.getElementById("player");//Ext.get("player");
+	    
 	    layout = new Ext.BorderLayout( document.body, {
 		hideOnLayout: true,
 		north: {
@@ -62,10 +67,10 @@ Layout = function(){
 		    titlebar: false
 		}
 	    });
-	    lyricsPanel = new Ext.ContentPanel('center1', {title: 'Lyrics', closable: false});
-	    innerLayout.add( 'north', lyricsPanel );
-	    artistPanel = new Ext.ContentPanel('center2', {title: 'Artist Info', closable: true})
-	    innerLayout.add( 'north', artistPanel );
+//	    lyricsPanel = new Ext.ContentPanel('center1', {title: 'Lyrics', closable: false});
+//	    innerLayout.add( 'north', lyricsPanel );
+//	    artistPanel = new Ext.ContentPanel('center2', {title: 'Artist Info', closable: true})
+//	    innerLayout.add( 'north', artistPanel );
 
 	    layout.beginUpdate();
 	    layout.add('north', new Ext.ContentPanel('north', 'North'));
@@ -81,7 +86,7 @@ Layout = function(){
 //	    westLayout.add('center', new Ext.GridPanel( SongSearch.getGrid(), {title: 'Find'}));
 	    
 //	    westLayout.add('north',  new Ext.GridPanel( Playlists.getGrid() ) );
-	    layout.add('center', new Ext.NestedLayoutPanel(innerLayout) );
+//	    layout.add('center', new Ext.NestedLayoutPanel(innerLayout) );
 	    layout.add('west',  new Ext.NestedLayoutPanel(westLayout), {title:'Playlists'} );
 
 
@@ -96,15 +101,18 @@ Layout = function(){
 //	    this.trees.init();
 
 	},
+	height : function(){
+	    return layout.getViewSize().height;
+	},
 	addSongsGrid : function( grid ){
 	    var gp = new Ext.GridPanel( grid );
-	    innerLayout.add( 'center', gp  );
-	    innerLayout.addListener('layout', function(region,newSize) { this.getView().autoSizeColumns(); }, grid );
+	    layout.add( 'center', gp  );
+	    layout.addListener('regionresized', function( region,newSize ) { SongsGrid.setHeight( innerLayout.getViewSize().height-newSize ) } );
 	},
 	addPlGrid : function( grid ){
 	    var gp = new Ext.GridPanel( grid );
 	    westLayout.add( 'north', gp  );
-	    westLayout.addListener('layout', function(region,newSize) { this.getView().autoSizeColumns(); }, grid );
+	    westLayout.addListener('regionresized', function(region,newSize) { this.getView().autoSizeColumns(); }, grid );
 	},
 	beginDrag : function( type, ids ){
 	    DD = { type: type, ids: ids };

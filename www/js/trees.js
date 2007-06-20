@@ -39,5 +39,5 @@ var SongsTree = function(){
     };
 }();
 
-//Ext.EventManager.onDocumentReady( SongsTree.init, SongsTree, true);
+Ext.EventManager.onDocumentReady( SongsTree.init, SongsTree, true);
 

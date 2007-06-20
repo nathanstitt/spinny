@@ -230,7 +230,7 @@ PlayList::songs( unsigned int start, unsigned int limit ) const {
 	Song::table_description()->insert_fields( *con );
 	*con << ",(select name from artists where artists.rowid=songs.artist_id) as artist"
 	     << ",(select name from albums where albums.rowid=songs.album_id) as album"
-	     << ",playlist_songs.rowid from songs, playlist_songs where songs.rowid "
+	     << ",songs.rowid from songs, playlist_songs where songs.rowid "
 	      << "= playlist_songs.song_id and playlist_songs.playlist_id = "
 	     << this->db_id() << " order by "
 	     << sqlite::q(order_by_,false);
@@ -245,7 +245,7 @@ void
 PlayList::set_song_order( sqlite::id_t db_id, int order ){
 	sqlite::connection *con = sqlite::db();
 	*con << "update playlist_songs set present_order="
-	     << order << " where playlist_songs.rowid = " << db_id << " and playlist_id = " << this->db_id();
+	     << order << " where playlist_songs.song_id = " << db_id << " and playlist_id = " << this->db_id();
 	con->exec<sqlite::none>();
 }
 
@@ -352,12 +352,13 @@ PlayList::remove( sqlite::id_t song_id ){
 	sqlite::connection *con = sqlite::db();
 
 	*con <<  "update playlist_songs set present_order = present_order-1 where present_order >= " 
-	     << "(select b.present_order from playlist_songs b where b.rowid = " << song_id << ") and playlist_id = " << this->db_id();
+	     << "(select b.present_order from playlist_songs b where playlist_id = " << this->db_id() 
+	     << " and b.song_id = " << song_id << ") and playlist_id = " << this->db_id();
 	con->exec<sqlite::none>();
 
 	
 	*con <<	"delete from playlist_songs where playlist_id = " << this->db_id() 
-	     << " and playlist_songs.rowid = " << song_id;
+	     << " and playlist_songs.song_id = " << song_id;
 
 	con->exec<sqlite::none>();
 

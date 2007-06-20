@@ -21,6 +21,12 @@ BOOST_DECLARE_LOG(sql)
 
 namespace sqlite {
 
+	class not_found : public std::runtime_error {
+	public:
+		not_found( const char *msg ) : runtime_error(msg){}
+		not_found( const std::string &msg ) : runtime_error(msg.c_str()){}
+	};
+
 	// forward declarations
 	class reader;
 	class command;
@@ -387,7 +393,11 @@ namespace sqlite {
 			result_set<T> rs( cmd );
 			BOOST_LOGL(sql,debug) << "load_stored of " << typeid(T).name();
 			this->clear_cmd();
-			return rs.begin().shared_ptr();
+			typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::stored_type ret = rs.begin().shared_ptr();
+			if ( ! ret ){
+				throw not_found( current_statement() + " failed" );
+			}
+			return ret;
 		}
 
 		// count of items in table
@@ -455,7 +465,11 @@ namespace sqlite {
 		typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::stored_type
 		load_one( const std::string &field, const T2 &value ){
 			result_set<T> rs=this->load_many<T,T2>( field, value, "", 1 );
-			return rs.begin().shared_ptr();
+			typename ::sqlite::detail::best_type< T, boost::is_class<T>::value >::stored_type ret = rs.begin().shared_ptr();
+			if ( ! ret ){
+				throw not_found( current_statement() + " failed");
+			}
+			return ret;
 		}
 
 		// load a sqlite::table object where rowid = value

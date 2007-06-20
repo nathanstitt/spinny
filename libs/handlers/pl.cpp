@@ -71,9 +71,7 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 		BOOST_LOGL(www,debug) << "Listing Songs for pl id: " << req.svalue( "pl_id" );
 
 		Spinny::PlayList::ptr pl = Spinny::PlayList::load( req.single_value<sqlite::id_t>( "pl_id" ) );
-		if ( ! pl ){
-			throw ews::error("Unable to load playlist");
-		}
+
 		if ( req.u3 == "list" ){
 			if ( req.varibles.count("sort") ) {
 				pl->set_order( req.svalue("sort"), ( req.svalue("dir") == "DESC" ) );
@@ -95,8 +93,8 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 			      req.varibles.end() != var; ++var ){
 				if ( boost::all( var->first, boost::is_digit() ) ) {
 					BOOST_LOGL( www,debug ) << "Song id: " << var->first << " == " << var->second.front();
-					pl->set_song_order(  boost::lexical_cast<sqlite::id_t>(var->first),
-							     boost::lexical_cast<int>( var->second.front() ) );
+					pl->set_song_order( boost::lexical_cast<sqlite::id_t>(var->first),
+							    boost::lexical_cast<int>( var->second.front() ) );
 				}
 			}
 			pl->set_order( "playlist_songs" );
@@ -129,9 +127,6 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 					pl->insert( p, req.single_value<sqlite::id_t>( "position" ) );
 				}
 			}
-		} else if ( req.u3 == "select" ){
-			BOOST_LOGL(www,debug) << "Loading song " << req.single_value<sqlite::id_t>( "song_id" );
-			Spinny::Song::ptr song = pl->load_song( req.single_value<sqlite::id_t>( "song_id" ) );
 		}
 	} else if ( req.u2 == "list" ){
 

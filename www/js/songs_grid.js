@@ -6,13 +6,14 @@ var SongsGrid = function(){
     var cssOver;
     var paging;
     var currentPage;
+	
+
 
     onSongDblClick = function(grid, rowIndex, colIndex){
-	var song = SongsGrid.ds.getAt( rowIndex )
-        params='pl_id='+PlaylistsGrid.getCurrentId()+'&song_id=' + song.id;
-	var url;
 	if ( 0 == colIndex ){
-	    url = '/pl/songs/rm';
+	    var song = SongsGrid.ds.getAt( rowIndex )
+            params='pl_id='+PlaylistsGrid.getCurrentId()+'&song_id=' + song.id;
+	    var url = '/pl/songs/rm';
 	    var cb = {
                 scope: this,
         	argument: { song: song },
@@ -21,49 +22,91 @@ var SongsGrid = function(){
 		},
 		failure: function(o){ YAHOO.log("Song rm req failed"); }
 	    }
+	    Ext.lib.Ajax.request( 'POST', url, cb, params );
 	} else {
-	    url = '/pl/songs/select';
-	    var cb = {
-		success: function(o){ YAHOO.log( "Song change req success" ); },
-		failure: function(o){ YAHOO.log("Song change req failed"); }
-	    }
+	    var mp = document.getElementById("Mplayer");
+	    var pos = SongsGrid.rangeShowing().start + rowIndex-1;
+	    var res = mp.setPlaylistPos( pos );
+//	    console.log( "Change to song " + pos );
 	}
-	Ext.lib.Ajax.request( 'POST', url, cb, params );
     }
-
     
     return {
+	rangeShowing : function(){
+	    return { start: SongsGrid.paging.cursor+1, end: 1 + SongsGrid.paging.cursor + SongsGrid.ds.data.getCount() };
+	},
+	hiLightRow : function( num ){
+	    var el_num = ( num % SongsGrid.ds.baseParams.limit );
+	    r=SongsGrid.rangeShowing();
+//	    console.log( "On Track: " + el_num + ' / ' + num + ' : ' + r.start + ' ~ ' + r.end );
+	    if ( num >= end ){
+		SongsGrid.ds.load( { params:{ start: num } } );
+	    } else if ( num < r.start ){
+		SongsGrid.ds.load({ params:{ start: 1+(num-( r.end-r.start )) } });
+	    } else {
+		SongsGrid.grid.getSelectionModel().selectRow( el_num );
+	    }
+	},
 	clearDNDcss : function(){
 	    Ext.util.CSS.updateRule(  ".x-grid-row-over td", "border-top", "0px" );
 	    Ext.util.CSS.updateRule(  ".x-grid-row-over td, .x-grid-locked .x-grid-row-over td", "background-color", '#d9e8fb' );
+	},
+
+	setHeight :function( height ){
+	    this.ds.baseParams.limit=Math.round((height-50)/28);
+//	    console.log("Height: " + height );
 	},
 	removeSong : function( song ){
 	    SongsGrid.ds.remove( song );//data.removeAt( rowIndex );
 	},
 	refresh: function(){
 	    SongsGrid.ds.baseParams.pl_id = PlaylistsGrid.getCurrentId();
-	    SongsGrid.ds.load( { params: { start:0, limit:25  } } );
+	    this.ds.baseParams.limit=Math.round( (Layout.height()-50) / 28 );
+	    SongsGrid.ds.load( { params: {start:0 } }  );
+	},
+	randomize: function(){
+//	    console.log( "Randomize" );
+	},
+	onLoad:function(){
+	    var mp = document.getElementById("Mplayer");
+	    if ( ! mp.getPlaylistId ){
+		setTimeout( SongsGrid.onLoad, 200 );
+	    } else if ( mp.getPlaylistId() != PlaylistsGrid.getCurrentId() ){
+		mp.loadNewPlaylist( PlaylistsGrid.getCurrentId() )
+		SongsGrid.grid.getSelectionModel().selectRow(0 );
+	    } else {
+		var el_num = ( mp.getPlaylistPos() % SongsGrid.ds.baseParams.limit );
+		SongsGrid.grid.getSelectionModel().selectRow( el_num );
+	    }
 	},
 	init : function(){
-            // create the Data Store
-	    this.ds = new Ext.data.Store({
-                // load using HTTP
-		proxy: new Ext.data.HttpProxy({url: '/pl/songs/list'}),
 
-                // the return will be XML, so lets set up a reader
-		reader: new Ext.data.JsonReader( {
+	    var jsonreader =  new Ext.data.JsonReader( {
 		    root: 'Songs',
 		    id: 'id',
-		    totalProperty: 'Size',
-		},[
+		    totalProperty: 'Size'
+		}, [
 		   {name: 'track', mapping: 'tr', type: 'int'},
 		   {name: 'title', mapping: 'tt'},
 		   {name: 'artist', mapping: 'at'},
 		   {name: 'album', mapping: 'al'},
 		   {name: 'length', mapping: 'ln', type: 'int'}
-		   ] ),
+		   ] );
+// 	    jsonreader.addListener('load',function(o,arg ){
+// 		console.log("Loaded");
+// 	    });
+            // create the Data Store
+	    this.ds = new Ext.data.Store({
+                // load using HTTP
+		proxy: new Ext.data.HttpProxy({url: '/pl/songs/list'}),
+                // the return will be XML, so lets set up a reader
+		reader: jsonreader,
 		remoteSort: true
 	    });
+	    this.ds.on('load', this.onLoad, this);
+	    this.setHeight( Layout.height() );
+
+
 	    this.currentPage = 1;
 	    cm = new Ext.grid.ColumnModel([
 					       {header: "Del", fixed:true, width: 30,renderer:
@@ -149,18 +192,20 @@ var SongsGrid = function(){
 	    });
 
  	    this.grid.render();
-	    var gridFoot = this.grid.getView().getFooterPanel(true);
+	    var gridFoot = this.grid.getView().getHeaderPanel(true);
 
-    // add a paging toolbar to the grid's footer
 	    this.paging = new Ext.PagingToolbar( gridFoot, this.ds, {
-		pageSize: 25,
+		pageSize: this.ds.baseParams.limit,
 		displayInfo: true,
 		displayMsg: 'Displaying songs {0} - {1} of {2}',
 		emptyMsg: "No songs to display"
 	    });
+	    this.paging.add( 'separator' );
+	    this.paging.addButton( new Ext.Toolbar.Button( { icon:'/images/custom/shuffle.gif', cls:"x-btn-text-icon", handler: SongsGrid.randomize } ) );
 	    SongsGrid.refresh();
+
 	}
     };
 }();
 
-//Ext.EventManager.onDocumentReady( SongsGrid.init, SongsGrid, true);
+Ext.EventManager.onDocumentReady( SongsGrid.init, SongsGrid, true);

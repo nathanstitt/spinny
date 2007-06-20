@@ -50,16 +50,22 @@ namespace ews {
 					if ( Stop == status ){
 						rep.set_header( "X-HANDLED-BY", (*h)->name() );
 					}
-
 				}
 				catch ( const ews::not_found_error &e ){
 					BOOST_LOGL( www,err ) << (*h)->name() << " raised ews::not_found_error - " << e.what() 
-							      << " : referer: " << req.get_header<std::string>("HTTP_REFERER");
+							      << " : req: " << req.uri;
 					rep.set_to( reply::not_found );
 					rep.clear_contents();
 					rep.content << "<html>\n<head><title>Not Found</title></head>"
 						    << "<body><h1>404 Not Found error retrieving " << e.what() << "</h1></body>"
 						    << "</html>";
+					status = Stop;
+					break;
+				}
+				catch ( const sqlite::not_found &e ){
+					BOOST_LOGL( www,err ) << (*h)->name() << " raised sqlite::not_found_error - " << e.what() 
+							      << " : req: " << req.uri;
+					rep.set_to( reply::not_found );
 					status = Stop;
 					break;
 				}

@@ -1,5 +1,4 @@
 
-
 #include "handlers/users.hpp"
 #include "spinny/user.hpp"
 #include "spinny/settings.hpp"
@@ -63,8 +62,9 @@ Users::handle( const ews::request& req, ews::reply& rep ) const {
  						     << "\n Pass: " << (json_user["password"].asString() == "********"
  								       ? "(Unchanged)" : json_user["password"].asString() )
  						     << "\n Role: " << json_user["role"].asString();
+				Spinny::User::ptr user;
 				if ( uid ){
-					Spinny::User::ptr user = Spinny::User::load( uid );
+					user = Spinny::User::load( uid );
 					user->login = json_user["login"].asString();
 					if (  json_user["password"].asString() != "********" ){
 						user->set_password( json_user["password"].asString() );
@@ -72,15 +72,18 @@ Users::handle( const ews::request& req, ews::reply& rep ) const {
 					user->set_role(
 						static_cast<Spinny::User::Role>(
 							boost::lexical_cast<int>( json_user["role"].asString() ) ) );
-					BOOST_LOGL(www,info) << "Login: " << user->login;
 					user->save();
-					BOOST_LOGL(www,info) << "Login: " << user->login;
+
 				} else {
+					BOOST_LOGL(www,debug) << "About to create user";
+
 					Spinny::User::ptr user = Spinny::User::create( json_user["login"].asString(),
-								     json_user["password"].asString() );
-					user->set_role( static_cast<Spinny::User::Role>( json_user["role"].asInt() ) );
+										       json_user["password"].asString() );
+					user->set_role(
+						static_cast<Spinny::User::Role>(
+							boost::lexical_cast<int>( json_user["role"].asString() ) ) );
 					user->save();
-				}
+				} 
 			}
 		}
 	}

@@ -36,12 +36,13 @@ var UserAdminDlg = function(){
 	    } );
 	}
     };
+
     createUser = function(){
 	UserAdminDlg.ds.add( new Ext.data.Record({
 	    id: 0,
 	    login: 'New User',
 	    password: '******',
-	    role: 0,
+	    role: '0',
 	    last_visit:'',
 	    newRecord:true
 	}));
@@ -54,7 +55,6 @@ var UserAdminDlg = function(){
             showBtn.on('click', this.showDialog, this, true);
 	    errorMsg = Ext.get('user-admin-dlg-error-msg');
 	    saveWait = Ext.get('user-admin-dlg-save-wait');
-	    this.showDialog();
         },
         onClick: function( grid,row,col ){
 	    if ( col ){
@@ -103,12 +103,12 @@ var UserAdminDlg = function(){
 		    reader: new Ext.data.JsonReader( {
 			root: 'Users',
 			id: 'id',
-		    },[
-		       { name: 'login' },
-		       { name: 'id' },
-		       { name: 'password'},
-		       { name: 'role' },
-		       { name: 'last_visit' }
+		    }, [
+		       {name: 'login' },
+		       {name: 'id' },
+		       {name: 'password'},
+		       {name: 'role' },
+		       {name: 'last_visit' }
 		       ] )
 		    } );
 
