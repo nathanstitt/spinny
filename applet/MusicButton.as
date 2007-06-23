@@ -126,9 +126,9 @@ class MusicButton extends MovieClip
 	my_cm.hideBuiltInItems();
 	this.menu = my_cm;
 
-	this.loadNewPlaylist( Number( ExternalInterface.call("PlaylistsGrid.getCurrentId" ) ) );
+//	this.loadNewPlaylist( Number( ExternalInterface.call("PlaylistsGrid.getCurrentId" ) ) );
 
-	ExternalInterface.call( "SongsGrid.refresh" );
+//	ExternalInterface.call( "SongsGrid.refresh" );
 		//-
     }
 

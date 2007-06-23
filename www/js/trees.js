@@ -33,6 +33,7 @@ var SongsTree = function(){
 
     return {
         init : function(){
+//alert("Create trea");
 	    dirsTree = createTree('/tree/dir', 'dirsTree' );
 	    tagsTree = createTree('/tree/tag', 'tagsTree' );
 	}

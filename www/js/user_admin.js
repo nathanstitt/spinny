@@ -52,7 +52,7 @@ var UserAdminDlg = function(){
     return {
         init : function(){
             showBtn = Ext.get('show-user-admin-btn');
-            showBtn.on('click', this.showDialog, this, true);
+//          showBtn.on('click', this.showDialog, this, true);
 	    errorMsg = Ext.get('user-admin-dlg-error-msg');
 	    saveWait = Ext.get('user-admin-dlg-save-wait');
         },
@@ -102,7 +102,7 @@ var UserAdminDlg = function(){
 		    proxy: new Ext.data.HttpProxy({url: '/users/list'}),
 		    reader: new Ext.data.JsonReader( {
 			root: 'Users',
-			id: 'id',
+			id: 'id'
 		    }, [
 		       {name: 'login' },
 		       {name: 'id' },
@@ -194,8 +194,7 @@ var UserAdminDlg = function(){
 	    saveWait.setVisible(false);
 	    errorMsg.update('');
 
-       },
-
+       }
 
     };
 }();

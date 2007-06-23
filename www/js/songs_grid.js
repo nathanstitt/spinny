@@ -20,11 +20,11 @@ var SongsGrid = function(){
 		success: function(o){ 
 		    this.removeSong( o.argument.song );
 		},
-		failure: function(o){ YAHOO.log("Song rm req failed"); }
+		failure: function(o){ alert("Song rm req failed"); }
 	    }
 	    Ext.lib.Ajax.request( 'POST', url, cb, params );
 	} else {
-	    var mp = document.getElementById("Mplayer");
+	    var mp = Layout.getApplet();
 	    var pos = SongsGrid.rangeShowing().start + rowIndex-1;
 	    var res = mp.setPlaylistPos( pos );
 //	    console.log( "Change to song " + pos );
@@ -68,10 +68,9 @@ var SongsGrid = function(){
 //	    console.log( "Randomize" );
 	},
 	onLoad:function(){
-	    var mp = document.getElementById("Mplayer");
-	    if ( ! mp.getPlaylistId ){
-		setTimeout( SongsGrid.onLoad, 200 );
-	    } else if ( mp.getPlaylistId() != PlaylistsGrid.getCurrentId() ){
+//	    var mp = document.getElementById("flash_applet");
+	    var mp = Layout.getApplet();
+	    if ( mp.getPlaylistId() != PlaylistsGrid.getCurrentId() ){
 		mp.loadNewPlaylist( PlaylistsGrid.getCurrentId() )
 		SongsGrid.grid.getSelectionModel().selectRow(0 );
 	    } else {
@@ -105,7 +104,6 @@ var SongsGrid = function(){
 	    });
 	    this.ds.on('load', this.onLoad, this);
 	    this.setHeight( Layout.height() );
-
 
 	    this.currentPage = 1;
 	    cm = new Ext.grid.ColumnModel([
@@ -164,10 +162,10 @@ var SongsGrid = function(){
 			Ext.lib.Ajax.request( 'POST', '/pl/songs/reorder', null, params );
 		    } else {
 			var cb = {
- 			    success: function(o){ YAHOO.log( "Song add req success" );
+ 			    success: function(o){ alert( "Song add req success" );
 				SongsGrid.refresh();
  			    },
- 		    	    failure: function(o){ YAHOO.log("Song add req failed"); }
+ 		    	    failure: function(o){ alert("Song add req failed"); }
  			}
 			var t = e.getTarget();
 			var row = SongsGrid.grid.view.findRowIndex(t)+1;
@@ -202,7 +200,7 @@ var SongsGrid = function(){
 	    });
 	    this.paging.add( 'separator' );
 	    this.paging.addButton( new Ext.Toolbar.Button( { icon:'/images/custom/shuffle.gif', cls:"x-btn-text-icon", handler: SongsGrid.randomize } ) );
-	    SongsGrid.refresh();
+ //	    SongsGrid.refresh();
 
 	}
     };

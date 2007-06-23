@@ -1,17 +1,19 @@
+var flash_applet;
 
 Layout = function(){
     var layout;
     var innerLayout;
     var westLayout;
-    var musicPlayer;
+
     var DD=[];
     return {
 	setTrack :function( num ){
 	    SongsGrid.hiLightRow( num );
 	},
 	init : function(){
-	    this.musicPlayer = document.getElementById("player");//Ext.get("player");
-	    
+	    flash_applet = new SWFObject("/player.swf", "flash_applet", "17", "17", "9", "#FFFFFF");
+	    flash_applet.write("flash_applet");
+
 	    layout = new Ext.BorderLayout( document.body, {
 		hideOnLayout: true,
 		north: {
@@ -67,39 +69,26 @@ Layout = function(){
 		    titlebar: false
 		}
 	    });
-//	    lyricsPanel = new Ext.ContentPanel('center1', {title: 'Lyrics', closable: false});
-//	    innerLayout.add( 'north', lyricsPanel );
-//	    artistPanel = new Ext.ContentPanel('center2', {title: 'Artist Info', closable: true})
-//	    innerLayout.add( 'north', artistPanel );
 
 	    layout.beginUpdate();
 	    layout.add('north', new Ext.ContentPanel('north', 'North'));
-
-
 
 	    westLayout.add('center', new Ext.ContentPanel( 'tagsTree', {title: 'Artists' }));
 
 	    westLayout.add('center', new Ext.ContentPanel( 'dirsTree', {title: 'Dir'}));
 
-//	    SongSearch.init();
-
-//	    westLayout.add('center', new Ext.GridPanel( SongSearch.getGrid(), {title: 'Find'}));
-	    
-//	    westLayout.add('north',  new Ext.GridPanel( Playlists.getGrid() ) );
-//	    layout.add('center', new Ext.NestedLayoutPanel(innerLayout) );
 	    layout.add('west',  new Ext.NestedLayoutPanel(westLayout), {title:'Playlists'} );
 
+	    PlaylistsGrid.init();
 
-	    layout.getRegion('center').showPanel('center1');
+
 
 	    layout.endUpdate();
 
-/* 			setTimeout('Layout.plGrid.autoSize();', 500); */
-// 			setTimeout('Layout.songsGrid.reload();', 500); 
-
-//	    this.trees = new Trees();
-//	    this.trees.init();
-
+	},
+	getApplet : function(){
+	    flash_applet = document.getElementById("flash_applet");
+	    return flash_applet;
 	},
 	height : function(){
 	    return layout.getViewSize().height;
@@ -122,46 +111,7 @@ Layout = function(){
 	}
 	
 
-// 	toggleWest : function(link){
-// 	    var west = layout.getRegion('west');
-// 	    if(west.isVisible()){
-// 		west.hide();
-// 		link.innerHTML = 'Show Playlists'
-// 	    }else{
-// 		west.show();
-// 		link.innerHTML = 'Hide Playlists';
-// 	    }
-// 	},
-// 	handleDrag : function( dd, dest_id, src_id, event ){
-// 	    if ( dest_id == 'playlists' ){
-// 		Playlists.dragOver( event, src_id );
-// 	    } else if ( dest_id == 'songs' ){
-// 		Songs.dragOver( event, src_id );
-// 	    } else {
-// 		dd.setDropStatus(false);
-// 	    }
-// 	},
-// 	handleDrop : function( dst_id, src_id, event, ids ){
-// 	    HighlightEvents.cancel();
-// 	    if ( dst_id == 'playlists' ){
-// 		Playlists.songsDropped( event, ids );
-// 	    } else if ( dst_id == 'songs' && src_id == 'playlists' ){
-// 		Songs.playlistDropped( event, ids );
-// 	    } else if ( dst_id == 'songs' ) {
-// 		Songs.songDropped( event, ids );
-// 	    }
-// 	},
-// 	showSongInfo : function( song_id, artist ){
-// 	    link = 'http://en.wikipedia.org/wiki/' + encodeURIComponent( artist );
-
-// 	    id='art-'+song_id;	    
-//   	    var iframe = Ext.DomHelper.append( document.body, 
-//     		            {tag: 'iframe', frameBorder: 0, src: link, id: 'frm'+id } );
-
-//  	    panel = new Ext.ContentPanel(iframe,{
-// 		title: artist, fitToFrame:true, closable:true } );
-// 	    innerLayout.add( 'north', panel );
-// 	}	
+	
     }
 }();
 

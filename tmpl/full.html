@@ -4,15 +4,15 @@
     <title>Spinny</title>
     <link rel="stylesheet" type="text/css" href="/css/ext-all.css" />
     <link rel="stylesheet" type="text/css" href="/css/custom.css" />
+    <script type="text/javascript" src="/js/swfobject.js"></script>
   </head>
   <body> <!--scroll="no"-->
     <div id="loading">
       <div class="loading-indicator">Loading...</div>
     </div>
     
-    <script type="text/javascript" src="/js/yui-utilities.js"></script>
-    <script type="text/javascript" src="/js/ext-yui-adapter.js"></script>
-    <script type="text/javascript" src="/js/ext-all-debug.js"></script>
+    <script type="text/javascript" src="/js/ext-base.js"></script>
+    <script type="text/javascript" src="/js/ext-all.js"></script>
     <script type="text/javascript" src="/js/layout.js"></script>
     <script type="text/javascript" src="/js/trees.js"></script>
     <script type="text/javascript" src="/js/playlists.js"></script>
@@ -24,10 +24,10 @@
     </div>
 
     <div id="north" class="ylayout-inactive-content">
-      <div id="flash_applet">
-	<!-- object type="application/x-shockwave-flash" id="Mplayer" width="17" height="17" data="/player.swf">
+      <div id="flash_applet"><strong>You need to upgrade your Flash Player</strong>
+	<object type="application/x-shockwave-flash" id="Mplayer" width="17" height="17" data="/player.swf">
 	  <param id="Mplayer" name="movie" value="/player.swf" />
-	</object -->
+	</object>
       </div>
       <div id="playlist-description">Current Playlist Description goes here</div>
       <?cs if:isAdmin ?>

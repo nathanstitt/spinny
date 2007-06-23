@@ -129,7 +129,6 @@ PL::handle( const ews::request& req, ews::reply& rep ) const {
 			}
 		}
 	} else if ( req.u2 == "list" ){
-
 		BOOST_LOGL(www,debug) << "Loading PL";
 		rep.content << "{Playlists: [";
 		Spinny::PlayList::result_set rs = Spinny::PlayList::all();
